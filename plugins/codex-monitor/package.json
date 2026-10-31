@@ -1,0 +1,26 @@
+{
+  "name": "codex-monitor",
+  "version": "0.6.0",
+  "description": "Codex 会话状态泳道看板",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test ./notification-manager.test.mjs ./client-dismiss.test.mjs ./dismiss-running.test.mjs ./board-notifications.test.mjs ./notifications.test.mjs ./preview-interaction.test.mjs ./conversation.test.mjs ./preview-client.test.mjs ./monitor.test.mjs ./bulk-review.test.mjs ./client-bulk.test.mjs && python -m unittest ./codex_monitor_test.py",
+    "check": "node --check notification-manager.js && node --check notifications.js && node --check conversation.js && node --check index.js && node --check session-source.js && node --check record-store.js && node --check monitor.js && node --check client.js && python ./codex_monitor.py --help > NUL"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
+}
