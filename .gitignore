@@ -1,0 +1,10 @@
+# 各插件目录内的 .gitignore 继续生效；这里只放通用规则。
+node_modules/
+.task-temp/
+.task-tmp/
+__pycache__/
+*.pyc
+coverage/
+.env
+.env.*
+!.env.example
