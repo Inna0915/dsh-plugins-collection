@@ -48,11 +48,29 @@ function readJsonBody(req) {
   })
 }
 
+// 跨站页面可以不经 CORS 预检向本机发送 text/plain 的 POST；写接口只接受 JSON，
+// 且浏览器带 Origin 时必须与 Host 同源。命令行等非浏览器调用不带 Origin，不受影响。
+function sameSiteWriteError(req) {
+  if (req.method === 'GET' || req.method === 'HEAD') return null
+  const headers = req.headers || {}
+  if (headers.origin !== undefined) {
+    let sameHost = false
+    try { sameHost = new URL(headers.origin).host === headers.host } catch {}
+    if (!sameHost) return { status: 403, error: '拒绝跨站请求' }
+  }
+  if (!/^application\/json\b/i.test(String(headers['content-type'] || ''))) {
+    return { status: 415, error: '请求必须是 application/json' }
+  }
+  return null
+}
+
 function register(ctx, path, handler) {
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact',
     path,
     handler: async (req, res) => {
+      const rejected = sameSiteWriteError(req)
+      if (rejected) return sendJson(res, rejected.status, { ok: false, error: rejected.error })
       try {
         await handler(req, res)
       } catch (error) {

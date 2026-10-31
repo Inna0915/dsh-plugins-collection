@@ -23,7 +23,7 @@ test('宿主可选 DSH 接入贯通列表、预览和审核接口，拒绝跨路
     inject(dependencies, activate) { if (dependencies.includes('sessionQuery')) activate(ctx) }
   }
   async function call(path, body, method = 'POST') {
-    const req = Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]); req.method = method
+    const req = Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]); req.method = method; req.headers = { 'content-type': 'application/json' }
     let status; let result
     await routes.get('/codex-monitor/' + path)(req, { writeHead(code) { status = code }, end(json) { result = JSON.parse(json) } })
     return { status, result }

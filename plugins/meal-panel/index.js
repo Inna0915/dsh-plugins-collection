@@ -252,6 +252,23 @@ async function readJson(req) {
   }
 }
 
+/**
+ * Writes must come from the panel itself. A cross-site page can still send a
+ * "simple" text/plain POST to loopback without a CORS preflight, so require
+ * JSON and, when the browser reports an Origin, the same host as the request.
+ */
+function assertSameSiteWrite(req) {
+  const headers = req.headers ?? {}
+  if (headers.origin !== undefined) {
+    let sameHost = false
+    try { sameHost = new URL(headers.origin).host === headers.host } catch {}
+    if (!sameHost) throw httpError(403, 'cross-origin', '拒绝跨站请求')
+  }
+  if (!/^application\/json\b/i.test(String(headers['content-type'] ?? ''))) {
+    throw httpError(415, 'bad-content-type', '请求必须是 application/json')
+  }
+}
+
 function sendJson(res, status, body) {
   const text = JSON.stringify(body)
   res.writeHead(status, {
@@ -276,6 +293,7 @@ async function handle(state, req, res) {
   const url = new URL(req.url, 'http://127.0.0.1')
   const pathname = url.pathname.replace(/\/+$/, '') || '/'
   const suffix = pathname.slice(API_PREFIX.length)
+  if (req.method !== 'GET' && req.method !== 'HEAD') assertSameSiteWrite(req)
 
   if (suffix === '/health' && req.method === 'GET') {
     return sendJson(res, 200, {
@@ -442,6 +460,7 @@ export const __internals = {
   trimBaseUrl,
   resolveConfig,
   validateSelection,
+  assertSameSiteWrite,
   panelPayload,
   ensureSession,
   handle,

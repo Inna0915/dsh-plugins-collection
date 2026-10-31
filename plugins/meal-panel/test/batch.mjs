@@ -35,14 +35,33 @@ assert.equal(batchEligibility('2026-10-28', 'LUNCH', calendar, true).eligible, t
 calendar.days[0].meals[0].locked = true
 assert.equal(batchEligibility('2026-10-28', 'LUNCH', calendar, true).eligible, false)
 
-function request(path, body) {
-  const req = Readable.from([Buffer.from(JSON.stringify(body))]); req.method = 'POST'; req.url = '/meal/api/' + path
+function request(path, body, headers = { host: '127.0.0.1:3080', origin: 'http://127.0.0.1:3080', 'content-type': 'application/json' }) {
+  const req = Readable.from([Buffer.from(JSON.stringify(body))]); req.method = 'POST'; req.url = '/meal/api/' + path; req.headers = headers
   let result
   const res = { writeHead(status) { this.status = status }, end(text) { result = { status: this.status, body: JSON.parse(text) } } }
   return { req, res, result: () => result }
 }
 const state = { cfg: { username: '王鹏宏', baseUrl: 'http://test.invalid' }, cookies: new Map([['SESSION', 'stub']]), profile: { username: '王鹏宏' } }
 const body = { date: '2026-10-28', meal: 'LUNCH', choice: 'ORDERED', expectedUsername: '王鹏宏' }
+
+// Cross-site writes are rejected before any canteen call.
+{
+  const guardFetch = globalThis.fetch
+  let reached = 0
+  globalThis.fetch = async () => { reached++; throw new Error('must not reach canteen') }
+  try {
+    const crossSite = request('selection', body, { host: '127.0.0.1:3080', origin: 'https://evil.example', 'content-type': 'application/json' })
+    await assert.rejects(__internals.handle(state, crossSite.req, crossSite.res), error => error.status === 403)
+    const simplePost = request('selection', body, { host: '127.0.0.1:3080', 'content-type': 'text/plain' })
+    await assert.rejects(__internals.handle(state, simplePost.req, simplePost.res), error => error.status === 415)
+    const nullOrigin = request('presence', { presence: 'IN_OFFICE' }, { host: '127.0.0.1:3080', origin: 'null', 'content-type': 'application/json' })
+    await assert.rejects(__internals.handle(state, nullOrigin.req, nullOrigin.res), error => error.status === 403)
+    assert.equal(reached, 0)
+    // Non-browser callers (no Origin) with JSON stay allowed.
+    __internals.assertSameSiteWrite({ headers: { host: '127.0.0.1:3080', 'content-type': 'application/json; charset=utf-8' } })
+  } finally { globalThis.fetch = guardFetch }
+}
+
 let called = 0, release
 let startedResolve
 const started = new Promise(resolve => { startedResolve = resolve })
@@ -82,4 +101,4 @@ try {
   await assert.rejects(stale, error => error.code === 'account-changed')
   assert.equal(oldState.cookies.get('SESSION'), 'new', 'old response must not overwrite new session')
 } finally { globalThis.fetch = oldFetch }
-console.log('PASS: workday filtering, date limits, meal eligibility, account exclusion and no POST replay')
+console.log('PASS: workday filtering, date limits, meal eligibility, cross-site write guard, account exclusion and no POST replay')

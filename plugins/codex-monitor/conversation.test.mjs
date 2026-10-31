@@ -95,11 +95,37 @@ test('preview endpoint refuses arbitrary paths, unknown fields and excessive cur
   apply(ctx)
   try {
     for (const body of [{ sessionId: '../../secret' }, { sessionId: 'anything', path: 'C:/private' }, { sessionId: 'anything', cursor: 'x'.repeat(1025) }]) {
-      const req = Readable.from([Buffer.from(JSON.stringify(body))]); req.method = 'POST'
+      const req = Readable.from([Buffer.from(JSON.stringify(body))]); req.method = 'POST'; req.headers = { 'content-type': 'application/json' }
       let status; let result
       await routes.get(`/${name}/conversation`)(req, { writeHead(value) { status = value }, end(value) { result = JSON.parse(value) } })
       assert.equal(status, 400)
       assert.match(result.error, /无效/)
     }
+  } finally { cleanup.filter((item) => typeof item === 'function').reverse().forEach((close) => close()) }
+})
+
+test('write endpoints reject cross-site origins and non-JSON simple requests before handling', async () => {
+  const { apply } = await import('./index.js')
+  const routes = new Map(); const cleanup = []
+  const { Readable } = await import('node:stream')
+  const ctx = { logger: { info() {} }, webServer: { register(route) { routes.set(route.path, route.handler); return () => {} } }, effect(setup) { cleanup.push(setup()) } }
+  apply(ctx)
+  const call = async (path, headers, method = 'POST') => {
+    const req = Readable.from([Buffer.from('{}')]); req.method = method; req.headers = headers
+    let status; let result
+    await routes.get(path)(req, { writeHead(value) { status = value }, end(value) { result = JSON.parse(value) } })
+    return { status, result }
+  }
+  try {
+    const host = '127.0.0.1:3080'
+    for (const path of ['/codex-monitor/notifications/test', '/codex-monitor/notifications/settings', '/codex-monitor/refresh', '/codex-monitor/review-all']) {
+      assert.equal((await call(path, { host, origin: 'https://evil.example', 'content-type': 'application/json' })).status, 403, path)
+      assert.equal((await call(path, { host, origin: 'null', 'content-type': 'application/json' })).status, 403, path)
+      assert.equal((await call(path, { host, 'content-type': 'text/plain' })).status, 415, path)
+    }
+    const sameOrigin = await call('/codex-monitor/refresh', { host, origin: `http://${host}`, 'content-type': 'application/json; charset=utf-8' })
+    assert.equal(sameOrigin.status, 202)
+    const cli = await call('/codex-monitor/refresh', { host, 'content-type': 'application/json' })
+    assert.equal(cli.status, 202)
   } finally { cleanup.filter((item) => typeof item === 'function').reverse().forEach((close) => close()) }
 })
