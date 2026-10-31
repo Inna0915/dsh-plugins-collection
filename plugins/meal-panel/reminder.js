@@ -114,7 +114,9 @@ export function createLunchReminder(options) {
       if (!Number.isFinite(serverTime) || panel?.today !== date || panel?.username !== username ||
           (panel?.profile?.username && panel.profile.username !== username) || panel?.configured !== true ||
           serviceDate(serverTime) !== date || serverTime < boundary) return null
-      if ((Number.isFinite(deadline) && serverTime >= deadline) ||
+      // A verified calendar without today's lunch (holiday, no service) is final
+      // for the day; stop re-reading the canteen every interval until midnight.
+      if (!lunch || (Number.isFinite(deadline) && serverTime >= deadline) ||
           panel.presence === 'OUT_OF_OFFICE' || day?.presence === 'OUT_OF_OFFICE' ||
           lunch?.choice === 'ORDERED' || lunch?.choice === 'DECLINED') expiredUsers.add(username)
       if (!Number.isFinite(deadline) || serverTime >= deadline || panel.presence !== 'IN_OFFICE' ||

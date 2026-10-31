@@ -68,6 +68,14 @@ try {
     const f = fixture(), r = f.make(); f.alter = change; f.time = at('2026-10-27T08:30:00')
     assert.equal(await r.tick(), 'ineligible'); assert.equal(f.sends.length, 0); r.dispose()
   }
+  for (const holiday of [p => { p.days = [] }, p => { p.days[0].meals = [] }]) {
+    // No lunch today: one calendar read, then no canteen requests until the next day.
+    const f = fixture(), r = f.make(); f.alter = holiday; f.time = at('2026-10-27T08:30:00')
+    assert.equal(await r.tick(), 'ineligible'); assert.equal(f.calls, 1)
+    f.time = at('2026-10-27T15:00:00'); assert.equal(await r.tick(), 'outside-window'); assert.equal(f.calls, 1)
+    f.alter = () => {}; f.time = at('2026-10-28T08:30:00')
+    assert.equal(await r.tick(), 'sent'); assert.equal(f.sends.length, 1); r.dispose()
+  }
   {
     const f = fixture(), r = f.make(); f.time = at('2026-10-27T08:30:00')
     f.im = null; assert.equal(await r.tick(), 'unavailable')
