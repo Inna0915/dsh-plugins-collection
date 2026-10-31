@@ -1,6 +1,6 @@
 {
   "name": "dsh-project-package",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "项目打包看板：工作区识别、Maven、Git、版本说明、加壳与依赖核验，按需加载。",
   "type": "module",

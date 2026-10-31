@@ -25,7 +25,7 @@ function sameOrigin(req) {
 }
 export function apply(ctx) {
   let runtimePromise, disposed = false;
-  const receipt = { plugin: 'dsh-project-package', version: '0.1.5', hostPid: process.pid,
+  const receipt = { plugin: 'dsh-project-package', version: '0.1.6', hostPid: process.pid,
     active: true, engineStarts: 0, enginePid: null, activeTask: null };
   let receiptWrite = Promise.resolve();
   const report = state => {

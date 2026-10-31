@@ -33,6 +33,18 @@ with tempfile.TemporaryDirectory(prefix="frozen-smoke-", dir=root / ".task-temp"
     assert reopened.returncode == 0, reopened.stderr
     restored = [json.loads(line) for line in reopened.stdout.splitlines()]
     assert restored[1]["value"]["projectsCached"] is True, restored
+    history = Path(temporary) / "PackageTool" / "dsh-project-package" / "history.json"
+    history.write_text(json.dumps([{"id": task_id, "kind": "build", "status": "succeeded", "artifacts": {}, "markdown": "# " + task_id,
+                                    "logs": [{"time": 1, "text": task_id + " log", "channel": "build"}]} for task_id in ("newer", "older")]),
+                       encoding="utf-8")
+    focused = subprocess.run([str(root / "runtime" / "PackageEngine.exe")],
+                             input="\n".join(json.dumps(m) for m in [{"id": 1, "operation": "state", "data": {"focus": "older"}},
+                                                                     {"id": 2, "operation": "shutdown"}]) + "\n",
+                             capture_output=True, text=True, encoding="utf-8", timeout=30, env=env)
+    assert focused.returncode == 0, focused.stderr
+    tasks = {task["id"]: task for task in json.loads(focused.stdout.splitlines()[1])["value"]["tasks"]}
+    assert tasks["older"]["logs"][0]["text"] == "older log" and "detailOmitted" not in tasks["older"], tasks
+    assert tasks["newer"]["detailOmitted"] is True and tasks["newer"]["logs"] == [], tasks
     shell_data = {"war_path":str(Path(temporary)/"missing.war"),"upload_dir":str(Path(temporary)/"missing-upload"),
                   "trigger_url":"http://127.0.0.1:1/never-contacted","finish_dir":str(Path(temporary)/"finish")}
     shell_result = subprocess.run([str(root / "runtime" / "PackageEngine.exe"),"--shell"],input=json.dumps(shell_data)+"\n",
@@ -73,4 +85,4 @@ with tempfile.TemporaryDirectory(prefix="frozen-smoke-", dir=root / ".task-temp"
         server.shutdown()
         server.server_close()
         server_thread.join(3)
-    print('Frozen engine: startup, discovery, cached reopen, preparation helper/three version resources, state and shutdown passed. Local fixture HTTP only; no production services called.')
+    print('Frozen engine: startup, discovery, cached reopen, focused task details, preparation helper/three version resources, state and shutdown passed. Local fixture HTTP only; no production services called.')
