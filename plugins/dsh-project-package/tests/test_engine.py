@@ -81,6 +81,31 @@ class DiscoveryTests(unittest.TestCase):
         business_project(self.root / "template", "wms-project-base", "wms-project")
         self.assertEqual(discover([{"path": str(self.root)}], [])["projects"][0]["artifact"], "wms-project-base")
 
+    def test_each_workspace_has_its_own_directory_budget(self):
+        large = self.root / "large"
+        for index in range(10):
+            (large / f"folder-{index}").mkdir(parents=True)
+        business_project(self.root / "small", "fms-p281", "fms-p281")
+        with patch("discovery.MAX_DIRECTORIES_PER_ROOT", 3):
+            result = discover([{"path": str(large), "title": "大工作区"}, {"path": str(self.root / "small"), "title": "小工作区"}], [])
+        self.assertEqual([p["artifact"] for p in result["projects"]], ["fms-p281"])
+        self.assertEqual(result["warnings"], ["工作区「大工作区」较大，本次识别已达上限；可输入具体项目目录继续识别。"])
+
+    def test_walk_skips_sources_and_plain_folders_inside_maven_projects(self):
+        import discovery
+        library = self.root / "fms"
+        pom(library, "fms-parent", modules=["fms-core"])
+        pom(library / "fms-core", "fms-core", "jar")
+        (library / "fms-core" / "src" / "main" / "java").mkdir(parents=True)
+        (library / "plans" / "2026-10-01-方案").mkdir(parents=True)
+        business_project(library / "nested", "wms-p999", "wms-p999")
+        with patch("discovery.pom_info", wraps=discovery.pom_info) as reads:
+            result = discover([{"path": str(self.root)}], [])
+        self.assertEqual([p["artifact"] for p in result["projects"]], ["wms-p999"])
+        visited = {Path(call.args[0]).resolve() for call in reads.call_args_list}
+        for skipped in (library / "fms-core" / "src", library / "plans", library / "plans" / "2026-10-01-方案"):
+            self.assertNotIn(skipped.resolve(), visited)
+
     def test_explicit_target_excludes_protected_war(self):
         pom(self.root, modules=["one", "two"])
         pom(self.root / "one", "one", "war")

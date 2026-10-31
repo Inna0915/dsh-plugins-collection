@@ -10,6 +10,10 @@ from pathlib import Path
 IGNORED = {".git", ".svn", "node_modules", "target", "build", "dist", ".idea", ".gradle", ".venv", "venv", ".task-temp", "work", "__pycache__"}
 PROJECT_ROOT = re.compile(r"^[a-z][a-z0-9]*-(?:p\d+|project(?:-[a-z0-9][a-z0-9.-]*)?)$")
 PROJECT_MODULE = re.compile(r"^(.+-(?:project|p\d+))-module$")
+# Each workspace gets its own directory budget so one large workspace cannot
+# starve the others; the shared deadline only bounds the whole scan.
+MAX_DIRECTORIES_PER_ROOT = 1800
+SCAN_SECONDS = 12
 
 
 def pom_info(directory: Path) -> dict | None:
@@ -99,7 +103,7 @@ def discover(workspaces: list[dict], recent: list[str], max_depth: int = 3) -> d
     found = {}
     warnings = []
     visited = set()
-    deadline = time.monotonic() + 12
+    deadline = time.monotonic() + SCAN_SECONDS
     roots = [(w.get("path", ""), w.get("title", "工作区")) for w in workspaces]
     roots += [(path, "最近项目") for path in recent]
     for raw, title in roots:
@@ -125,18 +129,19 @@ def discover(workspaces: list[dict], recent: list[str], max_depth: int = 3) -> d
             if (parent / ".git").exists():
                 break
         pending = [(candidate, 0)]
+        budget = MAX_DIRECTORIES_PER_ROOT
         while pending:
             directory, depth = pending.pop(0)
             canonical = key(directory)
             if canonical in visited:
                 continue
-            if len(visited) >= 1800 or time.monotonic() > deadline:
-                warnings.append("工作区较大，本次识别已达上限；可输入具体项目目录继续识别。")
-                pending.clear()
+            if budget <= 0 or time.monotonic() > deadline:
+                warnings.append(f"工作区「{title}」较大，本次识别已达上限；可输入具体项目目录继续识别。")
                 break
+            budget -= 1
             visited.add(canonical)
-            info = pom_info(directory)
-            if info:
+            pom = pom_info(directory)
+            if pom:
                 try:
                     info = project_info(directory)
                     info["workspace"] = title
@@ -145,11 +150,18 @@ def discover(workspaces: list[dict], recent: list[str], max_depth: int = 3) -> d
                         continue
                 except (OSError, ValueError):
                     pass
+                # A business project root is always a pom aggregator. Below a jar/war
+                # module there are only sources and build output.
+                if pom["packaging"] != "pom":
+                    continue
             if depth >= max_depth:
                 continue
             try:
+                # Inside a Maven aggregator only directories with their own POM can be
+                # a project; plain folders (sources, docs, plans) are not walked.
                 pending.extend((p, depth + 1) for p in sorted(directory.iterdir())
                                if p.name not in IGNORED and not p.name.startswith(".")
+                               and (not pom or (p / "pom.xml").is_file())
                                and p.is_dir() and not p.is_symlink() and not getattr(p, "is_junction", lambda: False)())
             except OSError:
                 warnings.append(f"目录无法读取：{directory}")

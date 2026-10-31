@@ -4,6 +4,9 @@ from pathlib import Path
 
 from discovery import discover, key
 
+# Bump when discovery rules change so results from older rules are rescanned.
+SCHEMA = 2
+
 
 def sources(workspaces, recent):
     roots = sorted((key(w['path']), w.get('title', '工作区')) for w in workspaces if w.get('path'))
@@ -27,13 +30,13 @@ def cached_discover(path, workspaces, recent, force=False):
         try:
             saved = json.loads(path.read_text(encoding='utf-8'))
             result = saved['result']
-            if saved['schema'] == 1 and saved['sources'] == source_key and saved['signatures'] == signatures(result['projects']):
+            if saved['schema'] == SCHEMA and saved['sources'] == source_key and saved['signatures'] == signatures(result['projects']):
                 return result, True
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             pass
     result = discover(workspaces, recent)
     try:
-        saved = {'schema': 1, 'sources': source_key, 'signatures': signatures(result['projects']), 'result': result}
+        saved = {'schema': SCHEMA, 'sources': source_key, 'signatures': signatures(result['projects']), 'result': result}
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix('.tmp')
         try:
