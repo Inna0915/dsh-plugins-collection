@@ -1,0 +1,6 @@
+- insert:
+    - id: meal-panel
+      name: '@local/dsh-meal-panel'
+      config:
+        baseUrl: 'http://172.18.10.59:8081/app'
+        username: '王鹏宏'
