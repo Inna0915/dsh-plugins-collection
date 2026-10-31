@@ -1,0 +1,30 @@
+[
+  {
+    "passed": true,
+    "name": "unicode_defaults_and_success_cleanup"
+  },
+  {
+    "passed": true,
+    "name": "resume_model_effort_override_and_permission_mismatch_rejection"
+  },
+  {
+    "passed": true,
+    "name": "failure_exit_and_cleanup"
+  },
+  {
+    "passed": true,
+    "name": "reject_exit_zero_without_completed"
+  },
+  {
+    "passed": true,
+    "name": "timeout_tree_and_overlay_cleanup"
+  },
+  {
+    "passed": true,
+    "name": "same_session_mutex_and_forced_parent_exit_cleanup"
+  },
+  {
+    "passed": true,
+    "name": "invalid_model_fails_before_execution"
+  }
+]

@@ -1,0 +1,127 @@
+{
+  "verifiedAt": "2026-10-24T23:33:31.9238705+08:00",
+  "runs": [
+    {
+      "engine": "codex",
+      "task": "fast-new",
+      "runId": "codex-20261024-231656-711-9de36a",
+      "sessionId": "01a16e7c-8c4f-7950-8581-36e15d80f893",
+      "requestedModel": "gpt-6.1-sol",
+      "requestedEffort": "max",
+      "requestedMode": "yolo",
+      "requestedServiceTier": "fast",
+      "appliedSettings": {
+        "timestamp": "2026-10-24T15:19:19.42Z",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "serviceTier": "priority",
+        "permissionProfile": {
+          "type": "disabled"
+        },
+        "approvalPolicy": "never",
+        "source": "C:\\Users\\OMEN\\.codex\\sessions\\2026\\10\\24\\rollout-2026-10-24T23-17-00-01a16e7c-8c4f-7950-8581-36e15d80f893.jsonl",
+        "line": 20
+      },
+      "configuration": null,
+      "state": "finished",
+      "exitCode": 0,
+      "cleanupVerified": true,
+      "overlayRemoved": null,
+      "startedAt": "2026-10-24T23:16:57.4791464+08:00",
+      "finishedAt": "2026-10-24T23:17:16.5673841+08:00",
+      "final": "CODEX_TIER_READY"
+    },
+    {
+      "engine": "codex",
+      "task": "fast-resume",
+      "runId": "codex-20261024-231913-244-1ed968",
+      "sessionId": "01a16e7c-8c4f-7950-8581-36e15d80f893",
+      "requestedModel": "gpt-6.1-sol",
+      "requestedEffort": "max",
+      "requestedMode": "yolo",
+      "requestedServiceTier": "fast",
+      "appliedSettings": {
+        "timestamp": "2026-10-24T15:19:19.42Z",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "serviceTier": "priority",
+        "permissionProfile": {
+          "type": "disabled"
+        },
+        "approvalPolicy": "never",
+        "source": "C:\\Users\\OMEN\\.codex\\sessions\\2026\\10\\24\\rollout-2026-10-24T23-17-00-01a16e7c-8c4f-7950-8581-36e15d80f893.jsonl",
+        "line": 20
+      },
+      "configuration": null,
+      "state": "finished",
+      "exitCode": 0,
+      "cleanupVerified": true,
+      "overlayRemoved": null,
+      "startedAt": "2026-10-24T23:19:13.7146638+08:00",
+      "finishedAt": "2026-10-24T23:20:46.2516981+08:00",
+      "final": "暗号：FIR-86。\n\n已创建 probe.txt，内容为 CODEX_WRITE_READY；`Get-Content` 读取确认后删除，`Test-Path` 确认文件不存在。\n\n无保留改动、临时文件或后台进程；未构建、安装或创建子代理，无未完成项。\n\nCODEX_FAST_RESUME_READY"
+    },
+    {
+      "engine": "codex",
+      "task": "standard-baseline",
+      "runId": "codex-20261024-233548-041-d6d84d",
+      "sessionId": "01a16e8d-cdfb-7601-bb34-6be8cc1eef32",
+      "requestedModel": "gpt-6.1-sol",
+      "requestedEffort": "max",
+      "requestedMode": "yolo",
+      "requestedServiceTier": "default",
+      "appliedSettings": {
+        "timestamp": "2026-10-24T15:35:55.592Z",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "serviceTier": "default",
+        "permissionProfile": {
+          "type": "disabled"
+        },
+        "approvalPolicy": "never",
+        "source": "C:\\Users\\OMEN\\.codex\\sessions\\2026\\10\\24\\rollout-2026-10-24T23-35-51-01a16e8d-cdfb-7601-bb34-6be8cc1eef32.jsonl",
+        "line": 9
+      },
+      "serviceTierVerified": true,
+      "state": "finished",
+      "exitCode": 0,
+      "cleanupVerified": true,
+      "startedAt": "2026-10-24T23:35:48.546509+08:00",
+      "finishedAt": "2026-10-24T23:36:08.4022632+08:00",
+      "final": "STANDARD_BASELINE_READY"
+    },
+    {
+      "engine": "codex",
+      "task": "fast-override",
+      "runId": "codex-20261024-233609-468-cd024c",
+      "sessionId": "01a16e8d-cdfb-7601-bb34-6be8cc1eef32",
+      "requestedModel": "gpt-6.1-sol",
+      "requestedEffort": "max",
+      "requestedMode": "yolo",
+      "requestedServiceTier": "fast",
+      "appliedSettings": {
+        "timestamp": "2026-10-24T15:36:12.713Z",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "serviceTier": "priority",
+        "permissionProfile": {
+          "type": "disabled"
+        },
+        "approvalPolicy": "never",
+        "source": "C:\\Users\\OMEN\\.codex\\sessions\\2026\\10\\24\\rollout-2026-10-24T23-35-51-01a16e8d-cdfb-7601-bb34-6be8cc1eef32.jsonl",
+        "line": 20
+      },
+      "serviceTierVerified": true,
+      "state": "finished",
+      "exitCode": 0,
+      "cleanupVerified": true,
+      "startedAt": "2026-10-24T23:36:09.9745905+08:00",
+      "finishedAt": "2026-10-24T23:36:27.249114+08:00",
+      "final": "FAST_OVERRIDE_READY"
+    }
+  ],
+  "globalConfigChanged": false,
+  "processesRemaining": 0,
+  "temporaryWorkspaceRemoved": true,
+  "globalConfigHashesVerified": 3
+}

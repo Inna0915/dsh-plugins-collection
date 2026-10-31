@@ -1,0 +1,43 @@
+{
+  "verifiedAt": "2026-10-24T23:30:55.8166902+08:00",
+  "liveModelCalled": false,
+  "tests": [
+    {
+      "name": "new_session_unicode_and_success_child_cleanup",
+      "passed": true
+    },
+    {
+      "name": "resume_explicit_id_model_and_auto_permissions",
+      "passed": true
+    },
+    {
+      "name": "failure_exit_code_and_child_cleanup",
+      "passed": true
+    },
+    {
+      "name": "timeout_and_child_cleanup",
+      "passed": true
+    },
+    {
+      "name": "forced_dispatcher_stop_kills_job",
+      "passed": true
+    },
+    {
+      "name": "concurrent_resume_rejected",
+      "passed": true
+    },
+    {
+      "name": "dry_run_does_not_start_cli",
+      "passed": true
+    },
+    {
+      "name": "reject_partial_output_without_session_hint",
+      "passed": true
+    },
+    {
+      "name": "reject_external_session",
+      "passed": true
+    }
+  ],
+  "scratchRemoved": true
+}

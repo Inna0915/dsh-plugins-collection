@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-10-24T23:37:45.5442269+08:00",
+  "skillRoot": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker",
+  "files": [
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\Invoke-KimiTask.ps1",
+      "Hash": "507496D557B433547FE7B3EF9AA97D5BC31BE467530B3A4747EB25F60304A25D"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\KimiWorker.ps1",
+      "Hash": "CFF9D8DC7218D871DFE6A9A5F4ABD7093758C7CF5B8D44015EC0B8F6B3FDC1BC"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\Read-KimiAppliedSettings.ps1",
+      "Hash": "8F0BBD50D72C31C1D48F6D9684B6205B2EF5DEBF3A7CCB7B654352CAE9C59E52"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\WindowsJob.cs",
+      "Hash": "84E7FAB9D3D8FEC3A0545DBA519B492E4345D40BD29E5D578E2397A152FF0EF7"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\tests\\Fake-Kimi.ps1",
+      "Hash": "2B793F457C58EDAFFF4167F7DF6151568AB3544436110444FB556B35D90A5999"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\kimi-worker\\scripts\\tests\\Test-Dispatcher.ps1",
+      "Hash": "C573787102E3C46F259EB33FF4BD259729BA304F8B8AE93E8873CFF017CEA12A"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-10-24T23:37:45.5316963+08:00",
+  "skillRoot": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker",
+  "files": [
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\CodexWorker.ps1",
+      "Hash": "A8A07BF91AA90001833FC4596712F6BAB68FC784A14A86727C6C04234CDAF1A8"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\Invoke-CodexTask.ps1",
+      "Hash": "EDCC7E103D2B51E4F5388AC48A2FD6FAC7E2D10783F751F95FF367D0FED379FA"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\Read-CodexAppliedSettings.ps1",
+      "Hash": "7966B50D57C3CDA5D04FD04166D68F3906985508A7BC3D57AA63CCBFDAD2F8FD"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\WindowsJob.cs",
+      "Hash": "264E845D54D7CA03751780E59A96FC9ED183E6646783E8050C000214E0C9220B"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\tests\\Fake-Codex.ps1",
+      "Hash": "D052D3EFF85399C6ABD94AD8B556A88BDB6CB002AA92991C9A6E96861D574844"
+    },
+    {
+      "Path": "C:\\Users\\OMEN\\.claude\\skills\\codex-worker\\scripts\\tests\\Test-Dispatcher.ps1",
+      "Hash": "44FEEB1FB33402669AAE11D9ED6E7B4CD9474F34B3B80212124180C74B41F28C"
+    }
+  ]
+}

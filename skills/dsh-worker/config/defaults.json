@@ -1,0 +1,9 @@
+{
+  "provider": "magpie",
+  "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+  "effort": "max",
+  "mode": "danger-full-access",
+  "nodePath": "C:/Users/OMEN/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+  "dshPackage": "C:/Program Files/nodejs/node_modules/@deepseek-ai/dsh",
+  "sourceConfig": "C:/Users/OMEN/.dsh/profiles/desktop/cordis.patch.yml"
+}

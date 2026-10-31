@@ -1,0 +1,30 @@
+[
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\DshLauncher.mjs",
+    "Hash": "DEDEA30089A52EAE991FC0847AD4BB196C13376E401155B4010B738172F7E43F"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\DshWorker.ps1",
+    "Hash": "627D9E4F88D57FB60D8C203102CB2008383750182938B2D316DA11DE5A40207B"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\Invoke-DshTask.ps1",
+    "Hash": "4446ADBF26FD0050C7259782881E2D40C9090FD6C6871A6DE566BCD8224E5FE9"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\WindowsJob.cs",
+    "Hash": "ECBB72B30C8699BE02BE906B069E008AE038ACE8677B14E013291EF1699B5750"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\tests\\Fake-Dsh.mjs",
+    "Hash": "A55845A075FD2B98E983A3E7E8DFDBA267E66E72D6AC5988FC75D78C44246D78"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\scripts\\tests\\Test-Dispatcher.ps1",
+    "Hash": "BB684D6F10710A9D5B7B9BAB804AD792A84FD880B2FBF8449A5CCA5F6D3C123B"
+  },
+  {
+    "Path": "C:\\Users\\OMEN\\.claude\\skills\\dsh-worker\\config\\defaults.json",
+    "Hash": "89DAD56473DA1D60A81F6510587BA54D62A1EA636A48F811992E44128D73448F"
+  }
+]

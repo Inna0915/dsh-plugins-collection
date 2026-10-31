@@ -1,0 +1,199 @@
+{
+  "verifiedAt": "2026-10-24T14:39:03.7890463+08:00",
+  "unchangedOriginalFiles": 15,
+  "ownedProcessesRemaining": 0,
+  "runs": [
+    {
+      "task": "final-config",
+      "runId": "dsh-20261024-143625-080-acde1e",
+      "sessionId": "session-f821e907-b661-4853-ace0-d59f1aa02501",
+      "state": "finished",
+      "exitCode": 0,
+      "configuration": {
+        "type": "delegate_config",
+        "dshVersion": "0.2.1-rc.2",
+        "nodeVersion": "v24.22.1",
+        "provider": "magpie",
+        "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+        "effort": "max",
+        "mode": "danger-full-access",
+        "approval": "never",
+        "sourceConfig": "C:/Users/OMEN/.dsh/profiles/desktop/cordis.patch.yml"
+      },
+      "startedAt": "2026-10-24T14:36:25.6394774+08:00",
+      "finishedAt": "2026-10-24T14:36:44.0521+08:00",
+      "seconds": 18.4,
+      "turnCompleted": true,
+      "cleanupVerified": true,
+      "overlayRemoved": true,
+      "stderrBytes": 0,
+      "toolCalls": [],
+      "final": "DSH_FINAL_CONFIG_READY"
+    },
+    {
+      "task": "final-resume",
+      "runId": "dsh-20261024-143718-222-7a52e5",
+      "sessionId": "session-f821e907-b661-4853-ace0-d59f1aa02501",
+      "state": "finished",
+      "exitCode": 0,
+      "configuration": {
+        "type": "delegate_config",
+        "dshVersion": "0.2.1-rc.2",
+        "nodeVersion": "v24.22.1",
+        "provider": "magpie",
+        "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+        "effort": "max",
+        "mode": "danger-full-access",
+        "approval": "never",
+        "sourceConfig": "C:/Users/OMEN/.dsh/profiles/desktop/cordis.patch.yml"
+      },
+      "startedAt": "2026-10-24T14:37:19.0749114+08:00",
+      "finishedAt": "2026-10-24T14:37:42.1412743+08:00",
+      "seconds": 23.1,
+      "turnCompleted": true,
+      "cleanupVerified": true,
+      "overlayRemoved": true,
+      "stderrBytes": 0,
+      "toolCalls": [],
+      "final": "CEDAR-52\n\nDSH_FINAL_RESUME_READY"
+    },
+    {
+      "task": "smoke",
+      "runId": "dsh-20261024-143033-231-29cff9",
+      "sessionId": "session-3df181bf-5f77-42ad-bd7b-8c2eaf624ecc",
+      "state": "finished",
+      "exitCode": 0,
+      "configuration": {
+        "type": "delegate_config",
+        "dshVersion": "0.2.1-rc.2",
+        "nodeVersion": "v24.22.1",
+        "provider": "magpie",
+        "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+        "effort": "max",
+        "mode": "danger-full-access",
+        "approval": "never",
+        "sourceConfig": "C:/Users/OMEN/.dsh/profiles/desktop/cordis.patch.yml"
+      },
+      "startedAt": "2026-10-24T14:30:34.004059+08:00",
+      "finishedAt": "2026-10-24T14:32:03.6374539+08:00",
+      "seconds": 89.6,
+      "turnCompleted": true,
+      "cleanupVerified": true,
+      "overlayRemoved": true,
+      "stderrBytes": 0,
+      "toolCalls": [
+        "working_directory",
+        "glob",
+        "glob",
+        "pwsh",
+        "write",
+        "read",
+        "pwsh"
+      ],
+      "final": "本次操作成功。\n\n- **AGENTS.md**：工作目录及其适用的上层路径中均未发现 AGENTS.md。\n- **文件验证**：创建 `probe.txt` 并写入 `DSH_WRITE_READY`，读取确认内容一致，随后删除；删除后确认文件不存在。\n- **其他**：未构建、未安装、未创建子代理、未访问其他项目；无残留临时文件或后台进程。\n- **未完成项**：无。\n\nDSH_READY AMBER-64"
+    },
+    {
+      "task": "smoke-resume",
+      "runId": "dsh-20261024-143327-347-36c75c",
+      "sessionId": "session-3df181bf-5f77-42ad-bd7b-8c2eaf624ecc",
+      "state": "finished",
+      "exitCode": 0,
+      "configuration": {
+        "type": "delegate_config",
+        "dshVersion": "0.2.1-rc.2",
+        "nodeVersion": "v24.22.1",
+        "provider": "magpie",
+        "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+        "effort": "max",
+        "mode": "danger-full-access",
+        "approval": "never",
+        "sourceConfig": "C:/Users/OMEN/.dsh/profiles/desktop/cordis.patch.yml"
+      },
+      "startedAt": "2026-10-24T14:33:28.0035032+08:00",
+      "finishedAt": "2026-10-24T14:33:56.247766+08:00",
+      "seconds": 28.2,
+      "turnCompleted": true,
+      "cleanupVerified": true,
+      "overlayRemoved": true,
+      "stderrBytes": 0,
+      "toolCalls": [],
+      "final": "测试暗号：**AMBER-64**。\n\nDSH_RESUME_READY"
+    }
+  ],
+  "sessionEvidence": [
+    {
+      "id": "session-f821e907-b661-4853-ace0-d59f1aa02501",
+      "file": "C:\\Users\\OMEN\\.dsh\\sessions\\--C-Users-OMEN-Documents-~52A9~624B-.task-tmp-dsh-worker-20261024-live--\\session-f821e907-b661-4853-ace0-d59f1aa02501\\session.v4.jsonl.zstd",
+      "permissionEvents": [
+        {
+          "type": "permission/preset",
+          "data": {
+            "preset": "danger-full-access"
+          }
+        },
+        {
+          "type": "sandbox/mode",
+          "data": {
+            "mode": "danger-full-access"
+          }
+        },
+        {
+          "type": "approval/policy",
+          "data": {
+            "policy": "never"
+          }
+        }
+      ],
+      "requestSelections": [
+        {
+          "provider": "magpie",
+          "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+          "effort": "max"
+        },
+        {
+          "provider": "magpie",
+          "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+          "effort": "max"
+        }
+      ]
+    },
+    {
+      "id": "session-3df181bf-5f77-42ad-bd7b-8c2eaf624ecc",
+      "file": "C:\\Users\\OMEN\\.dsh\\sessions\\--C-Users-OMEN-Documents-~52A9~624B-.task-tmp-dsh-worker-20261024-live--\\session-3df181bf-5f77-42ad-bd7b-8c2eaf624ecc\\session.v4.jsonl.zstd",
+      "permissionEvents": [
+        {
+          "type": "permission/preset",
+          "data": {
+            "preset": "danger-full-access"
+          }
+        },
+        {
+          "type": "sandbox/mode",
+          "data": {
+            "mode": "danger-full-access"
+          }
+        },
+        {
+          "type": "approval/policy",
+          "data": {
+            "policy": "never"
+          }
+        }
+      ],
+      "requestSelections": [
+        {
+          "provider": "magpie",
+          "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+          "effort": "max"
+        },
+        {
+          "provider": "magpie",
+          "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+          "effort": "max"
+        }
+      ]
+    }
+  ],
+  "temporaryWorkspaceRemoved": true,
+  "cleanupCheckedAt": "2026-10-24T14:40:39.0884463+08:00"
+}
