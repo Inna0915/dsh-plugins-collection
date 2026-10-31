@@ -1,0 +1,15 @@
+{
+  "name": "dsh-confluence-flow",
+  "version": "0.2.0",
+  "description": "Confluence 文档：Wiki 读写、正文与目录布局、DSH 原生工具和跨 agent Skills",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20.19" },
+  "bin": { "confluence-flow": "./dist/cli.js" },
+  "exports": { ".": "./dist/plugin.js", "./client": "./dist/client.js", "./cordis.patch.yml": "./cordis.patch.yml", "./package.json": "./package.json" },
+  "files": ["dist/cli.js", "dist/plugin.js", "dist/client.js", "dist/standalone.js", "dist/index.html", "skills", "scripts/credential-store.ps1", "cordis.patch.yml", "README.md", "docs", "LICENSE"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "platform": "web" } },
+  "scripts": { "build": "node scripts/build.mjs", "typecheck": "tsc --noEmit", "test": "node --test --test-timeout=30000 tests/integration.test.mjs tests/reading.test.mjs tests/service.test.mjs tests/storage.test.mjs" },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.2", "htmlparser2": "10.1.0", "domhandler": "6.0.1", "entities": "8.1.0", "zod": "4.6.7" },
+  "devDependencies": { "@types/node": "22.0.0", "@types/react": "19.0.0", "@types/react-dom": "19.0.0", "esbuild": "0.25.0", "prettier": "3.9.10", "react": "19.0.0", "react-dom": "19.0.0", "typescript": "5.9.3" }
+}
