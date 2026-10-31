@@ -235,8 +235,8 @@ export class JiraService {
           profile,
           args,
           operation,
-          async () => ({
-            ...(await client.createPrepared(plan, true)),
+          async (beforeWrite) => ({
+            ...(await client.createPrepared(plan, true, beforeWrite)),
             ...(withImages
               ? {
                   imageManifest: images,
@@ -290,7 +290,7 @@ export class JiraService {
         return { issue, transitions };
       }
       case 'transition':
-        return this.mutate(profile, args, operation, () =>
+        return this.mutate(profile, args, operation, (beforeWrite) =>
           client.transition(
             key(),
             text('transitionId'),
@@ -298,15 +298,16 @@ export class JiraService {
             text('comment'),
             text('expectedUpdated'),
             args.apply === true,
+            beforeWrite,
           ),
         );
       case 'update':
-        return this.mutate(profile, args, operation, () =>
-          client.update(key(), args.fields || {}, text('expectedUpdated'), args.apply === true),
+        return this.mutate(profile, args, operation, (beforeWrite) =>
+          client.update(key(), args.fields || {}, text('expectedUpdated'), args.apply === true, beforeWrite),
         );
       case 'comment':
-        return this.mutate(profile, args, operation, () =>
-          client.comment(key(), text('body'), args.apply === true),
+        return this.mutate(profile, args, operation, (beforeWrite) =>
+          client.comment(key(), text('body'), args.apply === true, beforeWrite),
         );
       case 'history': {
         const fields = changeFields(args.changeFields);
@@ -338,7 +339,7 @@ export class JiraService {
     profile: string,
     args: Args,
     operation: string,
-    task: () => Promise<unknown>,
+    task: (beforeWrite: () => Promise<void>) => Promise<unknown>,
     prepare?: () => Promise<void>,
   ): Promise<unknown> {
     const operationId = validId(args.requestId || randomUUID());
@@ -376,39 +377,31 @@ export class JiraService {
         throw new Error('此操作之前的结果尚未确认，请先检查 Jira，不能自动重试');
       }
       await prepare?.();
-      await jsonWrite(file, {
-        id: operationId,
-        profile,
-        key: args.key,
-        operation,
-        fingerprint,
-        state: 'pending',
-        at: new Date().toISOString(),
-      });
-      try {
-        const result = await task();
-        await jsonWrite(file, {
+      const record = (state: string, extra: Record<string, unknown> = {}) =>
+        jsonWrite(file, {
           id: operationId,
           profile,
           key: args.key,
           operation,
           fingerprint,
-          state: 'confirmed',
+          state,
           at: new Date().toISOString(),
-          result,
+          ...extra,
         });
+      // 只读、权限、版本和必填校验都在客户端发写请求之前完成；这些失败没有发出任何请求，
+      // 不留回执，允许用同一标识修正后重试。pending 只在写请求即将发出时落盘。
+      let sending = false;
+      const beforeWrite = async () => {
+        if (sending) return;
+        await record('pending');
+        sending = true;
+      };
+      try {
+        const result = await task(beforeWrite);
+        await record('confirmed', { result });
         return result;
       } catch (error) {
-        await jsonWrite(file, {
-          id: operationId,
-          profile,
-          key: args.key,
-          operation,
-          fingerprint,
-          state: 'unconfirmed',
-          at: new Date().toISOString(),
-          error: message(error),
-        });
+        if (sending) await record('unconfirmed', { error: message(error) });
         throw error;
       }
     });

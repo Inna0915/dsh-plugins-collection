@@ -191,3 +191,85 @@ test('history 批量读取隔离单条失败；issue 精简输出；精简列表
     await rm(temp, { recursive: true, force: true });
   }
 });
+test('写操作回执只在请求发出时记录：本地拒绝不留回执，发出后失败为未确认', async () => {
+  await mkdir(path.resolve('.task-temp'), { recursive: true });
+  const temp = await mkdtemp(path.resolve('.task-temp', 'mutate-receipt-test-'));
+  const old = {
+    home: process.env.JIRA_FLOW_HOME,
+    auth: process.env.JIRA_FLOW_AUTH_TEST,
+    readonlyAuth: process.env.JIRA_FLOW_AUTH_READONLY,
+    fetch: globalThis.fetch,
+  };
+  process.env.JIRA_FLOW_HOME = temp;
+  process.env.JIRA_FLOW_AUTH_TEST = JSON.stringify({ kind: 'bearer', secret: 'fixture-token' });
+  process.env.JIRA_FLOW_AUTH_READONLY = process.env.JIRA_FLOW_AUTH_TEST;
+  const json = (value, status = 200) =>
+    new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json' } });
+  const issue = {
+    id: '1',
+    key: 'PROJ-1',
+    fields: {
+      project: { key: 'PROJ' },
+      summary: '示例任务',
+      issuetype: { name: 'Bug' },
+      status: { id: '3', name: 'Open', statusCategory: { key: 'new' } },
+      updated: 'v2',
+      attachment: [],
+    },
+  };
+  let writes = 0;
+  let failWrite = false;
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method === 'PUT') {
+      writes++;
+      return failWrite ? json({ errorMessages: ['暂时不可用'] }, 503) : new Response(null, { status: 204 });
+    }
+    return json(issue);
+  };
+  const receipt = (id) => path.join(temp, 'operations', `${id}.json`);
+  const service = new JiraService();
+  const update = (requestId, expectedUpdated, profile = 'test') =>
+    service.execute('update', {
+      profile,
+      key: 'PROJ-1',
+      fields: { summary: '新标题' },
+      expectedUpdated,
+      apply: true,
+      requestId,
+    });
+  try {
+    const base = { host: 'https://jira.example.test', projectKeys: ['PROJ'], credentialStore: 'environment' };
+    await jsonWrite(path.join(temp, 'profiles/test.json'), normalizeProfile({ ...base, id: 'test', allowWrites: true }));
+    await jsonWrite(path.join(temp, 'profiles/readonly.json'), normalizeProfile({ ...base, id: 'readonly' }));
+
+    await assert.rejects(update('r-readonly', 'v2', 'readonly'), /只读模式/);
+    await assert.rejects(readFile(receipt('r-readonly')), { code: 'ENOENT' });
+
+    await assert.rejects(update('r-1', 'v1'), /任务已变化/);
+    await assert.rejects(readFile(receipt('r-1')), { code: 'ENOENT' });
+    assert.equal(writes, 0);
+
+    await update('r-1', 'v2');
+    assert.equal(writes, 1);
+    assert.equal(JSON.parse(await readFile(receipt('r-1'), 'utf8')).state, 'confirmed');
+    await update('r-1', 'v2');
+    assert.equal(writes, 1, '已确认的操作不重复发送');
+
+    failWrite = true;
+    await assert.rejects(update('r-2', 'v2'), /503/);
+    assert.equal(JSON.parse(await readFile(receipt('r-2'), 'utf8')).state, 'unconfirmed');
+    await assert.rejects(update('r-2', 'v2'), /尚未确认/);
+    assert.equal(writes, 2, '结果不确定的写操作不能自动重试');
+  } finally {
+    service.dispose();
+    globalThis.fetch = old.fetch;
+    if (old.home === undefined) delete process.env.JIRA_FLOW_HOME;
+    else process.env.JIRA_FLOW_HOME = old.home;
+    if (old.auth === undefined) delete process.env.JIRA_FLOW_AUTH_TEST;
+    else process.env.JIRA_FLOW_AUTH_TEST = old.auth;
+    if (old.readonlyAuth === undefined) delete process.env.JIRA_FLOW_AUTH_READONLY;
+    else process.env.JIRA_FLOW_AUTH_READONLY = old.readonlyAuth;
+    assert.ok(temp.startsWith(path.resolve('.task-temp') + path.sep));
+    await rm(temp, { recursive: true, force: true });
+  }
+});

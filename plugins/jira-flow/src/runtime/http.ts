@@ -29,6 +29,14 @@ export function createHttpHandler(service: JiraService) {
       send(res, 403, { error: '任务看板仅允许本机访问' });
       return;
     }
+    // DNS 重绑定时 Origin 与 Host 一致，只能靠 Host 白名单拦截。
+    try {
+      if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL('http://' + req.headers.host).hostname))
+        throw new Error();
+    } catch {
+      send(res, 403, { error: '无效的本机 Host' });
+      return;
+    }
     const origin = req.headers.origin;
     if (origin) {
       try {

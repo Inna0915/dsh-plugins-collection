@@ -417,6 +417,7 @@ export class JiraClient {
     comment: string,
     expectedUpdated: string,
     apply: boolean,
+    beforeWrite?: () => Promise<void>,
   ): Promise<Issue> {
     this.writable(apply);
     const issue = await this.get(key, false);
@@ -440,10 +441,17 @@ export class JiraClient {
     const body: Json = { transition: { id: transitionId } };
     if (Object.keys(fields).length) body.fields = fields;
     if (comment.trim()) body.update = { comment: [{ add: { body: comment } }] };
+    await beforeWrite?.();
     await this.request(`issue/${this.scopedKey(key)}/transitions`, 'POST', body);
     return this.get(key, false);
   }
-  async update(key: string, fields: Json, expectedUpdated: string, apply: boolean): Promise<Issue> {
+  async update(
+    key: string,
+    fields: Json,
+    expectedUpdated: string,
+    apply: boolean,
+    beforeWrite?: () => Promise<void>,
+  ): Promise<Issue> {
     this.writable(apply);
     if (!fields || typeof fields !== 'object' || Array.isArray(fields) || !Object.keys(fields).length)
       throw new Error('没有要更新的字段');
@@ -451,21 +459,33 @@ export class JiraClient {
       throw new Error('状态请使用流转工具，项目迁移不在此操作范围');
     const current = await this.get(key, false);
     if (expectedUpdated && expectedUpdated !== current.updated) throw new Error('任务已变化，请刷新后更新');
+    await beforeWrite?.();
     await this.request(`issue/${this.scopedKey(key)}`, 'PUT', { fields });
     return this.get(key, false);
   }
-  async comment(key: string, body: string, apply: boolean): Promise<{ id: string }> {
+  async comment(
+    key: string,
+    body: string,
+    apply: boolean,
+    beforeWrite?: () => Promise<void>,
+  ): Promise<{ id: string }> {
     this.writable(apply);
     if (!body.trim()) throw new Error('评论不能为空');
+    await beforeWrite?.();
     const result = await this.request(`issue/${this.scopedKey(key)}/comment`, 'POST', { body });
     return { id: String(result.id) };
   }
-  async createPrepared(plan: Awaited<ReturnType<typeof prepareCreate>>, apply: boolean) {
+  async createPrepared(
+    plan: Awaited<ReturnType<typeof prepareCreate>>,
+    apply: boolean,
+    beforeWrite?: () => Promise<void>,
+  ) {
     this.writable(apply);
     if (!plan.ready)
       throw new Error(
         `缺少必填字段：${plan.missingFields.map((field) => `${field.name} (${field.key})`).join('、')}`,
       );
+    await beforeWrite?.();
     const result = await this.request('issue', 'POST', { fields: plan.fields });
     const key = this.scopedKey(result.key);
     // Preserve the successful create receipt. A follow-up detail failure must not
