@@ -35,7 +35,10 @@ export async function startMcp() {
         ]),
         profile: z.string().optional(),
         key: z.string().optional(),
-        keys: z.array(z.string()).optional(),
+        keys: z
+          .array(z.string())
+          .optional()
+          .describe('export 的多个任务；history 传多个编号时批量读取，返回 items'),
         jql: z.string().optional(),
         project: z.string().optional(),
         issueType: z.string().optional(),
@@ -60,6 +63,18 @@ export async function startMcp() {
         limit: z.number().optional(),
         outputDir: z.string().optional(),
         comments: z.boolean().optional(),
+        includeDescription: z
+          .boolean()
+          .optional()
+          .describe('search 是否返回正文，默认 true；只需列表时传 false 可大幅缩小输出'),
+        detail: z
+          .enum(['compact', 'full'])
+          .optional()
+          .describe('issue 输出，默认 compact：省略 HTML 正文与 bodyMarkdown，保留 markdown'),
+        changeFields: z
+          .array(z.string())
+          .optional()
+          .describe('history 只保留这些变更字段（如 status、assignee、resolution），并精简作者信息'),
         attachments: z.enum(['images', 'all', 'none']).optional(),
         zip: z.boolean().optional(),
         transitionId: z.string().optional(),
@@ -75,7 +90,8 @@ export async function startMcp() {
     },
     async ({ operation, ...args }, extra) => {
       try {
-        const value = await service.execute(operation, args, extra.signal);
+        const params = operation === 'issue' ? { ...args, detail: args.detail ?? 'compact' } : args;
+        const value = await service.execute(operation, params, extra.signal);
         return { content: [{ type: 'text' as const, text: JSON.stringify(value) }] };
       } catch (error) {
         return { isError: true, content: [{ type: 'text' as const, text: message(error) }] };

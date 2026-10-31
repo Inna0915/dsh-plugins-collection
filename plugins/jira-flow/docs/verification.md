@@ -110,3 +110,24 @@
 ## 范围
 
 当前适配 Jira Server/DC REST v2。Cloud v3/完整 ADF、远端 DSH Host、跨域附件 CDN 鉴权和自动批量并发 agent 未纳入本版支持。周报提供事实清单，不自动发布。
+
+## 2026-10-31 agent 读取效率与安装范围
+
+改动：`skills install` 默认安装到 .agents/.codex/.claude 三处；`search --no-description`（includeDescription）；`issue` 在 CLI/MCP/DSH 工具默认 compact，看板 HTTP 接口不变；`history` 支持多个编号与 `--change-fields`（changeFields），单条失败写入 items[].error；MCP/DSH 工具 schema 同步新参数。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 51/51 通过，新增合成用例覆盖列表不取正文、精简历史、批量历史失败隔离与去重、issue compact/full、精简列表不覆盖看板缓存、MCP 新参数通过 schema。
+
+真实 Jira 只读对照（数字已脱敏，不含任务内容）：
+- 41 个任务状态历史：逐条 CLI 调用约 33 s；一次批量调用约 5.0 s，全部成功。单条原始历史约 19.5 KB，批量过滤后平均约 3.3 KB/条。
+- 119 个候选任务列表：494 KB → 不取正文 187 KB。
+- 单任务详情：19.6 KB → compact 7.1 KB；`--detail full` 与改动前一致。
+- 单次 CLI 固定开销约 2.5 s（Node 启动与模块加载）+ 约 2 s（PowerShell DPAPI 解密）；常驻 MCP 只解密一次。
+- 未写入 Jira。临时测试目录由各用例在 finally 中删除。
+
+## 2026-10-31 本地数据每日清理与任务包清单
+
+改动：service.execute 入口（CLI、MCP、DSH、看板共用）先调用 dailyMaintenance：同进程当天只检查一次；跨进程用 maintenance/<本地日期> 独占创建抢占；清理 operations、uploads 中超过 30 天的文件及旧标记，异常吞掉不影响请求。新增只读 `exports [--older-than 30]`，列出超龄、无索引和目录缺失的任务包及大小，不删除。core.test.mjs 改为整文件使用隔离数据目录：原有两个 transition-context 用例未设置数据目录，加入清理后会触及用户目录。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 53/53 通过，新增用例覆盖清理范围、同日跳过、其他进程已执行时跳过、任务包清单；全量测试后用户目录未产生当天标记。
+
+用户目录实测：当天首次清理约 14 ms（无超龄文件，删除 0 个）；同进程再次调用约 0.1 ms；其他进程约 5 ms。移除开发期遗留的 previews、verification 目录（共约 1.1 MB）。

@@ -61,6 +61,20 @@ export async function apply(ctx: any): Promise<void> {
     limit: { type: 'number' },
     outputDir: { type: 'string' },
     comments: { type: 'boolean' },
+    includeDescription: {
+      type: 'boolean',
+      description: 'search 是否返回正文，默认 true；只需列表时传 false',
+    },
+    detail: {
+      type: 'string',
+      enum: ['compact', 'full'],
+      description: 'issue 输出，默认 compact：省略 HTML 正文与 bodyMarkdown，保留 markdown',
+    },
+    changeFields: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'history 只保留这些变更字段，并精简作者信息；keys 传多个编号时批量读取',
+    },
     attachments: { type: 'string', enum: ['images', 'all', 'none'] },
     zip: { type: 'boolean' },
     transitionId: { type: 'string' },
@@ -85,7 +99,8 @@ export async function apply(ctx: any): Promise<void> {
     async execute(args: any, exec: any) {
       if (!properties.operation.enum.includes(args.operation)) throw new Error('不支持的操作');
       const { operation, ...params } = args;
-      return service.execute(operation, params, exec.signal);
+      const detail = operation === 'issue' ? { detail: params.detail ?? 'compact' } : {};
+      return service.execute(operation, { ...params, ...detail }, exec.signal);
     },
   });
   for (const skill of await bundledSkills()) ctx.skills.register(skill);

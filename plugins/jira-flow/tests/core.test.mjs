@@ -1,7 +1,13 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+
+// Service calls run daily maintenance on the data home; keep this file off the user's directory.
+await mkdir(path.resolve('.task-temp'), { recursive: true });
+const isolatedHome = await mkdtemp(path.resolve('.task-temp', 'core-test-'));
+process.env.JIRA_FLOW_HOME = isolatedHome;
+after(() => rm(isolatedHome, { recursive: true, force: true }));
 import {
   JiraClient,
   JiraService,
@@ -16,6 +22,7 @@ import {
   milestones,
   inside,
   resolveAttachment,
+  compactHistories,
 } from '../dist/test-exports.js';
 
 const profile = normalizeProfile({
@@ -103,6 +110,48 @@ test('按服务器实际分页长度前进，未完成分页不返回成功', as
   assert.equal(result.issues.length, 3);
   const broken = new JiraClient(profile, auth, async () => json({ issues: [], total: 10, maxResults: 100 }));
   await assert.rejects(() => broken.search(), /分页未完成/);
+});
+test('列表查询可不取正文，默认仍返回渲染正文', async () => {
+  const bodies = [];
+  const client = new JiraClient(profile, auth, async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    return json({ issues: [raw()], total: 1, maxResults: 100 });
+  });
+  const full = await client.search('');
+  const slim = await client.search('', 500, { description: false });
+  assert.ok(bodies[0].fields.includes('description'));
+  assert.deepEqual(bodies[0].expand, ['renderedFields']);
+  assert.ok(!bodies[1].fields.includes('description'));
+  assert.equal(bodies[1].expand, undefined);
+  assert.ok(full.issues[0].description.includes('<h2>'));
+  assert.equal(slim.issues[0].summary, '示例任务');
+});
+test('精简历史只保留指定字段与作者标识，空变更整条省略', () => {
+  const histories = [
+    {
+      id: '1',
+      created: '2026-10-20T10:00:00.000+0800',
+      author: { name: 'dev', displayName: 'Dev', avatarUrls: { '16x16': 'https://jira.example.test/a.png' } },
+      items: [
+        { field: 'status', fieldtype: 'jira', from: '1', fromString: 'Open', to: '2', toString: 'In Review' },
+        { field: 'description', fieldtype: 'jira', from: null, fromString: '旧', to: null, toString: '新' },
+      ],
+    },
+    {
+      id: '2',
+      created: '2026-10-21T10:00:00.000+0800',
+      author: { name: 'qa' },
+      items: [{ field: 'description', from: null, fromString: 'a', to: null, toString: 'b' }],
+    },
+  ];
+  const compact = compactHistories(histories, ['Status', 'assignee']);
+  assert.equal(compact.length, 1);
+  assert.deepEqual(compact[0], {
+    id: '1',
+    created: '2026-10-20T10:00:00.000+0800',
+    author: { name: 'dev', displayName: 'Dev' },
+    items: [{ field: 'status', from: '1', fromString: 'Open', to: '2', toString: 'In Review' }],
+  });
 });
 test('附件鉴权不跟随跨域重定向，也不请求外站', async () => {
   let calls = 0;

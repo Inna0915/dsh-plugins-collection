@@ -43,6 +43,16 @@ test('MCP 标准客户端可发现并调用工具，服务退出清理子进程'
     });
     assert.equal(attach.isError, true);
     assert.match(attach.content[0].text, /尚未配置/, 'attachment parameters must reach the service');
+    const history = await client.callTool({
+      name: 'jira_flow',
+      arguments: { operation: 'history', keys: ['DEMO-1', 'DEMO-2'], changeFields: ['status'] },
+    });
+    assert.match(history.content[0].text, /尚未配置/, 'batch history parameters must reach the service');
+    const slim = await client.callTool({
+      name: 'jira_flow',
+      arguments: { operation: 'search', includeDescription: false, detail: 'full' },
+    });
+    assert.match(slim.content[0].text, /尚未配置/, 'slim read parameters must pass schema validation');
     const invalid = await client.callTool({
       name: 'jira_flow',
       arguments: { operation: 'issue', key: '../escape' },

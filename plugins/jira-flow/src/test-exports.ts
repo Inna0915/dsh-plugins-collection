@@ -17,3 +17,4 @@ export * from './client/composer.js';
 export * from './runtime/draft.js';
 export * from './core/creation.js';
 export * from './runtime/attachments.js';
+export * from './runtime/maintenance.js';

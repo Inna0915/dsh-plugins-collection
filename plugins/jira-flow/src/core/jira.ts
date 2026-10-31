@@ -124,6 +124,18 @@ export function normalizeIssue(raw: Json, profile: Profile): Issue {
     warnings: [],
   };
 }
+// Agent-facing history: keep only the requested change fields and the author's identity.
+export function compactHistories(histories: History[], fields: string[]): History[] {
+  const wanted = new Set(fields.map((field) => field.toLowerCase()));
+  return histories.flatMap((history) => {
+    const items = history.items
+      .filter((item) => wanted.has(item.field.toLowerCase()))
+      .map(({ field, from, fromString, to, toString }) => ({ field, from, fromString, to, toString }));
+    if (!items.length) return [];
+    const author = history.author && { name: history.author.name, displayName: history.author.displayName };
+    return [{ id: history.id, created: history.created, author, items }];
+  });
+}
 export function scopedJql(profile: Profile, query?: string): string {
   const input = (query ?? profile.jql).trim();
   const order = ` ${input.match(/(?:^|\s+)ORDER\s+BY\s+[^]*$/i)?.[0].trim() || 'ORDER BY updated DESC'}`;
@@ -256,8 +268,10 @@ export class JiraClient {
       content: attachment.content,
     };
   }
-  async search(query?: string, limit = 500): Promise<SearchResult> {
+  async search(query?: string, limit = 500, options: { description?: boolean } = {}): Promise<SearchResult> {
     limit = Math.max(1, Math.min(5000, Math.floor(limit)));
+    // Lists for agents can skip bodies: rendered descriptions dominate the response size.
+    const description = options.description !== false;
     const jql = scopedJql(this.profile, query);
     const issues: Issue[] = [];
     let total = 0;
@@ -267,8 +281,8 @@ export class JiraClient {
         jql,
         startAt,
         maxResults: Math.min(100, limit - issues.length),
-        fields: this.fields.split(','),
-        expand: ['renderedFields'],
+        fields: this.fields.split(',').filter((field) => description || field !== 'description'),
+        ...(description ? { expand: ['renderedFields'] } : {}),
       });
       if (!Array.isArray(data.issues) || typeof data.total !== 'number')
         throw new Error('Jira 查询响应缺少分页信息');

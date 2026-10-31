@@ -17,24 +17,34 @@ export async function bundledSkills() {
       }),
   );
 }
-export async function installSkills(destination = path.join(homedir(), '.agents', 'skills')) {
+// Without --output, install for every local agent that reads user Skills, like Confluence Flow.
+export async function installSkills(destination?: string) {
+  const roots = destination
+    ? [path.resolve(destination)]
+    : [
+        path.join(homedir(), '.agents', 'skills'),
+        path.join(homedir(), '.codex', 'skills'),
+        path.join(homedir(), '.claude', 'skills'),
+      ];
   const skills = await bundledSkills();
-  await mkdir(destination, { recursive: true });
   const installed: string[] = [];
   const existing: string[] = [];
-  for (const skill of skills) {
-    const target = path.join(destination, skill.name);
-    try {
-      await mkdir(target);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
-        existing.push(target);
-        continue;
+  for (const root of roots) {
+    await mkdir(root, { recursive: true });
+    for (const skill of skills) {
+      const target = path.join(root, skill.name);
+      try {
+        await mkdir(target);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+          existing.push(target);
+          continue;
+        }
+        throw error;
       }
-      throw error;
+      await cp(path.dirname(skill.path), target, { recursive: true });
+      installed.push(target);
     }
-    await cp(path.dirname(skill.path), target, { recursive: true });
-    installed.push(target);
   }
   const { version } = JSON.parse(await readFile(path.join(installationRoot, 'package.json'), 'utf8'));
   await jsonWrite(path.join(dataHome(), 'installation.json'), {

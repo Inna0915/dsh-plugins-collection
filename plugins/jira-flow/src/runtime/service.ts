@@ -1,11 +1,12 @@
 import path from 'node:path';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID, createHash } from 'node:crypto';
-import { JiraClient } from '../core/jira.js';
+import { JiraClient, compactHistories } from '../core/jira.js';
 import { issueMarkdown } from '../core/markdown.js';
 import { exportTasks } from '../core/export.js';
 import { weeklyReport } from '../core/report.js';
 import { prepareComposerDraft } from './draft.js';
+import { dailyMaintenance, staleExports } from './maintenance.js';
 import {
   prepareImages,
   imageManifest,
@@ -16,7 +17,7 @@ import {
 import { createContext, prepareCreate, assignableUsers, queryJql } from '../core/creation.js';
 import { getAuth, getProfile, profiles, saveProfile, importObsidian } from './config.js';
 import { dataHome, jsonRead, jsonWrite, issueKey, validId, withLock, message, inside } from './store.js';
-import type { Profile, SearchResult, TaskPackage, RunRecord, TaskResult } from '../types.js';
+import type { History, Profile, SearchResult, TaskPackage, RunRecord, TaskResult } from '../types.js';
 
 export interface DispatchAdapter {
   targets(signal: AbortSignal): Promise<{
@@ -37,6 +38,37 @@ export interface DispatchAdapter {
   ): Promise<void>;
 }
 export type Args = Record<string, any>;
+function changeFields(value: unknown): string[] | undefined {
+  const list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
+  const fields = list
+    .filter((field): field is string => typeof field === 'string')
+    .map((field) => field.trim())
+    .filter(Boolean);
+  return fields.length ? fields : undefined;
+}
+// One process, one credential and bounded concurrency for many issues; failures stay per issue.
+async function historyBatch(
+  keys: unknown[],
+  read: (key: unknown) => Promise<{ histories: History[]; complete: boolean }>,
+) {
+  const unique = [...new Set(keys.map((key) => String(key ?? '').trim()))];
+  if (unique.length > 500) throw new Error('一次最多读取 500 个任务的状态历史');
+  const items: Array<{ key: string; histories?: History[]; complete: boolean; error?: string }> = [];
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(6, unique.length) }, async () => {
+      while (next < unique.length) {
+        const index = next++;
+        try {
+          items[index] = { key: issueKey(unique[index]), ...(await read(unique[index])) };
+        } catch (error) {
+          items[index] = { key: unique[index], complete: false, error: message(error) };
+        }
+      }
+    }),
+  );
+  return { items, complete: items.every((item) => item.complete && !item.error) };
+}
 export class JiraService {
   readonly shutdown = new AbortController();
   constructor(readonly adapter?: DispatchAdapter) {}
@@ -53,6 +85,7 @@ export class JiraService {
     if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('参数必须是对象');
     signal?.throwIfAborted();
     this.shutdown.signal.throwIfAborted();
+    await dailyMaintenance();
     const profile = typeof args.profile === 'string' ? validId(args.profile) : 'work-jira';
     const key = () => issueKey(args.key);
     const text = (name: string, fallback = '') => (typeof args[name] === 'string' ? args[name] : fallback);
@@ -75,6 +108,7 @@ export class JiraService {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .slice(0, 100);
     }
+    if (operation === 'exports') return staleExports(Number(args.olderThan) || 30);
     if (operation === 'cache')
       return jsonRead<SearchResult | null>(path.join(dataHome(), 'cache', `${profile}.json`), null);
     if (operation === 'results') {
@@ -133,12 +167,18 @@ export class JiraService {
       case 'doctor':
         return { profile, user: await client.me(), configured: true, readOnly: !client.profile.allowWrites };
       case 'search': {
-        const result = await client.search(queryJql(args), Number(args.limit) || 500);
-        await jsonWrite(path.join(dataHome(), 'cache', `${profile}.json`), result);
+        const description = args.includeDescription !== false;
+        const result = await client.search(queryJql(args), Number(args.limit) || 500, { description });
+        // The board cache keeps the full issue shape; slim agent lists must not replace it.
+        if (description) await jsonWrite(path.join(dataHome(), 'cache', `${profile}.json`), result);
         return result;
       }
       case 'issue': {
         const issue = await client.get(key(), args.comments !== false);
+        if (args.detail === 'compact') {
+          const { description: _html, ...rest } = issue;
+          return { ...rest, markdown: issueMarkdown(issue) };
+        }
         return {
           ...issue,
           markdown: issueMarkdown(issue),
@@ -268,8 +308,19 @@ export class JiraService {
         return this.mutate(profile, args, operation, () =>
           client.comment(key(), text('body'), args.apply === true),
         );
-      case 'history':
-        return client.history(key());
+      case 'history': {
+        const fields = changeFields(args.changeFields);
+        const read = async (target: unknown) => {
+          const value = await client.history(issueKey(target));
+          return fields ? { ...value, histories: compactHistories(value.histories, fields) } : value;
+        };
+        const keys = Array.isArray(args.keys) && args.keys.length ? args.keys : [args.key];
+        if (keys.length === 1) return read(keys[0]);
+        const batch = await historyBatch(keys, read);
+        signal?.throwIfAborted();
+        this.shutdown.signal.throwIfAborted();
+        return batch;
+      }
       case 'sprints':
         return client.sprints(args.project);
       case 'weekly':

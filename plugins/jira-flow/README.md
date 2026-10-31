@@ -65,7 +65,7 @@ node dist/cli.js create --type Bug --summary "查询页面超时" --body-file D:
 | `jira-update-progress` | 更新字段/经办人、评论、合法状态流转，导入执行结果       | 将此任务改为指定状态，并追加这段进度说明     |
 | `jira-weekly-report`   | 根据状态历史生成可追溯周报                              | 统计本周我负责的任务，区分开发完成和最终状态 |
 
-其他 agent 可加载 `~/.agents/skills` 中的 Skills；支持 DSH 原生工具、MCP 和独立 CLI。在线操作复用本机凭证存储，Skill 内没有凭证；只用图文任务包时可离线执行。代码实施需要指定对应项目目录。Jira 经办人分配与指定执行 agent 分开处理，完成代码不会自动关闭任务。
+Codex、Claude Code 等 agent 可加载 `~/.agents/skills`、`~/.codex/skills`、`~/.claude/skills` 中的 Skills；支持 DSH 原生工具、MCP 和独立 CLI。在线操作复用本机凭证存储，Skill 内没有凭证；只用图文任务包时可离线执行。代码实施需要指定对应项目目录。Jira 经办人分配与指定执行 agent 分开处理，完成代码不会自动关闭任务。
 
 ## 0.1.5 原生工作区分栏
 
@@ -123,6 +123,17 @@ node D:/dev/vscode/jira-flow/dist/cli.js search
 node D:/dev/vscode/jira-flow/dist/cli.js issue PROJ-123 --format markdown
 node D:/dev/vscode/jira-flow/dist/cli.js export PROJ-123 PROJ-124 --output D:/work/tasks --zip
 node D:/dev/vscode/jira-flow/dist/cli.js weekly --format markdown
+node D:/dev/vscode/jira-flow/dist/cli.js search --jql 'assignee = currentUser()' --no-description
+node D:/dev/vscode/jira-flow/dist/cli.js history PROJ-1 PROJ-2 --change-fields status,assignee,resolution
+```
+
+面向 agent 的读取默认精简：CLI、MCP 与 DSH 工具的 `issue` 默认 compact，保留 `markdown`，省略 HTML 正文与 `bodyMarkdown`，`--detail full` / `detail:"full"` 返回全部；看板界面不受影响。`search --no-description`（`includeDescription:false`）只取列表字段，且不覆盖看板缓存。`history` 接受多个编号，在同一进程内并发读取并按条报告失败；`--change-fields`（`changeFields`）只保留指定变更字段。每次 CLI 调用约有 4 秒进程启动与凭证解密开销，批量读取或常驻 MCP 可以避开这部分开销。
+
+Codex / Claude Code 注册 MCP 后由常驻进程复用凭证：
+
+```powershell
+codex mcp add jira-flow -- node D:/dev/vscode/jira-flow/dist/cli.js mcp
+claude mcp add --transport stdio --scope user jira-flow -- node D:/dev/vscode/jira-flow/dist/cli.js mcp
 ```
 
 ### DSH 插件
@@ -153,7 +164,7 @@ node D:/dev/vscode/jira-flow/dist/cli.js serve
 node D:/dev/vscode/jira-flow/dist/cli.js skills install
 ```
 
-默认安装到 `~/.agents/skills/`，已有同名目录会保留，不覆盖。可用 `--output <目录>` 安装到其他客户端支持的目录。
+默认安装到 `~/.agents/skills/`、`~/.codex/skills/` 和 `~/.claude/skills/`，已有同名目录（含指向源码的链接）会保留，不覆盖。可用 `--output <目录>` 只安装到指定目录。
 
 Skills：`jira-create`、`jira-query`、`jira-export`、`jira-analyze`、`jira-implement-story`、`jira-fix-bug`、`jira-update-progress`、`jira-weekly-report`。
 
@@ -242,6 +253,10 @@ node dist/cli.js weekly --start 2026-10-19T00:00:00+08:00 --end 2026-10-26T00:00
 - SVG 等不适合直接嵌入的格式可作为任务包文件交付，不在浏览器内执行。
 
 导出包包含 `index.md`、`combined.md`、`issues/`、`assets/`、`manifest.json`，索引说明 `results.json` 的返回格式。所有路径保留明确的来源与快照时间。
+
+任务包是交付物，不会被自动删除。`jira-flow exports [--older-than 30]` 只列出长期未改动的任务包、缺少索引的导出目录和索引指向已不存在的目录，并给出占用大小，由你决定是否手工删除。
+
+本地数据默认在 `~/.jira-flow`（可用 `JIRA_FLOW_HOME` 指定）。每天第一次调用（CLI、MCP、DSH 或看板均可）会先清理超过 30 天的写操作回执（`operations`、`uploads`），再执行请求；连接、凭证、看板缓存、执行结果和任务包不动。同一进程当天后续调用不再检查；多个进程用 `maintenance/` 下的当天标记文件抢占，只有一个执行。实测十几毫秒，失败不影响本次请求。
 
 ## 周报口径
 
