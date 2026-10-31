@@ -1,0 +1,19 @@
+{
+  "scanColdMs": 476.6,
+  "scanCachedMs": 12.6,
+  "projects": 3,
+  "switches": [
+    {
+      "project": "D:/dev/code/fms-p275/fms-p275",
+      "selectMs": 4.3,
+      "gitReadyMs": 1418.4,
+      "branch": "develop"
+    },
+    {
+      "project": "D:/dev/code/wms277/wms-p277",
+      "selectMs": 3.7,
+      "gitReadyMs": 1791.0,
+      "branch": "develop"
+    }
+  ]
+}

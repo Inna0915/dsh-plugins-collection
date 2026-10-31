@@ -1,0 +1,72 @@
+{
+  "workspaces": [
+    "D:\\dev\\code\\fms-p275",
+    "D:\\dev\\code\\wms329",
+    "D:\\dev\\code\\fms269",
+    "D:\\dev\\code\\wms277",
+    "D:\\dev\\code\\fms",
+    "C:\\Users\\OMEN\\.dsh\\bot\\workspace",
+    "D:\\dev\\vscode\\deepseek"
+  ],
+  "count": 5,
+  "projects": [
+    {
+      "artifact": "fms-p275",
+      "path": "D:\\dev\\code\\fms-p275\\fms-p275",
+      "targets": [
+        {
+          "path": "D:\\dev\\code\\fms-p275\\fms-p275\\fms-project-starter",
+          "artifact": "fms-project-starter",
+          "packaging": "war"
+        }
+      ]
+    },
+    {
+      "artifact": "wms-p329",
+      "path": "D:\\dev\\code\\wms329\\wms-p329",
+      "targets": [
+        {
+          "path": "D:\\dev\\code\\wms329\\wms-p329\\wms-project-starter",
+          "artifact": "wms-p329-starter",
+          "packaging": "war"
+        }
+      ]
+    },
+    {
+      "artifact": "fms-project-269",
+      "path": "D:\\dev\\code\\fms269\\fms-p269",
+      "targets": [
+        {
+          "path": "D:\\dev\\code\\fms269\\fms-p269\\fms-project-starter",
+          "artifact": "fms-project-starter",
+          "packaging": "war"
+        }
+      ]
+    },
+    {
+      "artifact": "wms-p277",
+      "path": "D:\\dev\\code\\wms277\\wms-p277",
+      "targets": [
+        {
+          "path": "D:\\dev\\code\\wms277\\wms-p277\\wms-p277-starter",
+          "artifact": "wms-p277-starter",
+          "packaging": "war"
+        }
+      ]
+    },
+    {
+      "artifact": "wms-project-base",
+      "path": "D:\\dev\\code\\wms277\\wms-project-base",
+      "targets": [
+        {
+          "path": "D:\\dev\\code\\wms277\\wms-project-base\\wms-project-starter",
+          "artifact": "wms-project-starter",
+          "packaging": "war"
+        }
+      ]
+    }
+  ],
+  "warnings": [],
+  "nativePanelCountIncludingRecent": 10,
+  "nativeJenkinsGroups": 4
+}

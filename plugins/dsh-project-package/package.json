@@ -1,0 +1,14 @@
+{
+  "name": "dsh-project-package",
+  "version": "0.1.5",
+  "private": true,
+  "description": "项目打包看板：工作区识别、Maven、Git、版本说明、加壳与依赖核验，按需加载。",
+  "type": "module",
+  "main": "./dist/plugin.js",
+  "exports": {".": "./dist/plugin.js", "./client": "./dist/client.js", "./package.json": "./package.json", "./cordis.patch.yml": "./cordis.patch.yml", "./locale/*.json": "./locale/*.json"},
+  "files": ["dist", "engine", "runtime", "locale", "cordis.patch.yml", "README.md", "docs/acceptance.md"],
+  "engines": {"node": ">=20.19", "dsh": "0.2.1-rc.3 || 0.2.1-rc.5"},
+  "dsh": {"manifestVersion": 1, "bundle": {"patch": "./cordis.patch.yml"}, "client": {"platform": "web"}},
+  "scripts": {"build": "node scripts/build.mjs", "test": "node --test tests/*.test.mjs"},
+  "devDependencies": {"esbuild": "^0.25.0", "react": "19.2.0", "react-dom": "19.2.0", "linkedom": "^0.18.12"}
+}

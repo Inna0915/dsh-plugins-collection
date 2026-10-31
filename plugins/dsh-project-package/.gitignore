@@ -1,0 +1,8 @@
+node_modules/
+.task-temp/
+**/__pycache__/
+runtime/
+releases/
+dist/
+runtime-status.json
+docs/installation/desktop-package-before-*.json

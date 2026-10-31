@@ -1,0 +1,14 @@
+[
+  {
+    "request": 1,
+    "cached": false,
+    "projects": 10,
+    "elapsedMs": 1892.5
+  },
+  {
+    "request": 2,
+    "cached": true,
+    "projects": 10,
+    "elapsedMs": 24.4
+  }
+]

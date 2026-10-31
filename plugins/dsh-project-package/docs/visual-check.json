@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "checks": [
+    "no task board; compact task history",
+    "notes and grouped dependencies",
+    "hover preview and hover leave",
+    "click pins and toggles closed",
+    "outside click and Escape dismiss",
+    "live running count and progress",
+    "wait for auto shell before artifacts",
+    "completion switches exactly once",
+    "cancel stays on logs",
+    "connection errors retain labelled stale data",
+    "narrow popup stays in viewport",
+    "polling stops after close"
+  ],
+  "errors": []
+}

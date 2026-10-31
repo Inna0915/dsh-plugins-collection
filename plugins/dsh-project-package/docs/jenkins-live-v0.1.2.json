@@ -1,0 +1,69 @@
+{
+  "readOnly": true,
+  "displayed": 12,
+  "totalCount": 16,
+  "runningCount": 0,
+  "fetchedAt": 1793170953845,
+  "jobs": [
+    {
+      "jobName": "wcs",
+      "number": 60,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "wms-10",
+      "number": 197,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "wms-front",
+      "number": 1551,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "gaia-front",
+      "number": 55,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "fms",
+      "number": 65,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "wms-platform",
+      "number": 3701,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "ykeey-wms-standard",
+      "number": 3920,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "wms",
+      "number": 2881,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "fms-front",
+      "number": 48,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "gaia",
+      "number": 24,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "eris-2",
+      "number": 11,
+      "result": "SUCCESS"
+    },
+    {
+      "jobName": "wcs-front",
+      "number": 7,
+      "result": "SUCCESS"
+    }
+  ]
+}
