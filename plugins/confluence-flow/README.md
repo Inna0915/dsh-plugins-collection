@@ -10,7 +10,7 @@ Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面
 - DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
 - confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
 
-读取会保留原始 storage 底稿。wiki 是阅读/编写表示，任意旧页面不保证无损反向转换。部分修改保留范围外的原始字符。复杂宏在本地预览显示占位或内容摘要；最终动态效果请打开 Confluence 原网页。第一版提供附件列表，不上传附件；本地预览以文本标注图片引用。
+读取会保留原始 storage 底稿。wiki 是阅读/编写表示，任意旧页面不保证无损反向转换。部分修改保留范围外的原始字符。复杂宏在本地预览显示占位或内容摘要；Jira 宏读取为 `{jira:key=…}` / `{jira:jqlQuery=…}` 引用，可交给 Jira 工具查询，写回时由 Confluence 的格式转换还原为宏；最终动态效果请打开 Confluence 原网页。第一版提供附件列表，不上传附件；本地预览以文本标注图片引用。
 
 局部章节编辑以 `read --format=outline` 返回的章节 items 为准；复杂宏或复杂容器内部的标题不会自动作为替换边界。
 
@@ -107,7 +107,9 @@ node dist/cli.js commit --draft-id DRAFT_ID --request-id UNIQUE_REQUEST_ID
 
 ## 用户数据
 
-默认 ~/.confluence-flow，可通过 CONFLUENCE_FLOW_HOME 指定。profiles 保存非秘密连接；credentials 保存 Windows DPAPI CurrentUser 密文；snapshots 保存读取底稿；read-cache 保存阅读缓存索引；scans 保存批量摘要及分页结果；drafts 保存待发布内容；operations 保存提交回执；installation.json 记录运行层位置。快照与草稿是恢复用用户资料，不属于仓库或自动删除的测试文件。
+默认 ~/.confluence-flow，可通过 CONFLUENCE_FLOW_HOME 指定。profiles 保存非秘密连接；credentials 保存 Windows DPAPI CurrentUser 密文；snapshots 保存读取底稿；read-cache 保存阅读缓存索引；scans 保存批量摘要及分页结果；drafts 保存待发布内容；operations 保存提交回执；installation.json 记录运行层位置。快照与草稿是用户资料，不属于仓库或测试文件。
+
+每天第一次调用（CLI、MCP、DSH 或界面均可）会先做一次清理，再执行请求：snapshots、scans、read-cache、drafts 保留 7 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同一进程当天后续调用不再检查；多个进程用 maintenance/ 下的当天标记文件抢占，只有一个执行。清理只扫描上述目录，实测十几毫秒，失败不影响本次请求。超过 7 天的 snapshotId 不再可用，需要重新读取；更早的页面内容可在 Confluence 页面历史中找回。
 
 Windows 凭据通过子进程标准输入保护，不放入参数或工具结果。它依赖当前 Windows 用户，不能抵御同一用户下任意代码访问。其他系统使用 credentialStore=environment，变量名为 CONFLUENCE_FLOW_AUTH_<大写连接别名，非字母数字替换为下划线>，值为 basic 或 bearer 认证 JSON；不要在聊天、仓库或配置示例中写真实值。
 

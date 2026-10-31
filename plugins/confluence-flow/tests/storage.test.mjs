@@ -62,6 +62,34 @@ test("重复标题用不同 sectionId 定位，保留标题与其他章节", () 
     "<h2>参数</h2><p>A</p><h2>参数</h2><p>C</p>",
   );
 });
+test("Jira 宏以 {jira:…} 引用保留任务号与 JQL，仍标记为原文保留", () => {
+  const jira = (parameters) =>
+    `<ac:structured-macro ac:name="jira" ac:schema-version="1">${Object.entries(
+      parameters,
+    )
+      .map(
+        ([name, value]) =>
+          `<ac:parameter ac:name="${name}">${value}</ac:parameter>`,
+      )
+      .join("")}</ac:structured-macro>`;
+  const xml =
+    `<h2>同步</h2><table><tbody><tr><td><p>${jira({ server: "Fixture Jira", columnIds: "issuekey", serverId: "fixture-id", key: "DEMO-1" })}</p></td></tr></tbody></table>` +
+    `<p>${jira({ server: "Fixture Jira", jqlQuery: "project = DEMO AND status = Open", maximumIssues: "20" })}</p>`;
+  const result = analyzeStorage(xml, "", { html: true });
+  // Table cells escape parameter separators like any other cell content.
+  assert.match(
+    result.wiki,
+    /\|\{jira:key=DEMO-1\\\|server=Fixture Jira\\\|serverId=fixture-id\}\|/,
+  );
+  assert.match(
+    result.wiki,
+    /\{jira:jqlQuery=project = DEMO AND status = Open\|server=Fixture Jira\|maximumIssues=20\}/,
+  );
+  assert.doesNotMatch(result.wiki, /原始内容已保留/);
+  assert.equal(result.lossy, true);
+  assert.match(result.warnings.join(" "), /\{jira:…\}/);
+  assert.match(result.html, /\{jira:key=DEMO-1/);
+});
 test("宏中的假标题不可作为顶层章节，代码内容不破坏范围", () => {
   const xml =
     '<h2>正文</h2><ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[<h1>not a heading</h1>]]></ac:plain-text-body></ac:structured-macro><h2>结束</h2><p>保留</p>';

@@ -46,3 +46,19 @@
 - 已移除隔离宿主指向正式项目的临时 junction。整块临时目录递归删除及移除链接后的逐项清理均被自动安全审核拒绝，工具只返回 blocked by policy，未提供具体原因。
 - 因此 .task-temp 暂留：native-host.mjs（隔离宿主脚本）、native-host（隔离宿主数据）、skill-validator（PyYAML 校验依赖）、test-M19os7 与 test-mzuA31（合成服务数据）。这些文件均不打包，不应误报为已清理。
 - 正式保留的交付文件为源码/构建、发布包、本文档与模拟 UI 截图；用户目录中的连接密文、运行层位置与页面读取底稿服务于后续使用。
+
+## 2026-10-31 Jira 宏阅读表示
+
+改动：wiki 阅读表示与本地预览把带 key 或 jqlQuery 的 Jira 宏输出为 `{jira:key=…|server=…}` / `{jira:jqlQuery=…}`；仍标记 lossy 并保留原始 storage，编辑保护不变。写回时由 Confluence 的格式转换接口解析该语法。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 44/44 通过，新增合成用例覆盖表格内任务号引用（参数分隔符按单元格规则转义）、JQL 引用、lossy 与预览。
+
+真实页面只读对照：一份含 4 个 Jira 宏的会议页，改动前 grep 任务号命中 0，改动后命中 4。未修改任何页面。
+
+## 2026-10-31 本地数据每日清理
+
+改动：service.execute 入口先调用 dailyMaintenance：snapshots、scans、read-cache、drafts 保留 7 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同进程当天只检查一次，跨进程用 maintenance/<本地日期> 独占创建抢占，异常不影响请求。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 45/45 通过，新增用例覆盖各目录保留期、凭证与配置不动、同日与其他进程已执行时跳过。
+
+用户目录实测：当天首次清理约 12 ms（无超龄文件，删除 0 个）；同进程再次调用约 0 ms；其他进程约 5 ms。

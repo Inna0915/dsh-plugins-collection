@@ -13,6 +13,7 @@ import {
 } from "./store.js";
 import { toolSchema, type ToolInput } from "./schema.js";
 import { PageReader, invalidateReadCache } from "./reading.js";
+import { dailyMaintenance } from "./maintenance.js";
 import {
   jsonOutput,
   fitRows,
@@ -285,6 +286,7 @@ export class ConfluenceService {
     });
   }
   async execute(raw: unknown, signal?: AbortSignal): Promise<any> {
+    await dailyMaintenance();
     return jsonOutput(await this.executeInternal(raw, signal));
   }
   private async executeInternal(

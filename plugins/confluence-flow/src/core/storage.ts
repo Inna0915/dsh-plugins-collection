@@ -68,6 +68,22 @@ function body(node: Element): Node[] {
     )
     .flatMap(children);
 }
+// Confluence wiki syntax keeps Jira references readable and lets convert/storage rebuild the macro.
+function jiraReference(values: Record<string, string>): string {
+  const parameters = [
+    "key",
+    "jqlQuery",
+    "server",
+    "serverId",
+    "columns",
+    "count",
+    "maximumIssues",
+  ]
+    .filter((name) => values[name])
+    .map((name) => `${name}=${values[name]}`)
+    .join("|");
+  return `{jira:${parameters}}`;
+}
 function safeUrl(value: string, baseUrl: string): string {
   try {
     const url = new URL(value, baseUrl || "https://example.invalid/");
@@ -199,6 +215,15 @@ export function analyzeStorage(
         return `\n{${kind}${parameters ? ":" + parameters : ""}}\n${body(node)
           .map((child) => wiki(child, list))
           .join("")}\n{${kind}}\n`;
+      }
+      if (kind === "jira" && (values.key || values.jqlQuery)) {
+        mark(
+          node,
+          "宏 jira 以 {jira:…} 引用表示，可交给 Jira 工具查询；完整宏参数保留在原始 storage。",
+        );
+        return values.key
+          ? jiraReference(values)
+          : `\n${jiraReference(values)}\n`;
       }
       mark(
         node,
@@ -370,6 +395,10 @@ export function analyzeStorage(
       }
       if (kind === "section" || kind === "column") {
         return `<div class="cf-macro-${kind}">${body(node).map(html).join("")}</div>`;
+      }
+      const values = params(node);
+      if (kind === "jira" && (values.key || values.jqlQuery)) {
+        return `<span class="cf-reference">${escapeHtml(jiraReference(values))}</span>`;
       }
       return `<aside class="cf-macro"><small>${escapeHtml(kind)}</small>${body(node).map(html).join("") || "<p>此宏请在 Confluence 原网页查看</p>"}</aside>`;
     }
