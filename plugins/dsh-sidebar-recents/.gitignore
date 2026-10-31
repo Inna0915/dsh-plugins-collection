@@ -1,0 +1,5 @@
+node_modules/
+.task-temp/
+runtime-status.json
+docs/installation/desktop-package-before-*.json
+releases/*.tgz

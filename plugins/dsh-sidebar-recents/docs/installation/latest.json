@@ -1,0 +1,10 @@
+{
+  "package": "dsh-sidebar-recents",
+  "version": "0.1.7",
+  "enabled": true,
+  "installDir": "C:\\Users\\OMEN\\.dsh\\local-plugins\\dsh-sidebar-recents",
+  "profile": "C:\\Users\\OMEN\\.dsh\\profiles\\desktop\\package.json",
+  "backup": "C:\\Users\\OMEN\\Documents\\助手\\dsh-sidebar-recents\\docs\\installation\\desktop-package-before-20261030-114208962.json",
+  "installedAt": "2026-10-30T11:42:08.9897438+08:00",
+  "method": "local package copy, directory junction, atomic bundle manifest update; no host restart"
+}

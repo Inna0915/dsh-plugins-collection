@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-10-30T03:38:42.229Z",
+  "runtime": "0.2.1-rc.5",
+  "package": "dsh-sidebar-recents",
+  "version": "0.1.7",
+  "range": "0.2.1-rc.3 || 0.2.1-rc.5",
+  "oldDeclarationRejected": true,
+  "newDeclarationAccepted": true,
+  "versionExemptionsUsed": false,
+  "checks": [
+    {
+      "name": "workspace row keys and HoverCard wrapper",
+      "passed": true
+    },
+    {
+      "name": "workspace header/search/list containers",
+      "passed": true
+    },
+    {
+      "name": "sidebar slots",
+      "passed": true
+    },
+    {
+      "name": "navigation and native multi-pin",
+      "passed": true
+    },
+    {
+      "name": "folder collapse and persistent store",
+      "passed": true
+    },
+    {
+      "name": "live status and native indicator",
+      "passed": true
+    },
+    {
+      "name": "main panel controller",
+      "passed": true
+    },
+    {
+      "name": "host route registration",
+      "passed": true
+    },
+    {
+      "name": "host workspace registry",
+      "passed": true
+    },
+    {
+      "name": "host native directory picker",
+      "passed": true
+    }
+  ],
+  "workspaceClientSHA256": "bafd2d6eea2f82674cc0606bec13fc891e44b42fb2ac973f01cb32c735d4062f",
+  "verificationBoundary": "Source/API contract audit and official version admission; visual acceptance is manual."
+}

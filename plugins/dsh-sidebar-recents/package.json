@@ -1,0 +1,50 @@
+{
+  "name": "dsh-sidebar-recents",
+  "version": "0.1.7",
+  "private": true,
+  "description": "最近会话与工作区折叠：默认五项、点击标题收起、原会话跳转与收起全部文件夹。",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19",
+    "dsh": "0.2.1-rc.3 || 0.2.1-rc.5"
+  },
+  "main": "./dist/plugin.js",
+  "exports": {
+    ".": "./dist/plugin.js",
+    "./client": "./dist/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "dist/plugin.js",
+    "dist/client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "locale",
+    "docs/feasibility.md",
+    "docs/implementation-report.md"
+  ],
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node tests/run-tests.js",
+    "check:dist": "node scripts/check-dist.mjs",
+    "verify": "node tests/run-tests.js && node scripts/build.mjs && node scripts/check-dist.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "linkedom": "^0.18.12",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  }
+}
