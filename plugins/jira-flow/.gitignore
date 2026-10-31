@@ -1,0 +1,7 @@
+node_modules/
+.task-temp/
+dist/
+*.tgz
+.env*
+!.env.example
+coverage/

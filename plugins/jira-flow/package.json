@@ -1,0 +1,68 @@
+{
+  "name": "dsh-jira-flow",
+  "version": "0.1.8",
+  "description": "任务看板：Jira Kanban、拖拽状态流转、图文任务包及跨 agent Skills",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "bin": {
+    "jira-flow": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/plugin.js",
+    "./client": "./dist/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/cli.js",
+    "dist/plugin.js",
+    "dist/client.js",
+    "dist/standalone.js",
+    "dist/index.html",
+    "skills",
+    "scripts/credential-store.ps1",
+    "cordis.patch.yml",
+    "README.md",
+    "docs/verification.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests",
+    "start": "node dist/cli.js",
+    "verify": "tsc --noEmit && node --test tests"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "fflate": "^0.8.2",
+    "linkedom": "^0.18.12",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/turndown": "^5.0.5",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.9.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.0"
+  }
+}
