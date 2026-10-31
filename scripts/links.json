@@ -1,0 +1,29 @@
+{
+  "links": [
+    { "path": "D:/dev/vscode/jira-flow", "target": "plugins/jira-flow", "usedBy": "DSH profile link、Claude/Codex MCP、~/.jira-flow/installation.json" },
+    { "path": "D:/dev/vscode/confluence-flow", "target": "plugins/confluence-flow", "usedBy": "DSH profile link、Claude/Codex MCP、~/.confluence-flow/installation.json" },
+    { "path": "~/.dsh/local-plugins/20260930/codex-monitor", "target": "plugins/codex-monitor", "usedBy": "DSH profile link" },
+    { "path": "~/.dsh/local-plugins/meal-panel", "target": "plugins/meal-panel", "usedBy": "DSH profile link" },
+    { "path": "~/Documents/助手/dsh-project-package", "target": "plugins/dsh-project-package", "usedBy": "旧源码路径兼容" },
+    { "path": "~/Documents/助手/dsh-sidebar-recents", "target": "plugins/dsh-sidebar-recents", "usedBy": "旧源码路径兼容" },
+    { "path": "plugins/dsh-project-package/node_modules", "target": "plugins/dsh-sidebar-recents/node_modules", "usedBy": "共用开发依赖（esbuild/react/linkedom）" }
+  ],
+  "skillRoots": ["~/.claude/skills", "~/.agents/skills", "~/.codex/skills"],
+  "skills": [
+    { "name": "jira-analyze", "target": "plugins/jira-flow/skills/jira-analyze" },
+    { "name": "jira-export", "target": "plugins/jira-flow/skills/jira-export" },
+    { "name": "jira-fix-bug", "target": "plugins/jira-flow/skills/jira-fix-bug" },
+    { "name": "jira-implement-story", "target": "plugins/jira-flow/skills/jira-implement-story" },
+    { "name": "jira-query", "target": "plugins/jira-flow/skills/jira-query" },
+    { "name": "jira-update-progress", "target": "plugins/jira-flow/skills/jira-update-progress" },
+    { "name": "jira-weekly-report", "target": "plugins/jira-flow/skills/jira-weekly-report" },
+    { "name": "jira-create", "target": "skills/jira-create" },
+    { "name": "jira-personal-report", "target": "skills/jira-personal-report" },
+    { "name": "confluence-publish", "target": "plugins/confluence-flow/skills/confluence-publish" },
+    { "name": "confluence-query", "target": "plugins/confluence-flow/skills/confluence-query" },
+    { "name": "confluence-update", "target": "plugins/confluence-flow/skills/confluence-update" },
+    { "name": "codex-worker", "target": "skills/codex-worker", "roots": ["~/.claude/skills"] },
+    { "name": "dsh-worker", "target": "skills/dsh-worker", "roots": ["~/.claude/skills"] },
+    { "name": "kimi-worker", "target": "skills/kimi-worker", "roots": ["~/.claude/skills"] }
+  ]
+}
