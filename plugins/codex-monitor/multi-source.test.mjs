@@ -188,3 +188,52 @@ test('卸载会等待读取及运行记录写入完成，不留下后台刷新',
   assert.equal(closed, true)
   assert.equal(monitor.snapshot().refreshing, false)
 })
+
+test('Claude 续写只读取新增记录，结果与整份重读一致；改写或截断时整份重读', async (t) => {
+  const { appendFile, open: openFile } = await import('node:fs/promises')
+  const home = await mkdtemp(join(tmpdir(), 'claude-incremental-'))
+  t.after(() => rm(home, { recursive: true, force: true }))
+  const project = join(home, 'projects', 'work')
+  await mkdir(project, { recursive: true })
+  const file = join(project, `${uuid}.jsonl`)
+  const line = (value) => JSON.stringify(value) + '\n'
+  const prompt = (i, time = at) => ({ type: 'user', uuid: `u${i}`, sessionId: uuid, timestamp: time, message: { content: `第 ${i} 个问题：中文多字节 ✓` } })
+  const answer = (id, time, stop = 'end_turn') => ({ type: 'assistant', sessionId: uuid, timestamp: time,
+    message: { id, model: 'claude-test', stop_reason: stop, usage: { input_tokens: 10, output_tokens: 5 }, content: [{ type: 'text', text: '好的' }] } })
+  const live = createClaudeSource({ claudeHome: home, isAlive: () => false })
+  const fresh = async () => createClaudeSource({ claudeHome: home, isAlive: () => false }).querySession(`claude:${uuid}`)
+  const current = () => live.querySession(`claude:${uuid}`)
+
+  await writeFile(file, line(prompt(1)) + line(answer('m1', later)))
+  assert.equal((await current()).questionCount, 1)
+
+  // 已读取部分被同长度空白覆盖：增量读取不再解析前缀，整份重读会少一个问题。
+  const original = await readFile(file)
+  const firstLength = original.indexOf(10)
+  const handle = await openFile(file, 'r+')
+  try { await handle.write(Buffer.alloc(firstLength, 0x20), 0, firstLength, 0) } finally { await handle.close() }
+  await appendFile(file, line(prompt(2, end)))
+  assert.equal((await current()).questionCount, 2, '前缀不应被重新解析')
+  assert.equal((await fresh()).questionCount, 1)
+  await writeFile(file, original); await appendFile(file, line(prompt(2, end)))
+
+  // 未换行的最后一条：完整 JSON 计入结果，补上换行后不重复计入；残缺 JSON 忽略，补全后计入一次。
+  await appendFile(file, JSON.stringify(answer('m2', end)))
+  assert.deepEqual(await current(), await fresh())
+  assert.equal((await current()).status, 'turn_completed')
+  await appendFile(file, '\n' + JSON.stringify(prompt(3, end)).slice(0, 20))
+  assert.deepEqual(await current(), await fresh())
+  assert.equal((await current()).questionCount, 2)
+  await appendFile(file, JSON.stringify(prompt(3, end)).slice(20) + '\r\n')
+  assert.deepEqual(await current(), await fresh())
+  assert.equal((await current()).questionCount, 3)
+  assert.equal((await current()).tokensUsed, 30)
+
+  // 文件被改写（前缀变化）或截断：回到整份重读。
+  await writeFile(file, line(prompt(9)) + line(prompt(8)) + line(prompt(7)) + line(prompt(6)) + line(answer('m9', end)))
+  assert.deepEqual(await current(), await fresh())
+  assert.equal((await current()).questionCount, 4)
+  await writeFile(file, line(prompt(5)))
+  assert.deepEqual(await current(), await fresh())
+  assert.equal((await current()).questionCount, 1)
+})

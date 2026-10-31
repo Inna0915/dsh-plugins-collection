@@ -1,6 +1,5 @@
 import { createReadStream } from 'node:fs'
-import { readFile, readdir, stat } from 'node:fs/promises'
-import { createInterface } from 'node:readline'
+import { open, readFile, readdir, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { iso, text } from './session-common.js'
@@ -10,6 +9,7 @@ import { readCompletionFile } from './completion-details.js'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_LOG_BYTES = 128 * 1024 * 1024
+const FRONTIER_BYTES = 64
 
 export function createClaudeSummary(id) {
   return { id, title: '', customTitle: false, firstPrompt: '', cwd: '', model: '', reasoningEffort: '', entrypoint: '',
@@ -135,38 +135,77 @@ export function createClaudeSource(options = {}) {
     for (const id of cache.keys()) if (!locations.has(id)) cache.delete(id)
   }
 
+  function consumeLine(summary, line, allowPartial = false) {
+    if (!line?.trim()) return
+    let row
+    try { row = JSON.parse(line) }
+    catch {
+      // The client can still be writing the final unterminated line.
+      if (allowPartial) return
+      throw new Error('Claude 会话日志包含无法解析的完整记录')
+    }
+    if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Claude 会话日志记录格式无效')
+    consumeClaude(summary, row)
+  }
+
+  // Folds newline-terminated records from `start` into `summary` and returns the
+  // byte offset after the last newline plus the unterminated tail, if any.
+  async function foldFrom(summary, path, start) {
+    const stream = createReadStream(path, { start })
+    // Long records (inline images) span many chunks; collect them instead of
+    // re-concatenating a growing buffer for every chunk.
+    let offset = start; let pending = []; let pendingBytes = 0
+    try {
+      for await (const chunk of stream) {
+        let lineStart = 0
+        for (let index = chunk.indexOf(10); index !== -1; index = chunk.indexOf(10, lineStart)) {
+          const piece = chunk.subarray(lineStart, index)
+          const line = pending.length ? Buffer.concat([...pending, piece]) : piece
+          consumeLine(summary, line.toString('utf8').replace(/\r$/, ''))
+          offset += pendingBytes + piece.length + 1
+          pending = []; pendingBytes = 0
+          lineStart = index + 1
+        }
+        if (lineStart < chunk.length) { pending.push(chunk.subarray(lineStart)); pendingBytes += chunk.length - lineStart }
+      }
+    } finally { stream.destroy() }
+    return { offset, tail: Buffer.concat(pending).toString('utf8') }
+  }
+
+  async function frontierBytes(path, offset) {
+    const length = Math.min(FRONTIER_BYTES, offset)
+    const bytes = Buffer.alloc(length)
+    if (!length) return bytes
+    const handle = await open(path, 'r')
+    try {
+      const { bytesRead } = await handle.read(bytes, 0, length, offset - length)
+      return bytes.subarray(0, bytesRead)
+    } finally { await handle.close() }
+  }
+
   async function readSummary(id, file) {
     const key = `${file.path}:${file.size}:${file.mtimeMs}`
-    if (cache.get(id)?.key === key) return cache.get(id).summary
+    const cached = cache.get(id)
+    if (cached?.key === key) return cached.result
     if (file.size > MAX_LOG_BYTES) throw new Error('Claude 单个会话日志超过读取上限')
-    const stream = createReadStream(file.path, { encoding: 'utf8' })
-    const reader = createInterface({ input: stream, crlfDelay: Infinity })
-    const summary = createClaudeSummary(id)
-    let endsWithNewline = false
-    let pendingLine
-    stream.on('data', (chunk) => { endsWithNewline = /[\r\n]$/.test(chunk) })
-    function consumeLine(line, allowPartial = false) {
-      if (!line?.trim()) return
-      let row
-      try { row = JSON.parse(line) }
-      catch {
-        // The client can still be writing the final unterminated line.
-        if (allowPartial) return
-        throw new Error('Claude 会话日志包含无法解析的完整记录')
-      }
-      if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Claude 会话日志记录格式无效')
-      consumeClaude(summary, row)
-    }
-    try {
-      for await (const line of reader) {
-        consumeLine(pendingLine)
-        pendingLine = line
-      }
-      consumeLine(pendingLine, !endsWithNewline)
-    } finally { reader.close(); stream.destroy() }
-    summary.updatedAt ||= file.mtime.toISOString()
-    cache.set(id, { key, summary })
-    return summary
+    // Claude appends to the active transcript. Continue from the last complete
+    // record when the file is the same one and the bytes before it are unchanged;
+    // otherwise (replaced, truncated or rewritten) parse it from the beginning.
+    const resume = cached && cached.path === file.path && cached.ino === file.ino && file.size >= cached.offset
+      && (await frontierBytes(file.path, cached.offset)).equals(cached.frontier)
+    const summary = resume ? cached.summary : createClaudeSummary(id)
+    let folded
+    try { folded = await foldFrom(summary, file.path, resume ? cached.offset : 0) }
+    catch (error) { cache.delete(id); throw error }
+    // An unterminated final record may still be in progress. Apply it to a copy
+    // so the next read folds the completed line exactly once; the mtime fallback
+    // also stays off the folded state.
+    let result = summary
+    if (folded.tail.trim()) { result = structuredClone(summary); consumeLine(result, folded.tail, true) }
+    if (!result.updatedAt) result = { ...result, updatedAt: file.mtime.toISOString() }
+    cache.set(id, { key, path: file.path, ino: file.ino, offset: folded.offset,
+      frontier: await frontierBytes(file.path, folded.offset), summary, result })
+    return result
   }
 
   return {

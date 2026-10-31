@@ -13,6 +13,11 @@ test('宿主可选 DSH 接入贯通列表、预览和审核接口，拒绝跨路
   const home = await mkdtemp(join(tmpdir(), 'multi-endpoints-'))
   process.env.DSH_HOME = home
   process.env.CODEX_MONITOR_NOTIFICATIONS = '0'
+  // Other providers read empty homes so the first refresh does not scan the
+  // developer's real transcripts (and finish only after the readiness wait).
+  const isolated = ['CLAUDE_CONFIG_DIR', 'CODEX_HOME', 'KIMI_CODE_HOME', 'KIMI_HOME']
+  const previousProviderHomes = Object.fromEntries(isolated.map((key) => [key, process.env[key]]))
+  for (const key of isolated) process.env[key] = join(home, key.toLowerCase())
   const header = { id: 'endpoint-test', createdAt: Date.now() - 5000 }
   const events = [{ type: 'turn/start', time: Date.now() - 1000, data: {} }, { type: 'user/message', seq: 2, data: { source: { kind: 'user' }, content: 'question' } }]
   const ctx = {
@@ -57,6 +62,7 @@ test('宿主可选 DSH 接入贯通列表、预览和审核接口，拒绝跨路
     for (const close of cleanup.reverse()) await close()
     if (previousHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previousHome
     if (previousNotifications === undefined) delete process.env.CODEX_MONITOR_NOTIFICATIONS; else process.env.CODEX_MONITOR_NOTIFICATIONS = previousNotifications
+    for (const [key, value] of Object.entries(previousProviderHomes)) { if (value === undefined) delete process.env[key]; else process.env[key] = value }
     await rm(home, { recursive: true, force: true })
   }
 })
