@@ -2,8 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PassThrough} from 'node:stream';
 import {EventEmitter} from 'node:events';
-import {createRuntime} from '../src/runtime.js';
+import {readFile} from 'node:fs/promises';
+import {createRuntime, TASK_WATCHDOG_MS} from '../src/runtime.js';
 import {apply} from '../src/plugin.js';
+
+test('host watchdog outlasts every engine stage limit combined',async()=>{
+  const engine=await readFile(new URL('../engine/service.py',import.meta.url),'utf8');
+  const stages=[...engine.matchAll(/time\.monotonic\(\) \+ (\d+)/g)].map(match=>Number(match[1]));
+  assert.ok(stages.length>=3,'未找到引擎阶段时限');
+  const total=stages.reduce((sum,seconds)=>sum+seconds,0)*1000;
+  assert.ok(TASK_WATCHDOG_MS>=total+15*60*1000,`看门狗 ${TASK_WATCHDOG_MS}ms 应长于阶段时限之和 ${total}ms 并留出余量`);
+});
 
 function fakeProcess() {
   const child=new EventEmitter();child.pid=12345;child.exitCode=null;

@@ -27,6 +27,15 @@ test('current project selection prefers exact path then owning reactor',()=>{
   assert.equal(panel.chooseProject(projects,'D:/other').path,'D:\\other');
   assert.equal(panel.chooseProject(projects,'D:/unrelated',[],'D:/other').path,'D:\\other');
 });
+test('task summaries keep details already received and never invent missing ones',()=>{
+  const detailed={tasks:[{id:'a',logs:[{text:'a 日志'}],markdown:'# a'},{id:'b',logs:[],markdown:'',detailOmitted:true}]};
+  const next={tasks:[{id:'a',status:'succeeded',logs:[],markdown:'',detailOmitted:true},{id:'b',logs:[],markdown:'',detailOmitted:true},{id:'c',logs:[],markdown:'',detailOmitted:true}]};
+  const merged=panel.keepTaskDetails(detailed,next);
+  assert.deepEqual(JSON.parse(JSON.stringify(merged.tasks[0])),{id:'a',status:'succeeded',logs:[{text:'a 日志'}],markdown:'# a',detailOmitted:false});
+  assert.equal(merged.tasks[1].detailOmitted,true,'只收到过摘要的任务仍需向引擎读取');
+  assert.equal(merged.tasks[2].detailOmitted,true);
+  assert.equal(panel.keepTaskDetails(null,next),next);
+});
 test('artifacts switch only after the entire build or shell task succeeds',()=>{
   const previous={activeTask:'build-1'};
   const next={activeTask:'build-1',tasks:[{id:'build-1',kind:'build',status:'running',phase:'自动加壳中',artifacts:{war:'a.war'}}]};

@@ -246,6 +246,30 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(task["artifacts"]["war"], str(war))
         self.assertEqual(task["markdown"], "# Combined")
 
+    def test_state_returns_task_details_only_for_active_and_focused_tasks(self):
+        def record(task_id):
+            return {"id": task_id, "kind": "build", "status": "succeeded", "artifacts": {},
+                    "logs": [{"time": 1, "text": task_id + " 日志", "channel": "build"}], "markdown": "# " + task_id}
+        self.service.tasks = [record("newer"), record("older")]
+        by_id = lambda state: {task["id"]: task for task in state["tasks"]}
+        summary = by_id(self.service.state())
+        self.assertTrue(all(t["detailOmitted"] and t["logs"] == [] and t["markdown"] == "" for t in summary.values()))
+        focused = by_id(self.service.dispatch("state", {"focus": "older"}))
+        self.assertEqual(focused["older"]["logs"][0]["text"], "older 日志")
+        self.assertEqual(focused["older"]["markdown"], "# older")
+        self.assertNotIn("detailOmitted", focused["older"])
+        self.assertTrue(focused["newer"]["detailOmitted"])
+        self.assertEqual(self.service.tasks[0]["logs"][0]["text"], "newer 日志", "摘要不能改动任务记录")
+        # 焦点对其他操作返回的状态同样生效；运行中的任务始终带详情。
+        self.service.active = "newer"
+        try:
+            detailed = by_id(self.service.dispatch("monitor", {}))
+            self.assertNotIn("detailOmitted", detailed["newer"])
+            self.assertNotIn("detailOmitted", detailed["older"])
+        finally:
+            self.service.active = None
+        self.assertTrue(all(t.get("detailOmitted") for t in self.service.dispatch("state", {"focus": ""})["tasks"]))
+
     def test_config_validation_and_secrets_not_returned(self):
         with self.assertRaises(ValueError):
             self.service.save_settings({"release": {"url": "file:///etc", "count": 5}})

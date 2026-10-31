@@ -67,6 +67,7 @@ class PackageService:
             if task.get("status") in ("running", "cancelling"):
                 task.update(status="interrupted", phase="上次任务已中断", ended=time.time())
         self.active = None
+        self.focus = None
         self.cancel = threading.Event()
         self.stop_build = None
         self.operation = None
@@ -85,11 +86,16 @@ class PackageService:
 
     def state(self):
         with self.lock:
+            # 面板一次只显示一个任务的日志与说明。其余任务只返回摘要，避免轮询时
+            # 复制、传输全部历史日志（最多 20 个任务 × 1600 行）。
+            detailed = {self.active, self.focus}
+            tasks = [task if task["id"] in detailed else {**task, "logs": [], "markdown": "", "detailOmitted": True}
+                     for task in self.tasks]
             return copy.deepcopy({"projects": self.projects, "warnings": self.warnings,
                 "selected": self.selected, "git": self.git, "gitLoading": self.git_loading, "branches": self.branches,
                 "projectsCached": self.projects_cached,
                 "environment": self.environment, "config": self.config.to_dict(),
-                "monitorOptions": self.public_options(), "tasks": self.tasks,
+                "monitorOptions": self.public_options(), "tasks": tasks,
                 "activeTask": self.active, "monitor": self.monitor_result,
                 "monitorError": self.monitor_error,
                 "monitorBusy": bool(self.monitor_thread and self.monitor_thread.is_alive()),
@@ -550,6 +556,9 @@ class PackageService:
 
     def dispatch(self, operation, data):
         if operation == "state":
+            # 面板轮询时告知当前查看的任务；之后其他操作返回的状态也带上它的详情。
+            if "focus" in data:
+                self.focus = data["focus"] or None
             return self.state()
         if operation == "scan":
             return self.scan(data.get("workspaces", []), data.get("force", False))

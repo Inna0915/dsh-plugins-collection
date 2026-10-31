@@ -4,6 +4,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+// The engine bounds each stage itself (release notes 4 min, Maven 60 min, WAR
+// protection 12 min); note generation and dependency checks between them have no
+// separate limit. This watchdog only catches an engine that stopped responding, so
+// it must outlast all stages together or it kills a healthy task in its last stage.
+export const TASK_WATCHDOG_MS = (4 + 60 + 12 + 30) * 60 * 1000;
 
 export function createRuntime({ packageRoot = root, onStatus = () => {}, spawnProcess = spawn } = {}) {
   let child, ready, sequence = 0, buffer = '', idleTimer, disposed = false, lastActive = null;
@@ -116,7 +121,7 @@ export function createRuntime({ packageRoot = root, onStatus = () => {}, spawnPr
   }
   async function reap() {
     for (const [id, updated] of leases) if (Date.now() - updated > 25000) leases.delete(id);
-    if (lastActive && Date.now() - lastActive > 75 * 60 * 1000) { await stop(); return; }
+    if (lastActive && Date.now() - lastActive > TASK_WATCHDOG_MS) { await stop(); return; }
     if (!leases.size && child) {
       const state = await call('state');
       if (leases.size) return;
