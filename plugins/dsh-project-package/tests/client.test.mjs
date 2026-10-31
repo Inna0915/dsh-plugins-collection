@@ -12,6 +12,21 @@ globalThis.window=window;globalThis.document=window.document;globalThis.IS_REACT
 function load(code, shell=false){let exports;const context={React,console,setTimeout,clearTimeout,setInterval,clearInterval,AbortSignal,fetch:(...args)=>globalThis.fetch(...args),document:window.document,globalThis:{},window:{__ModuleLoader__:{load({factory}){exports=factory(name=>{if(name==='react')return React;throw new Error(name);});}}}};context.globalThis=context;vm.runInNewContext(code,context);return shell?exports:context.__dshProjectPackagePanelFactory(()=>React);}
 const shell=load(await readFile(new URL('../dist/client.js',import.meta.url),'utf8'),true);
 const panel=load(await readFile(new URL('../dist/panel.js',import.meta.url),'utf8'));
+test('entry accepts the built lazy panel without reloading it (versions stay in step)',async()=>{
+  // A version mismatch makes loadPanel re-insert the script forever and the panel never opens.
+  let scripts=0;let exports;
+  const context={React,console,setTimeout,clearTimeout,encodeURIComponent,
+    document:{createElement(){scripts++;throw new Error('panel script requested again');},head:{appendChild(){}}},
+    window:{__ModuleLoader__:{load({factory}){exports=factory(name=>{if(name==='react')return React;throw new Error(name);});}}}};
+  context.globalThis=context;
+  vm.runInNewContext(await readFile(new URL('../dist/panel.js',import.meta.url),'utf8'),context);
+  vm.runInNewContext(await readFile(new URL('../dist/client.js',import.meta.url),'utf8'),context);
+  const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+  assert.equal(context.__dshProjectPackagePanelVersion,version);
+  const loaded=await exports.loadPanel();
+  assert.equal(typeof loaded.PackagePanel,'function');
+  assert.equal(scripts,0);
+});
 test('entry is directly above kanban and registers no scan/timer/panel script',()=>{
   const entries=[];let selected;const cleanup=[];
   const ctx={effect(fn){cleanup.push(fn());},slots:{inject(name,fn){return fn();},register(options,render){entries.push({options,render});return()=>{};}},layout:{selectPanel(id){selected=id;}}};

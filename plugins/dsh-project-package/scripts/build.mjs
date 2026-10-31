@@ -14,9 +14,11 @@ function compile(input, platform, format, extra=[]) {
 // Runtime is a separate ESM entry; preserve the lazy import in the host shell.
 await writeFile(path.join(root,'dist/plugin.js'),compile('src/plugin.js','node','esm',['--external:./runtime.js']));
 await writeFile(path.join(root,'dist/runtime.js'),compile('src/runtime.js','node','esm'));
-const entry=compile('src/client/index.jsx','browser','cjs',['--external:react']);
-const panel=compile('src/client/panel.jsx','browser','cjs',['--external:react']);
 const {version}=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
+// The entry only accepts a lazy panel stamped with the same version; inject it
+// from package.json so a version bump cannot leave the two out of step.
+const entry=compile('src/client/index.jsx','browser','cjs',['--external:react',`--define:PANEL_VERSION=${JSON.stringify(version)}`]);
+const panel=compile('src/client/panel.jsx','browser','cjs',['--external:react']);
 await writeFile(path.join(root,'dist/client.js'),`window.__ModuleLoader__.load({id:"dsh-project-package",factory:(require)=>{var module={exports:{}};var exports=module.exports;\n${entry}\nreturn module.exports;}});\n`);
 await writeFile(path.join(root,'dist/panel.js'),`globalThis.__dshProjectPackagePanelVersion=${JSON.stringify(version)};\nglobalThis.__dshProjectPackagePanelFactory=(require)=>{var module={exports:{}};var exports=module.exports;\n${panel}\nreturn module.exports;};\n`);
 console.log(JSON.stringify({entryBytes:Buffer.byteLength(entry),lazyPanelBytes:Buffer.byteLength(panel)}));

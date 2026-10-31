@@ -4,8 +4,9 @@ export const inject = ['slots', 'layout', 'uiWorkspace', 'sessions'];
 const PANEL = 'dsh-project-package';
 let panelPromise, panelModule;
 
+/* global PANEL_VERSION -- injected by scripts/build.mjs from package.json */
 export function loadPanel() {
-  if (globalThis.__dshProjectPackagePanelVersion === '0.1.5' && globalThis.__dshProjectPackagePanelFactory) {
+  if (globalThis.__dshProjectPackagePanelVersion === PANEL_VERSION && globalThis.__dshProjectPackagePanelFactory) {
     if (!panelModule) panelModule = globalThis.__dshProjectPackagePanelFactory(name => {
     if (name === 'react') return React;
     throw new Error('Unsupported panel module: ' + name);
@@ -14,7 +15,7 @@ export function loadPanel() {
   }
   if (!panelPromise) panelPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = '/dsh-project-package/panel.js?v=0.1.5';
+    script.src = '/dsh-project-package/panel.js?v=' + encodeURIComponent(PANEL_VERSION);
     script.dataset.plugin = PANEL;
     const timer = setTimeout(() => { script.remove(); panelPromise = null; reject(new Error('面板加载超时')); }, 15000);
     script.onload = () => { clearTimeout(timer); script.remove(); panelPromise = null; loadPanel().then(resolve, reject); };
