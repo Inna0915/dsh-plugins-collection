@@ -1,6 +1,6 @@
 ---
 name: confluence-update
-description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本；也可把本机文件上传为页面附件，同名附件生成新版本。
+description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本；也可把本机文件上传为页面附件（同名附件生成新版本），或把页面连同子页面移动到同空间的新父页下。
 ---
 
 # 修改 Confluence 页面
@@ -50,3 +50,22 @@ node <本Skill目录>/scripts/run.mjs upload --page PAGE_ID --files 时序.drawi
 ```
 
 返回逐个文件的 `state`：`uploaded` 带附件 ID 与版本；`failed` 为服务器明确拒绝或上传前校验失败，修正后可用同一 `requestId` 重试；`unknown` 表示回执不明，先用 `attachments` 核实附件，不得自动重传或换 requestId 重发。requestId 不能与页面写入共用。
+
+## 移动页面
+
+`move` 把页面连同全部子页面移到同一空间的新父页下，用于调整页面树。Confluence 7.19 没有独立移动接口，运行层按官方做法在更新请求中替换父页并原样回传正文，因此页面会多一个正文不变的小改动版本，不通知关注者；标题、正文、附件、评论和页面 ID 不变。
+
+- 先不带 `apply` 预览，核对 `from`（原父页）和 `to`（目标父页）；`status=no-change` 表示已在目标下，提交也不会写入。
+- 目标是页面自身或其子孙、或在其他空间时拒绝；跨空间移动请在 Confluence 界面操作。可选 `expectedVersion` 防止移动他人刚修改过的页面。
+- 确认后用相同参数加 `apply=true` 与稳定 `requestId` 提交；每次移动使用独立 requestId，不与页面写入或上传共用。
+
+```json
+{"operation":"move","page":"12345","parent":"67890"}
+```
+
+```text
+node <本Skill目录>/scripts/run.mjs move --page PAGE_ID --parent NEW_PARENT_ID
+node <本Skill目录>/scripts/run.mjs move --page PAGE_ID --parent NEW_PARENT_ID --apply true --request-id REQUEST_ID
+```
+
+回执 `changed=true` 带新版本号。服务器明确拒绝（如版本冲突 409）记 failed，重新预览后换新 requestId；`unknown` 表示结果不明，先用 `children` 查看目标父页核实位置，不得自动重发。批量调整先建好目标父页，再逐页移动，整棵子树只需移动其根页。

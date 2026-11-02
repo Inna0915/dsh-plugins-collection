@@ -8,7 +8,7 @@ import { startMcp } from "./runtime/mcp.js";
 import { serve } from "./runtime/http.js";
 import { message } from "./runtime/store.js";
 
-const help = `Confluence Flow 0.3.0
+const help = `Confluence Flow 0.4.0
   confluence-flow call --input request.json [--wiki-file content.wiki]
   confluence-flow read --page ID_OR_URL [--grep IDOC --context 120] [--head 30] [--format wiki|outline|full]
   confluence-flow read --snapshot-id SNAPSHOT_ID --offset NEXT_OFFSET
@@ -20,6 +20,7 @@ const help = `Confluence Flow 0.3.0
   confluence-flow update --page ID --expected-version N --mode replace-section --section-id r1-s1 --wiki-file content.wiki
   confluence-flow commit --draft-id ID --request-id UNIQUE_ID
   confluence-flow upload --page ID --files A.png,B.drawio [--comment 备注] [--apply --request-id UNIQUE_ID]
+  confluence-flow move --page ID --parent NEW_PARENT_ID [--expected-version N] [--apply --request-id UNIQUE_ID]
   confluence-flow profiles | doctor | children --page ID | attachments --page ID
   confluence-flow operation-status --request-id UNIQUE_ID
   confluence-flow auth import-obsidian --source PATH [--enable-writes]
@@ -28,8 +29,9 @@ const help = `Confluence Flow 0.3.0
   confluence-flow mcp
   confluence-flow serve [--port 43138]
 
-create/update/upload 默认仅预览。提交需明确用户指令；apply=true 时必须提供 requestId。
+create/update/upload/move 默认仅预览。提交需明确用户指令；apply=true 时必须提供 requestId。
 upload 的 --files 以英文逗号分隔，相对路径按当前目录解析；同名附件上传为新版本。
+move 把页面连同子页面移到同空间的新父页下，正文不变，页面产生一个小改动版本。
 参数 --input 接受 JSON 文件，--wiki-file 读取 UTF-8 wiki，避免多行 shell 转义。
 读取默认使用五分钟缓存与 8 KiB JSON 预算；--refresh 强制最新。full 为显式完整输出。
 `;

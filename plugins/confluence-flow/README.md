@@ -2,12 +2,13 @@
 
 Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 DSH / CLI / MCP / Skills 共用的运行层。
 
-## 当前能力（0.3.0）
+## 当前能力（0.4.0）
 
 - 搜索摘要、总数、空间/标签筛选、明确的多词匹配；按页面 ID 或 URL 精简读取、批量 scan、缓存、grep 和快照续读。
 - 标准 Confluence wiki 转 storage，原生 two_right_sidebar + toc 布局。
 - 指定父页新建、追加正文、替换章节、整页更新；预览、版本冲突检查和提交回执。
 - 本机文件上传为页面附件（0.3.0）：同名附件生成新版本，先预览，逐个文件记录回执，结果不明不重传。
+- 页面移动（0.4.0）：页面连同子页面移到同空间新父页下，正文原样回传，产生一个小改动版本；先预览，已在目标下不写入，拒绝成环和跨空间，结果不明不重发。
 - DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
 - confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
 
@@ -59,7 +60,7 @@ command = "node"
 args = ["D:/dev/vscode/confluence-flow/dist/cli.js", "mcp"]
 ```
 
-配置中无需账号、密码或 token。MCP 使用与 DSH 相同的工具名和参数。可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、operation-status。`node dist/cli.js --help` 查看 CLI 参数。
+配置中无需账号、密码或 token。MCP 使用与 DSH 相同的工具名和参数。可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、upload、move、operation-status。`node dist/cli.js --help` 查看 CLI 参数。
 
 本机交付已通过客户端命令注册，无需重复手动配置。其他机器可使用 `codex mcp add confluence-flow -- node <CLI绝对路径> mcp`，或 `claude mcp add --transport stdio --scope user confluence-flow -- node <CLI绝对路径> mcp`。官方接入说明：[Codex MCP](https://developers.openai.com/codex/mcp)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)。
 
@@ -70,6 +71,7 @@ node dist/cli.js scan --pages "12345,23456" --grep "IDOC" --context 120
 node dist/cli.js read --snapshot-id SNAPSHOT_ID --grep "字段"
 node dist/cli.js call --input request.json --wiki-file document.wiki
 node dist/cli.js commit --draft-id DRAFT_ID --request-id UNIQUE_REQUEST_ID
+node dist/cli.js move --page 12345 --parent 67890 [--apply true --request-id UNIQUE_REQUEST_ID]
 ```
 
 ### 低开销读取

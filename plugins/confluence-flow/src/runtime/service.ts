@@ -15,6 +15,7 @@ import { toolSchema, type ToolInput } from "./schema.js";
 import { PageReader, invalidateReadCache } from "./reading.js";
 import { dailyMaintenance } from "./maintenance.js";
 import { applyUpload, previewUpload, uploadPaths } from "./uploads.js";
+import { applyMove, previewMove } from "./moves.js";
 import {
   jsonOutput,
   fitRows,
@@ -523,6 +524,19 @@ export class ConfluenceService {
               signal,
             )
           : previewUpload(client, page, files, comment);
+      }
+      case "move": {
+        const page = required(input.page, "要移动的页面");
+        const parent = required(input.parent, "目标父页面");
+        return input.apply
+          ? applyMove(
+              client,
+              page,
+              parent,
+              required(input.requestId, "稳定 requestId"),
+              input.expectedVersion,
+            )
+          : previewMove(client, page, parent, input.expectedVersion);
       }
     }
   }

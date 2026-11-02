@@ -70,3 +70,11 @@
 检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 51/51 通过，新增 6 个合成用例覆盖预览不写入、同名新版本与新增、重复提交不重传、requestId 不可换文件或挪作页面写入、格式/路径校验、unknown 不重传、failed 可重试、只读连接不能提交。
 
 真实页面实测（用户指定的内部时序页）：CLI 预览识别 2 个文件均为新版本；提交后 drawio 与 PNG 各生成新版本，中文文件名保持不变，附件大小与本地一致；同一 requestId 再次提交返回原回执，未产生新版本。MCP 工具需重连后才加载 upload。
+
+## 2026-11-02 页面移动（0.4.0）
+
+改动：新增 `move` 操作，把页面连同子页面移到同空间新父页下。7.19 REST 没有独立移动接口（资源列表 `content/{id}/label` 之后即 `content/{id}/property`），按官方文档在 `PUT /rest/api/content/{id}` 中替换 `ancestors`；正文原样回传 GET 得到的 storage，版本 +1 并带 `minorEdit`，不通知关注者。新增 `node` 读取层级元数据（不含正文）。先预览，已在目标下返回 no-change 且不写；目标为自身/子孙或跨空间时拒绝；可选 expectedVersion。回执记在 operations（kind=move），requestId 不能与页面写入或上传共用；服务器明确拒绝记 failed，回执不明或父页不符记 unknown，禁止自动重发。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 57/57 通过，新增 6 个合成用例覆盖预览不写入、原样回传标题与正文、minorEdit 与版本号、重复提交返回原回执、requestId 不可换目标或挪作页面写入、无变化不写、成环/跨空间/版本不符拒绝、竞争 409 记 failed、回执不明记 unknown 不重发、只读连接不能提交。
+
+真实空间实测（用户指定的 FMS 文档树重组）：只读预览识别 no-change 与原/目标父页；首个页面移动前后 storage 的 sha256 与长度一致，版本 4→5。随后 37 次移动全部 complete，逐页遍历结果原有 93 页齐全、无缺失。MCP 工具需重连后才加载 move；CLI 与 Skill 脚本立即可用。

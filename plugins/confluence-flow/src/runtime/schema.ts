@@ -13,6 +13,7 @@ export const operationNames = [
   "update",
   "commit",
   "upload",
+  "move",
   "operation-status",
 ] as const;
 export const toolShape = {
@@ -80,7 +81,7 @@ export const toolShape = {
   parent: z
     .string()
     .optional()
-    .describe("新页面的父页面 ID、URL 或发布位置别名"),
+    .describe("新页面或 move 目标的父页面 ID、URL 或发布位置别名"),
   query: z.string().optional(),
   space: z.string().optional(),
   label: z.string().max(200).optional(),
@@ -122,11 +123,11 @@ export const toolShape = {
   apply: z
     .boolean()
     .default(false)
-    .describe("create/update/upload 默认生成预览；明确授权的写入设为 true"),
+    .describe("create/update/upload/move 默认生成预览；明确授权的写入设为 true"),
   draftId: z.string().optional(),
   requestId: z.string().optional(),
 };
 export const toolSchema = z.object(toolShape).strict();
 export type ToolInput = z.infer<typeof toolSchema>;
 export const toolDescription =
-  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。";
+  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。move+page+parent 把页面连同子页面移到同空间新父页下，正文不变，先预览，apply=true+稳定 requestId 提交。";

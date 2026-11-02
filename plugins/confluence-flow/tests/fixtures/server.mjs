@@ -231,12 +231,23 @@ export async function setup(options = {}) {
         send(500, {});
         return;
       }
+      // 移动按 ancestors 换到新父页层级；普通更新保留原层级与空间。
+      const parent =
+        input.ancestors && state.pages.get(String(input.ancestors[0].id));
+      if (input.ancestors && !parent) {
+        send(400, { message: "parent not found" });
+        return;
+      }
       const updated = rawPage(
         id,
         input.body.storage.value,
         input.version.number,
         input.title,
       );
+      updated.space = current.space;
+      updated.ancestors = parent
+        ? [...parent.ancestors, { id: parent.id }]
+        : current.ancestors;
       state.pages.set(id, updated);
       send(200, updated);
       return;

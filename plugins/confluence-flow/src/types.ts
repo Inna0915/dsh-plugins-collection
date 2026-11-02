@@ -23,6 +23,15 @@ export interface Page {
   storage: string;
   updated?: string;
 }
+/** 页面层级元数据；ancestorIds 自根到直接父页，末项为父页。 */
+export interface PageNode {
+  id: string;
+  title: string;
+  spaceKey: string;
+  version: number;
+  ancestorIds: string[];
+  url: string;
+}
 export interface Attachment {
   id: string;
   title: string;

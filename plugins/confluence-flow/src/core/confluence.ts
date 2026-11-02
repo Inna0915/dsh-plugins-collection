@@ -1,4 +1,4 @@
-import type { Attachment, Auth, Page, Profile } from "../types.js";
+import type { Attachment, Auth, Page, PageNode, Profile } from "../types.js";
 import { pageId } from "../runtime/store.js";
 import { parseDocument } from "htmlparser2";
 import { isText, hasChildren } from "domhandler";
@@ -352,6 +352,49 @@ export class ConfluenceClient {
           space: { key: parent.spaceKey },
           ancestors: [{ id: parent.id }],
           body: { storage: { value: storage, representation: "storage" } },
+        },
+      ),
+    );
+  }
+  /** 只取页面层级元数据（不含正文），供移动前核对空间与祖先链。 */
+  async node(reference: string): Promise<PageNode> {
+    const id = await this.resolve(reference);
+    const raw = await this.request(
+      `/rest/api/content/${id}?expand=space,version,ancestors`,
+    );
+    if (raw.type !== "page" || String(raw.id) !== id || !raw.space?.key) {
+      throw new Error("页面响应缺少类型或空间，无法确定层级");
+    }
+    return {
+      id,
+      title: raw.title,
+      spaceKey: raw.space.key,
+      version: raw.version?.number || 1,
+      ancestorIds: (raw.ancestors || []).map((row: any) => String(row.id)),
+      url: `${this.profile.host}/pages/viewpage.action?pageId=${id}`,
+    };
+  }
+  /**
+   * 移动页面到新父页下（子页面随之移动）。7.19 没有独立的 move 接口，按官方做法在更新请求中
+   * 替换 ancestors；正文原样回传 GET 得到的 storage，因此会产生一个内容不变的新版本，按小改动提交不通知关注者。
+   */
+  async move(page: Page, parentId: string): Promise<Page> {
+    return this.normalize(
+      await this.request(
+        `/rest/api/content/${pageId(page.id)}?expand=space,version,ancestors`,
+        "PUT",
+        {
+          id: page.id,
+          type: "page",
+          title: page.title,
+          space: { key: page.spaceKey },
+          ancestors: [{ id: pageId(parentId) }],
+          version: {
+            number: page.version + 1,
+            minorEdit: true,
+            message: "Moved with Confluence Flow",
+          },
+          body: { storage: { value: page.storage, representation: "storage" } },
         },
       ),
     );
