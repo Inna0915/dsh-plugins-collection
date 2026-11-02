@@ -6,7 +6,7 @@ import { message } from "./store.js";
 
 export async function startMcp() {
   const service = new ConfluenceService();
-  const server = new McpServer({ name: "confluence-flow", version: "0.2.0" });
+  const server = new McpServer({ name: "confluence-flow", version: "0.3.0" });
   server.registerTool(
     "confluence_flow",
     {

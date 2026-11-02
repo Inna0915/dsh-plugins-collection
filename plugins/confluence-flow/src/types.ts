@@ -23,6 +23,14 @@ export interface Page {
   storage: string;
   updated?: string;
 }
+export interface Attachment {
+  id: string;
+  title: string;
+  version: number | null;
+  mediaType?: string;
+  size?: number;
+  url: string;
+}
 export interface Region {
   id: string;
   label: string;

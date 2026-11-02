@@ -1,4 +1,4 @@
-import type { Auth, Page, Profile } from "../types.js";
+import type { Attachment, Auth, Page, Profile } from "../types.js";
 import { pageId } from "../runtime/store.js";
 import { parseDocument } from "htmlparser2";
 import { isText, hasChildren } from "domhandler";
@@ -45,9 +45,12 @@ export class ConfluenceClient {
     data?: unknown,
   ): Promise<any> {
     const url = this.profile.host + endpoint;
+    // 附件上传走 multipart：由 fetch 生成边界，不能手写 Content-Type；Atlassian 要求 no-check 绕过 XSRF 校验。
+    const multipart = data instanceof FormData;
+    const timeout = AbortSignal.timeout(multipart ? 120_000 : 30_000);
     const signal = this.signal
-      ? AbortSignal.any([this.signal, AbortSignal.timeout(30_000)])
-      : AbortSignal.timeout(30_000);
+      ? AbortSignal.any([this.signal, timeout])
+      : timeout;
     const response = await this.fetcher(url, {
       method,
       signal,
@@ -55,9 +58,15 @@ export class ConfluenceClient {
       headers: {
         Authorization: this.authorization,
         Accept: "application/json",
-        "Content-Type": "application/json",
+        ...(multipart
+          ? { "X-Atlassian-Token": "no-check" }
+          : { "Content-Type": "application/json" }),
       },
-      body: data === undefined ? undefined : JSON.stringify(data),
+      body: multipart
+        ? (data as FormData)
+        : data === undefined
+          ? undefined
+          : JSON.stringify(data),
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -66,6 +75,7 @@ export class ConfluenceClient {
         403: "没有操作权限",
         404: "页面或接口不存在",
         409: "页面版本冲突，请重新读取",
+        413: "文件超过服务器附件大小限制",
         429: "请求过于频繁，请稍后重试",
       };
       throw new ConfluenceError(
@@ -239,23 +249,82 @@ export class ConfluenceClient {
       nextStart: result._links?.next ? start + result.results.length : null,
     };
   }
+  private attachment(raw: any): Attachment {
+    return {
+      id: String(raw.id),
+      title: raw.title,
+      version: Number.isSafeInteger(raw.version?.number)
+        ? raw.version.number
+        : null,
+      mediaType: raw.metadata?.mediaType,
+      size: raw.extensions?.fileSize,
+      url: raw._links?.download
+        ? new URL(raw._links.download, this.profile.host + "/").toString()
+        : "",
+    };
+  }
   async attachments(reference: string, start = 0, limit = 50): Promise<any> {
     const id = await this.resolve(reference);
     const result = await this.request(
-      `/rest/api/content/${id}/child/attachment?start=${start}&limit=${limit}`,
+      `/rest/api/content/${id}/child/attachment?expand=version&start=${start}&limit=${limit}`,
     );
     return {
-      results: (result.results || []).map((raw: any) => ({
-        id: raw.id,
-        title: raw.title,
-        mediaType: raw.metadata?.mediaType,
-        size: raw.extensions?.fileSize,
-        url: raw._links?.download
-          ? new URL(raw._links.download, this.profile.host + "/").toString()
-          : "",
-      })),
+      results: (result.results || []).map((raw: any) => this.attachment(raw)),
       nextStart: result._links?.next ? start + result.results.length : null,
     };
+  }
+  /** 按文件名精确查找页面附件；Confluence 同一页面同名附件只有一个，上传同名文件即生成新版本。 */
+  async findAttachment(
+    id: string,
+    filename: string,
+  ): Promise<Attachment | undefined> {
+    const result = await this.request(
+      `/rest/api/content/${pageId(id)}/child/attachment?` +
+        new URLSearchParams({ filename, expand: "version", limit: "5" }),
+    );
+    const raw = (result.results || []).find(
+      (row: any) => row.title === filename,
+    );
+    return raw ? this.attachment(raw) : undefined;
+  }
+  /**
+   * 上传附件：existingId 存在时为该附件上传新版本，否则新增附件。
+   * 按小改动提交，不通知页面关注者；回执缺少附件 ID 时不视为成功，由调用方按结果不明处理。
+   */
+  async uploadAttachment(
+    id: string,
+    file: { filename: string; mediaType: string; bytes: Uint8Array },
+    comment: string,
+    existingId?: string,
+  ): Promise<Attachment> {
+    const form = new FormData();
+    form.append(
+      "file",
+      new Blob([new Uint8Array(file.bytes)], { type: file.mediaType }),
+      file.filename,
+    );
+    form.append("minorEdit", "true");
+    if (comment) {
+      form.append("comment", comment);
+    }
+    const base = `/rest/api/content/${pageId(id)}/child/attachment`;
+    const result = await this.request(
+      existingId ? `${base}/${pageId(existingId)}/data` : base,
+      "POST",
+      form,
+    );
+    // 新增返回 {results:[...]}，新版本返回附件本身；两种都只接受唯一回执。
+    const raw = Array.isArray(result?.results)
+      ? result.results.length === 1
+        ? result.results[0]
+        : undefined
+      : result;
+    if (!raw?.id) {
+      throw new Error(
+        "附件上传响应缺少唯一回执，请先在 Confluence 核实附件，不要重复上传",
+      );
+    }
+    return this.attachment(raw);
   }
   async convert(wiki: string, contextId?: string): Promise<string> {
     const context = contextId ? `?contentIdContext=${pageId(contextId)}` : "";

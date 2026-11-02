@@ -62,3 +62,11 @@
 检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 45/45 通过，新增用例覆盖各目录保留期、凭证与配置不动、同日与其他进程已执行时跳过。
 
 用户目录实测：当天首次清理约 12 ms（无超龄文件，删除 0 个）；同进程再次调用约 0 ms；其他进程约 5 ms。
+
+## 2026-11-02 附件上传（0.3.0）
+
+改动：新增 `upload` 操作，把本机文件上传为页面附件；按文件名匹配，已有同名附件走 `/child/attachment/{id}/data` 上传新版本，否则新增。只收本机绝对路径（CLI 可用相对路径），白名单为图片、SVG、drawio、PDF、Office 文档，按文件头校验内容与扩展名一致；每批最多 10 个、单个 50 MB、合计 100 MB。先预览，`apply=true` + 稳定 requestId 提交；进度逐个文件记录在 operations 目录（与页面写入共用，requestId 不能跨用途复用），发送前先记 uploading，回执不明记 unknown 且不重传，服务器明确拒绝记 failed 可用原 requestId 重试。multipart 请求带 `X-Atlassian-Token: no-check`、按小改动提交、超时 120 s。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 51/51 通过，新增 6 个合成用例覆盖预览不写入、同名新版本与新增、重复提交不重传、requestId 不可换文件或挪作页面写入、格式/路径校验、unknown 不重传、failed 可重试、只读连接不能提交。
+
+真实页面实测（用户指定的内部时序页）：CLI 预览识别 2 个文件均为新版本；提交后 drawio 与 PNG 各生成新版本，中文文件名保持不变，附件大小与本地一致；同一 requestId 再次提交返回原回执，未产生新版本。MCP 工具需重连后才加载 upload。

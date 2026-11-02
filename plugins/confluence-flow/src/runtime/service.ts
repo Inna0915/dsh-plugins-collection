@@ -14,6 +14,7 @@ import {
 import { toolSchema, type ToolInput } from "./schema.js";
 import { PageReader, invalidateReadCache } from "./reading.js";
 import { dailyMaintenance } from "./maintenance.js";
+import { applyUpload, previewUpload, uploadPaths } from "./uploads.js";
 import {
   jsonOutput,
   fitRows,
@@ -507,6 +508,21 @@ export class ConfluenceService {
           draft,
           required(input.requestId, "稳定 requestId"),
         );
+      }
+      case "upload": {
+        const page = required(input.page, "目标页面");
+        const files = uploadPaths(input.files);
+        const comment = input.comment?.trim() || "";
+        return input.apply
+          ? applyUpload(
+              client,
+              page,
+              files,
+              comment,
+              required(input.requestId, "稳定 requestId"),
+              signal,
+            )
+          : previewUpload(client, page, files, comment);
       }
     }
   }

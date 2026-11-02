@@ -2,15 +2,16 @@
 
 Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 DSH / CLI / MCP / Skills 共用的运行层。
 
-## 当前能力（0.2.0）
+## 当前能力（0.3.0）
 
 - 搜索摘要、总数、空间/标签筛选、明确的多词匹配；按页面 ID 或 URL 精简读取、批量 scan、缓存、grep 和快照续读。
 - 标准 Confluence wiki 转 storage，原生 two_right_sidebar + toc 布局。
 - 指定父页新建、追加正文、替换章节、整页更新；预览、版本冲突检查和提交回执。
+- 本机文件上传为页面附件（0.3.0）：同名附件生成新版本，先预览，逐个文件记录回执，结果不明不重传。
 - DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
 - confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
 
-读取会保留原始 storage 底稿。wiki 是阅读/编写表示，任意旧页面不保证无损反向转换。部分修改保留范围外的原始字符。复杂宏在本地预览显示占位或内容摘要；Jira 宏读取为 `{jira:key=…}` / `{jira:jqlQuery=…}` 引用，可交给 Jira 工具查询，写回时由 Confluence 的格式转换还原为宏；最终动态效果请打开 Confluence 原网页。第一版提供附件列表，不上传附件；本地预览以文本标注图片引用。
+读取会保留原始 storage 底稿。wiki 是阅读/编写表示，任意旧页面不保证无损反向转换。部分修改保留范围外的原始字符。复杂宏在本地预览显示占位或内容摘要；Jira 宏读取为 `{jira:key=…}` / `{jira:jqlQuery=…}` 引用，可交给 Jira 工具查询，写回时由 Confluence 的格式转换还原为宏；最终动态效果请打开 Confluence 原网页。附件可列表和上传（图片、SVG、drawio、PDF、Office 文档）；本地预览以文本标注图片引用。
 
 局部章节编辑以 `read --format=outline` 返回的章节 items 为准；复杂宏或复杂容器内部的标题不会自动作为替换边界。
 

@@ -63,7 +63,19 @@ export async function setup(options = {}) {
     requests: [],
     failWrite: false,
     race: false,
+    // 页面 1 的附件；uploads 记录每次附件写入，failUpload 模拟回执不明的服务器错误。
+    attachments: new Map([["9", { id: "9", title: "示例.png", version: 1 }]]),
+    uploads: [],
+    failUpload: false,
   };
+  const rawAttachment = (row) => ({
+    id: row.id,
+    title: row.title,
+    version: { number: row.version },
+    metadata: { mediaType: row.mediaType || "image/png" },
+    extensions: { fileSize: row.size || 1000 },
+    _links: { download: `/download/attachments/1/${encodeURIComponent(row.title)}` },
+  });
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, "http://fixture");
     state.requests.push({
@@ -77,12 +89,57 @@ export async function setup(options = {}) {
       res.end(JSON.stringify(value));
     };
     let input;
+    let multipart;
     if (req.method === "POST" || req.method === "PUT") {
       const chunks = [];
       for await (const chunk of req) {
         chunks.push(chunk);
       }
-      input = JSON.parse(Buffer.concat(chunks).toString());
+      const body = Buffer.concat(chunks);
+      if (req.headers["content-type"]?.startsWith("multipart/form-data")) {
+        const text = body.toString("utf8");
+        multipart = {
+          xsrf: req.headers["x-atlassian-token"],
+          filename: text.match(/name="file"; filename="([^"]+)"/)?.[1],
+          minorEdit: text.match(/name="minorEdit"\r\n\r\n([^\r]*)/)?.[1],
+          comment: text.match(/name="comment"\r\n\r\n([^\r]*)/)?.[1],
+          size: body.length,
+        };
+      } else {
+        input = JSON.parse(body.toString());
+      }
+    }
+    const attachmentPath = url.pathname.match(
+      /^\/rest\/api\/content\/(\d+)\/child\/attachment(?:\/(\d+)\/data)?$/,
+    );
+    if (attachmentPath && req.method === "POST") {
+      if (multipart?.xsrf !== "no-check") {
+        send(403, { message: "XSRF check failed" });
+        return;
+      }
+      state.uploads.push({ attachmentId: attachmentPath[2], ...multipart });
+      if (state.rejectUpload) {
+        send(413, { message: "too large" });
+        return;
+      }
+      if (state.failUpload) {
+        send(500, { message: "synthetic ambiguous failure" });
+        return;
+      }
+      if (attachmentPath[2]) {
+        const row = state.attachments.get(attachmentPath[2]);
+        row.version++;
+        send(200, rawAttachment(row));
+        return;
+      }
+      if ([...state.attachments.values()].some((row) => row.title === multipart.filename)) {
+        send(400, { message: "same file name" });
+        return;
+      }
+      const row = { id: String(100 + state.uploads.length), title: multipart.filename, version: 1 };
+      state.attachments.set(row.id, row);
+      send(200, { results: [rawAttachment(row)] });
+      return;
     }
     if (url.pathname === "/rest/api/user/current") {
       send(200, { displayName: "示例用户" });
@@ -127,16 +184,11 @@ export async function setup(options = {}) {
       return;
     }
     if (url.pathname.endsWith("/child/attachment")) {
+      const filename = url.searchParams.get("filename");
       send(200, {
-        results: [
-          {
-            id: "9",
-            title: "示例.png",
-            metadata: { mediaType: "image/png" },
-            extensions: { fileSize: 1000 },
-            _links: { download: "/download/attachments/1/example.png" },
-          },
-        ],
+        results: [...state.attachments.values()]
+          .filter((row) => !filename || row.title === filename)
+          .map(rawAttachment),
         _links: {},
       });
       return;

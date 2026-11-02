@@ -1,6 +1,6 @@
 ---
 name: confluence-update
-description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本。
+description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本；也可把本机文件上传为页面附件，同名附件生成新版本。
 ---
 
 # 修改 Confluence 页面
@@ -31,3 +31,22 @@ node <本Skill目录>/scripts/run.mjs operation-status --request-id REQUEST_ID
 HTTP 409 或版本变化时重新读取，保留他人的修改后生成新预览；不要递增版本号强行重试原稿。pending / unknown 表示结果待核实，不得换 requestId 重发。报告实际修改范围、页面链接和新版本。
 
 运行层在本机用户目录保存原始 storage 快照，部分修改按源区间拼接；agent 不应自行从 Markdown 重建整页。凭据无需传给工具或写入参数文件。
+
+## 上传附件
+
+`upload` 把本机文件上传为页面附件，按文件名匹配：页面已有同名附件时上传为新版本（页面里引用该附件的图片和链接自动指向新版本，不用改正文），否则新增附件。只上传用户指定的文件；要替换已有附件，先把本机文件命名为与附件相同的名称。
+
+- `files` 为本机绝对路径（CLI 可用相对路径，英文逗号分隔），每批最多 10 个、单个 50 MB、合计 100 MB；同批文件名不能重复。
+- 支持 PNG/JPEG/GIF/WebP/BMP/SVG、`.drawio`、PDF、DOCX/XLSX/PPTX，按文件头校验内容与扩展名一致。
+- 先不带 `apply` 预览，确认每个文件的 `action`（`new-version` / `create`）和目标附件；再用相同参数加 `apply=true` 与稳定 `requestId` 上传。`comment` 写入附件版本备注；上传按小改动提交，不通知关注者。
+
+```json
+{"operation":"upload","page":"12345","files":["D:\\docs\\时序.drawio","D:\\docs\\时序.png"],"comment":"更新时序图"}
+```
+
+```text
+node <本Skill目录>/scripts/run.mjs upload --page PAGE_ID --files 时序.drawio,时序.png --comment 更新时序图
+node <本Skill目录>/scripts/run.mjs upload --page PAGE_ID --files 时序.drawio,时序.png --comment 更新时序图 --apply true --request-id REQUEST_ID
+```
+
+返回逐个文件的 `state`：`uploaded` 带附件 ID 与版本；`failed` 为服务器明确拒绝或上传前校验失败，修正后可用同一 `requestId` 重试；`unknown` 表示回执不明，先用 `attachments` 核实附件，不得自动重传或换 requestId 重发。requestId 不能与页面写入共用。

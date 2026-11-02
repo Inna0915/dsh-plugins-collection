@@ -52,7 +52,7 @@ export async function installSkills(destination?: string) {
   }
   await jsonWrite(path.join(dataHome(), "installation.json"), {
     cli: path.join(installationRoot, "dist", "cli.js"),
-    version: "0.2.0",
+    version: "0.3.0",
   });
   return {
     installed,

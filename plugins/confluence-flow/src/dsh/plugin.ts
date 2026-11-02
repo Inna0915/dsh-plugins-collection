@@ -44,5 +44,5 @@ export async function apply(ctx: any): Promise<void> {
     },
     "confluence-flow: request cleanup",
   );
-  ctx.logger.info("Confluence 文档 0.2.0 ready");
+  ctx.logger.info("Confluence 文档 0.3.0 ready");
 }
