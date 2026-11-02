@@ -145,7 +145,19 @@ export async function setup(options = {}) {
       send(200, { displayName: "示例用户" });
       return;
     }
+    // 与真实服务器一致：storage 无法解析时仍返回 200，正文为 fatal-render-error 错误块。
+    if (url.pathname === "/rest/api/contentbody/convert/view") {
+      state.storageChecks = (state.storageChecks || 0) + 1;
+      send(200, {
+        value: input.value.includes("UNPARSEABLE")
+          ? '<div class="error fatal-render-error">错误: The XML content could not be parsed. Parser message: Unexpected close tag &lt;/strong&gt;</div>'
+          : input.value,
+        representation: "view",
+      });
+      return;
+    }
     if (url.pathname === "/rest/api/contentbody/convert/storage") {
+      state.wikiConversions = (state.wikiConversions || 0) + 1;
       send(200, {
         value: fixtureConvert(input.value),
         representation: "storage",

@@ -102,6 +102,13 @@ export const toolShape = {
     .max(1_500_000)
     .optional()
     .describe("标准 Confluence wiki 标记，不是 Markdown"),
+  storage: z
+    .string()
+    .max(1_500_000)
+    .optional()
+    .describe(
+      "Confluence storage XHTML 正文，与 wiki 二选一；用于合并单元格等 wiki 无法表达的格式，提交前经服务器解析校验",
+    ),
   layout: z.enum(["right-toc", "plain"]).optional(),
   mode: z.enum(["append", "replace-section", "replace-page"]).optional(),
   sectionId: z.string().optional(),
@@ -130,4 +137,4 @@ export const toolShape = {
 export const toolSchema = z.object(toolShape).strict();
 export type ToolInput = z.infer<typeof toolSchema>;
 export const toolDescription =
-  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。move+page+parent 把页面连同子页面移到同空间新父页下，正文不变，先预览，apply=true+稳定 requestId 提交。";
+  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。合并单元格等 wiki 无法表达的格式用 storage（XHTML）代替 wiki，经服务器解析校验。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。move+page+parent 把页面连同子页面移到同空间新父页下，正文不变，先预览，apply=true+稳定 requestId 提交。";

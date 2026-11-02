@@ -2,13 +2,14 @@
 
 Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 DSH / CLI / MCP / Skills 共用的运行层。
 
-## 当前能力（0.4.0）
+## 当前能力（0.5.0）
 
 - 搜索摘要、总数、空间/标签筛选、明确的多词匹配；按页面 ID 或 URL 精简读取、批量 scan、缓存、grep 和快照续读。
 - 标准 Confluence wiki 转 storage，原生 two_right_sidebar + toc 布局。
 - 指定父页新建、追加正文、替换章节、整页更新；预览、版本冲突检查和提交回执。
 - 本机文件上传为页面附件（0.3.0）：同名附件生成新版本，先预览，逐个文件记录回执，结果不明不重传。
 - 页面移动（0.4.0）：页面连同子页面移到同空间新父页下，正文原样回传，产生一个小改动版本；先预览，已在目标下不写入，拒绝成环和跨空间，结果不明不重发。
+- storage 正文（0.5.0）：create/update 可用 storage（XHTML）代替 wiki，表达合并单元格等 wiki 无法表达的格式；预览时经服务器非持久化转换校验，无法解析即拒绝并带回解析位置。
 - DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
 - confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
 
@@ -104,7 +105,7 @@ node dist/cli.js move --page 12345 --parent 67890 [--apply true --request-id UNI
 {"operation":"create","parent":"12345","title":"接口说明","layout":"right-toc"}
 ```
 
-正文通过 --wiki-file 读取；也可以在 JSON 中提供 wiki 字符串。create/update 默认生成预览草稿；明确授权后使用 commit，或 apply=true + requestId。局部更新需 expectedVersion，replace-section 需 outline 中 kind=section 的 id 作为 sectionId。章节替换保留标题并包含子章节。单个正文区域可自动选择，多区域 append 需 kind=region 的 id 作为 regionId。整篇替换可选择 right-toc 或 plain。
+正文通过 --wiki-file 读取；也可以在 JSON 中提供 wiki 字符串。需要合并单元格（rowspan/colspan）等 wiki 无法表达的格式时，用 --storage-file 或 storage 字段提交 Confluence storage XHTML，与 wiki 二选一；正文原样提交（right-toc 仍会包装布局），提交前经服务器解析校验。create/update 默认生成预览草稿；明确授权后使用 commit，或 apply=true + requestId。局部更新需 expectedVersion，replace-section 需 outline 中 kind=section 的 id 作为 sectionId。章节替换保留标题并包含子章节。单个正文区域可自动选择，多区域 append 需 kind=region 的 id 作为 regionId。整篇替换可选择 right-toc 或 plain。
 
 页面版本冲突需要重新读取。提交超时、pending 或 unknown 状态需要核实原页面，不自动重发。相同请求标识不能用于不同内容。预览不修改 Confluence 页面。
 

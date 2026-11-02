@@ -78,3 +78,13 @@
 检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 57/57 通过，新增 6 个合成用例覆盖预览不写入、原样回传标题与正文、minorEdit 与版本号、重复提交返回原回执、requestId 不可换目标或挪作页面写入、无变化不写、成环/跨空间/版本不符拒绝、竞争 409 记 failed、回执不明记 unknown 不重发、只读连接不能提交。
 
 真实空间实测（用户指定的 FMS 文档树重组）：只读预览识别 no-change 与原/目标父页；首个页面移动前后 storage 的 sha256 与长度一致，版本 4→5。随后 37 次移动全部 complete，逐页遍历结果原有 93 页齐全、无缺失。MCP 工具需重连后才加载 move；CLI 与 Skill 脚本立即可用。
+
+## 2026-11-02 storage 正文输入（0.5.0）
+
+改动：create/update/preview 可用 `storage`（CLI `--storage-file`）代替 `wiki`，二者只能提供一个，用于合并单元格等 wiki 无法表达的格式。storage 原样使用（right-toc 仍包装布局，update 三种模式均可），预览阶段经服务器 `convert/view` 非持久化转换校验：真实服务器对无法解析的 storage 仍返回 200，正文为 `fatal-render-error` 错误块，因此按错误块判定并带回解析位置。草稿的 wiki 为 storage 的阅读表示，提交、版本校验、回执与原流程相同。
+
+真实服务器只读探测（非持久化转换）：合法 storage 的 rowspan 原样保留；未闭合标签、裸 `&`、交错闭合三类错误均返回 200 + fatal-render-error，并给出行列位置。
+
+检查（均经 run-bounded.ps1）：build、`tsc --noEmit` 通过；`node --test` 62/62 通过，新增 5 个合成用例覆盖 storage 新建（不调用 wiki 转换、保留 rowspan、包装布局）、整页替换原样提交、章节替换保留范围外宏、无法解析时预览即拒绝并带回解析信息、wiki 与 storage 互斥及缺正文提示、独立预览渲染合并单元格。
+
+真实页面实测（用户指定的 FMS 菜单文档两页）：以 storage 整页替换为合并单元格表格，服务器回读主表 115 行 / 26 处 rowspan、95 行 / 31 处 rowspan，按跨行推算网格零错误；表格 tbody 与提交内容逐字一致，正文其他位置仅有服务器实体规范化（如 → 存为 &rarr;）。

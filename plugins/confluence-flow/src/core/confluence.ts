@@ -341,6 +341,29 @@ export class ConfluenceClient {
     }
     return result.value;
   }
+  /**
+   * 用服务器解析器校验调用方直接提供的 storage（非持久化转换为 view）。
+   * 格式错误时服务器仍返回 200，正文为 fatal-render-error 错误块，因此按错误块判定并带回解析位置。
+   */
+  async validateStorage(storage: string, contextId?: string): Promise<void> {
+    const context = contextId ? `?contentIdContext=${pageId(contextId)}` : "";
+    const result = await this.request(
+      "/rest/api/contentbody/convert/view" + context,
+      "POST",
+      { value: storage, representation: "storage" },
+    );
+    if (typeof result.value !== "string" || result.representation !== "view") {
+      throw new Error("服务器没有返回有效的 storage 校验结果");
+    }
+    const failure = result.value.match(
+      /<div[^>]*class="[^"]*fatal-render-error[^"]*"[^>]*>([\s\S]*?)<\/div>/,
+    );
+    if (failure) {
+      throw new Error(
+        `storage 无法解析：${plainExcerpt(failure[1]).slice(0, 300)}`,
+      );
+    }
+  }
   async create(title: string, parent: Page, storage: string): Promise<Page> {
     return this.normalize(
       await this.request(

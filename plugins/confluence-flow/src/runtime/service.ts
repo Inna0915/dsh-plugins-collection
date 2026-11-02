@@ -84,17 +84,35 @@ export class ConfluenceService {
       message: "预览已保存，尚未发布。提交使用 draftId 与稳定 requestId。",
     };
   }
+  /**
+   * 解析写入正文：wiki 由服务器转换为 storage；直接提供的 storage 原样使用，但先经服务器解析校验，
+   * 预览阶段就拒绝格式错误。返回的 wiki 用于预览与变更对照，storage 输入时为其阅读表示。
+   */
+  private async body(
+    client: ConfluenceClient,
+    input: ToolInput,
+    contextId?: string,
+  ): Promise<{ storage: string; wiki: string }> {
+    if (input.wiki !== undefined && input.storage !== undefined) {
+      throw new Error("wiki 与 storage 只能提供一个");
+    }
+    if (input.storage !== undefined) {
+      const storage = required(input.storage, "storage 正文");
+      await client.validateStorage(storage, contextId);
+      return { storage, wiki: analyzeStorage(storage).wiki };
+    }
+    const wiki = required(input.wiki, "wiki 或 storage 正文");
+    return { storage: await client.convert(wiki, contextId), wiki };
+  }
   private async prepare(
     client: ConfluenceClient,
     input: ToolInput,
   ): Promise<Draft> {
-    const wiki = required(input.wiki, "wiki 正文");
     if (input.operation === "create") {
       const parent = await client.get(required(input.parent, "父页面"));
-      const storage = withLayout(
-        await client.convert(wiki, parent.id),
-        input.layout || "right-toc",
-      );
+      const content = await this.body(client, input, parent.id);
+      const wiki = content.wiki;
+      const storage = withLayout(content.storage, input.layout || "right-toc");
       return {
         id: randomUUID(),
         profile: input.profile,
@@ -122,7 +140,9 @@ export class ConfluenceService {
     }
     const snapshotId = await this.snapshot(input.profile, page);
     const mode = input.mode || "append";
-    let replacement = await client.convert(wiki, page.id);
+    const content = await this.body(client, input, page.id);
+    const wiki = content.wiki;
+    let replacement = content.storage;
     if (mode === "replace-page") {
       replacement = withLayout(replacement, input.layout || "right-toc");
     } else if (input.layout) {
@@ -452,13 +472,12 @@ export class ConfluenceService {
           }
           return this.previewDraft(draft);
         }
-        const storage = withLayout(
-          await client.convert(
-            required(input.wiki, "wiki 正文"),
-            input.page ? await client.resolve(input.page) : undefined,
-          ),
-          input.layout || "right-toc",
+        const content = await this.body(
+          client,
+          input,
+          input.page ? await client.resolve(input.page) : undefined,
         );
+        const storage = withLayout(content.storage, input.layout || "right-toc");
         return {
           ...analyzeStorage(storage, client.profile.host),
           status: "preview",

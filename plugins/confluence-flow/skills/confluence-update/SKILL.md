@@ -17,6 +17,8 @@ description: 修改已有 Confluence 页面，支持追加正文、替换指定�
 {"operation":"update","page":"12345","expectedVersion":7,"mode":"replace-section","sectionId":"r1-s2","wiki":"替换后的章节正文"}
 ```
 
+需要合并单元格等 wiki 无法表达的格式时，用 `storage`（CLI `--storage-file`）代替 `wiki` 提交 storage XHTML，三种模式都适用；正文原样使用，预览时经服务器解析校验，无法解析即拒绝。
+
 预览返回 `draftId`、修改前后内容、影响范围和 warnings。核对范围后，用 `commit` 携带 `draftId` 和稳定 `requestId` 提交。也可在明确授权下通过 `update` 的 `apply=true`、`requestId` 直接提交。
 
 ```text
