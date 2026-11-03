@@ -11,11 +11,18 @@ import {
   withLock,
   message,
 } from "./store.js";
-import { toolSchema, type ToolInput } from "./schema.js";
+import { deleteSchema, toolSchema, type ToolInput } from "./schema.js";
 import { PageReader, invalidateReadCache } from "./reading.js";
 import { dailyMaintenance } from "./maintenance.js";
 import { applyUpload, previewUpload, uploadPaths } from "./uploads.js";
 import { applyMove, previewMove } from "./moves.js";
+import {
+  applyDelete,
+  applyRestore,
+  previewDelete,
+  previewRestore,
+  type DeleteAuthorizer,
+} from "./deletes.js";
 import {
   jsonOutput,
   fitRows,
@@ -311,6 +318,29 @@ export class ConfluenceService {
     await dailyMaintenance();
     return jsonOutput(await this.executeInternal(raw, signal));
   }
+  /**
+   * 删除只走此入口，且必须由调用方提供授权方（DSH 弹窗/用户消息、MCP 宿主确认、终端确认）；
+   * 通用 execute 与本机面板接口不接受删除。
+   */
+  async executeDelete(
+    raw: unknown,
+    authorize: DeleteAuthorizer,
+    signal?: AbortSignal,
+  ): Promise<any> {
+    await dailyMaintenance();
+    const input = deleteSchema.parse(raw);
+    const client = await this.client(input.profile, signal);
+    return jsonOutput(
+      await applyDelete(
+        client,
+        input,
+        authorize,
+        signal
+          ? AbortSignal.any([signal, this.controller.signal])
+          : this.controller.signal,
+      ),
+    );
+  }
   private async executeInternal(
     raw: unknown,
     signal?: AbortSignal,
@@ -556,6 +586,23 @@ export class ConfluenceService {
               input.expectedVersion,
             )
           : previewMove(client, page, parent, input.expectedVersion);
+      }
+      case "delete-preview":
+        return previewDelete(
+          client,
+          required(input.page, "要删除的根页面"),
+          input.keepRoot === true,
+        );
+      case "restore": {
+        const source = required(input.deleteRequestId, "deleteRequestId");
+        return input.apply
+          ? applyRestore(
+              client,
+              source,
+              required(input.requestId, "稳定 requestId"),
+              signal,
+            )
+          : previewRestore(client, source);
       }
     }
   }

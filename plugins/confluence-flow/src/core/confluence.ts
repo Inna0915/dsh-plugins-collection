@@ -1,4 +1,11 @@
-import type { Attachment, Auth, Page, PageNode, Profile } from "../types.js";
+import type {
+  Attachment,
+  Auth,
+  Page,
+  PageInfo,
+  PageNode,
+  Profile,
+} from "../types.js";
 import { pageId } from "../runtime/store.js";
 import { parseDocument } from "htmlparser2";
 import { isText, hasChildren } from "domhandler";
@@ -83,6 +90,11 @@ export class ConfluenceClient {
         detail[response.status] ||
           `Confluence 请求失败（HTTP ${response.status}）`,
       );
+    }
+    // 删除成功返回 204 且没有正文；不能按“非 JSON”判为失败，否则已执行的删除会被误记为结果不明。
+    if (response.status === 204) {
+      await response.body?.cancel();
+      return null;
     }
     if (!response.headers.get("content-type")?.includes("application/json")) {
       await response.body?.cancel();
@@ -379,23 +391,118 @@ export class ConfluenceClient {
       ),
     );
   }
-  /** 只取页面层级元数据（不含正文），供移动前核对空间与祖先链。 */
+  private info(raw: any): PageInfo {
+    const by = raw.version?.by;
+    return {
+      id: String(raw.id),
+      title: raw.title,
+      version: raw.version?.number || 1,
+      updated: raw.version?.when,
+      modifier: by?.displayName || by?.username,
+      modifierKey: by?.username || by?.userKey,
+      // 7.19 的 expand=operations 只列当前账号可执行的操作（如仅能删除自己创建的页面）。
+      canDelete: Array.isArray(raw.operations)
+        ? raw.operations.some(
+            (row: any) => row?.operation === "delete" && row?.targetType === "page",
+          )
+        : undefined,
+    };
+  }
+  /** 只取页面层级元数据（不含正文），供移动、删除前核对空间与祖先链。 */
   async node(reference: string): Promise<PageNode> {
     const id = await this.resolve(reference);
     const raw = await this.request(
-      `/rest/api/content/${id}?expand=space,version,ancestors`,
+      `/rest/api/content/${id}?expand=space,version,ancestors,operations`,
     );
     if (raw.type !== "page" || String(raw.id) !== id || !raw.space?.key) {
       throw new Error("页面响应缺少类型或空间，无法确定层级");
     }
     return {
+      ...this.info(raw),
       id,
-      title: raw.title,
       spaceKey: raw.space.key,
-      version: raw.version?.number || 1,
       ancestorIds: (raw.ancestors || []).map((row: any) => String(row.id)),
       url: `${this.profile.host}/pages/viewpage.action?pageId=${id}`,
     };
+  }
+  /** 列出页面的全部直接子页（自动翻页，仅当前状态，不含回收站）。 */
+  async childPages(id: string): Promise<PageInfo[]> {
+    const rows: PageInfo[] = [];
+    for (let start = 0; ; ) {
+      const result = await this.request(
+        `/rest/api/content/${pageId(id)}/child/page?expand=version,operations&start=${start}&limit=100`,
+      );
+      const batch = result?.results || [];
+      rows.push(...batch.map((raw: any) => this.info(raw)));
+      if (!result?._links?.next || !batch.length) {
+        return rows;
+      }
+      start += batch.length;
+    }
+  }
+  async currentUser(): Promise<{ username?: string; userKey?: string }> {
+    const raw = await this.request("/rest/api/user/current");
+    return { username: raw?.username, userKey: raw?.userKey };
+  }
+  async homepageId(spaceKey: string): Promise<string | undefined> {
+    const raw = await this.request(
+      `/rest/api/space/${encodeURIComponent(spaceKey)}?expand=homepage`,
+    );
+    return raw?.homepage?.id ? String(raw.homepage.id) : undefined;
+  }
+  /** 把页面移到回收站（不永久清除）。子页面不会随之删除，调用方须自下而上逐页删除。 */
+  async trash(id: string): Promise<void> {
+    await this.request(`/rest/api/content/${pageId(id)}`, "DELETE");
+  }
+  /** 读取回收站中的页面；不在回收站（当前可用或已永久清除）时返回 undefined。 */
+  async trashedPage(
+    id: string,
+  ): Promise<(PageInfo & { ancestorIds: string[] }) | undefined> {
+    let raw: any;
+    try {
+      raw = await this.request(
+        `/rest/api/content/${pageId(id)}?status=trashed&expand=version,ancestors`,
+      );
+    } catch (error) {
+      if (error instanceof ConfluenceError && error.status === 404) {
+        return undefined;
+      }
+      throw error;
+    }
+    if (String(raw?.id) !== id || (raw.status && raw.status !== "trashed")) {
+      return undefined;
+    }
+    return {
+      ...this.info(raw),
+      ancestorIds: (raw.ancestors || []).map((row: any) => String(row.id)),
+    };
+  }
+  async contentStatus(id: string): Promise<"current" | "trashed" | "missing"> {
+    try {
+      const raw = await this.request(`/rest/api/content/${pageId(id)}`);
+      if (raw?.status !== "trashed") {
+        return "current";
+      }
+    } catch (error) {
+      if (!(error instanceof ConfluenceError && error.status === 404)) {
+        throw error;
+      }
+    }
+    return (await this.trashedPage(id)) ? "trashed" : "missing";
+  }
+  /** 从回收站恢复：按官方说明把状态改为 current 并递增版本，不修改其他字段。 */
+  async restore(id: string, title: string, version: number): Promise<void> {
+    await this.request(
+      `/rest/api/content/${pageId(id)}?status=trashed`,
+      "PUT",
+      {
+        id,
+        type: "page",
+        title,
+        status: "current",
+        version: { number: version + 1 },
+      },
+    );
   }
   /**
    * 移动页面到新父页下（子页面随之移动）。7.19 没有独立的 move 接口，按官方做法在更新请求中

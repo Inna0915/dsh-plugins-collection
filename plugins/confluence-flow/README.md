@@ -2,7 +2,7 @@
 
 Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 DSH / CLI / MCP / Skills 共用的运行层。
 
-## 当前能力（0.5.0）
+## 当前能力（0.6.0）
 
 - 搜索摘要、总数、空间/标签筛选、明确的多词匹配；按页面 ID 或 URL 精简读取、批量 scan、缓存、grep 和快照续读。
 - 标准 Confluence wiki 转 storage，原生 two_right_sidebar + toc 布局。
@@ -10,6 +10,7 @@ Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面
 - 本机文件上传为页面附件（0.3.0）：同名附件生成新版本，先预览，逐个文件记录回执，结果不明不重传。
 - 页面移动（0.4.0）：页面连同子页面移到同空间新父页下，正文原样回传，产生一个小改动版本；先预览，已在目标下不写入，拒绝成环和跨空间，结果不明不重发。
 - storage 正文（0.5.0）：create/update 可用 storage（XHTML）代替 wiki，表达合并单元格等 wiki 无法表达的格式；预览时经服务器非持久化转换校验，无法解析即拒绝并带回解析位置。
+- 删除到回收站（0.6.0）：页面连同子页面，或只删某页下的子页面（keepRoot），单次最多 100 页；预览令牌绑定页面集合与版本，删除权限预先整体检查，自最深层逐页删除，结果不明不重发；可按删除记录恢复。删除是独立工具 `confluence_flow_delete`，由宿主确认（见“删除与授权”）。
 - DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
 - confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
 
@@ -61,7 +62,7 @@ command = "node"
 args = ["D:/dev/vscode/confluence-flow/dist/cli.js", "mcp"]
 ```
 
-配置中无需账号、密码或 token。MCP 使用与 DSH 相同的工具名和参数。可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、upload、move、operation-status。`node dist/cli.js --help` 查看 CLI 参数。
+配置中无需账号、密码或 token。MCP 使用与 DSH 相同的工具名和参数。`confluence_flow` 可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、upload、move、delete-preview、restore、operation-status；删除使用独立工具 `confluence_flow_delete`。`node dist/cli.js --help` 查看 CLI 参数。
 
 本机交付已通过客户端命令注册，无需重复手动配置。其他机器可使用 `codex mcp add confluence-flow -- node <CLI绝对路径> mcp`，或 `claude mcp add --transport stdio --scope user confluence-flow -- node <CLI绝对路径> mcp`。官方接入说明：[Codex MCP](https://developers.openai.com/codex/mcp)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)。
 
@@ -73,6 +74,9 @@ node dist/cli.js read --snapshot-id SNAPSHOT_ID --grep "字段"
 node dist/cli.js call --input request.json --wiki-file document.wiki
 node dist/cli.js commit --draft-id DRAFT_ID --request-id UNIQUE_REQUEST_ID
 node dist/cli.js move --page 12345 --parent 67890 [--apply true --request-id UNIQUE_REQUEST_ID]
+node dist/cli.js delete-preview --page 12345 [--keep-root true]
+node dist/cli.js delete --page 12345 --token TOKEN --title 根页标题 --count N --request-id UNIQUE_REQUEST_ID
+node dist/cli.js restore --delete-request-id UNIQUE_REQUEST_ID [--apply true --request-id NEW_REQUEST_ID]
 ```
 
 ### 低开销读取
@@ -109,11 +113,25 @@ node dist/cli.js move --page 12345 --parent 67890 [--apply true --request-id UNI
 
 页面版本冲突需要重新读取。提交超时、pending 或 unknown 状态需要核实原页面，不自动重发。相同请求标识不能用于不同内容。预览不修改 Confluence 页面。
 
+### 删除与授权
+
+删除只移到回收站，不提供永久清除。`delete-preview` 列出要删除的页面（默认连同根页；`keepRoot=true` 只删子页面、保留该页），返回 30 分钟有效的 token。以下情况预览直接拒绝：包含空间首页、连接配置的浏览根页或发布位置，超过 100 页，或当前账号对任何一页没有删除权限（7.19 的 `expand=operations` 只列出当前账号可执行的操作）。提交时重新列出并比对页面集合与版本，有任何变化即拒绝；删除自最深层逐页进行，每页记录回执，失败或结果不明立即停止且不重发。`restore` 按删除记录自上而下恢复并放回原父页，从回收站恢复通常需要空间管理员权限。
+
+删除不经过通用 `confluence_flow`、本机文档面板接口或非交互命令，只能通过以下入口，各自由人确认：
+
+| 入口 | 授权方式 |
+| --- | --- |
+| DSH 工具 `confluence_flow_delete` | 用户本人在当前（非子代理）会话的最近消息里写明删除、页面 ID/链接/完整标题和范围，则直接执行；否则通过 DSH 审批在这次工具调用上弹窗，“允许一次”才执行。全访问会话（审批策略 never）不弹窗，未明确指定时拒绝并提示 |
+| MCP 工具 `confluence_flow_delete` | 标注 `destructiveHint`，由 Claude Code / Codex 对该工具的确认决定；不要把它加入自动允许列表 |
+| CLI `delete` | 用户在交互式终端输入根页标题确认；非交互调用（agent 经 Skill 脚本执行）拒绝 |
+
+“明确指定”是保守的文字核对：含否定（不要删/先别删）、询问、页面内局部删除（段落、表格、附件）或范围不符（例如消息说“不包括这个页面”而本次会删除该页）时都判为未指定，退回弹窗。标题须作为完整词出现，避免同前缀标题误配。由其他 agent 代发消息驱动的 DSH 会话（如经 CLI 委派）无法与用户本人区分，应依赖审批弹窗。
+
 ## 用户数据
 
-默认 ~/.confluence-flow，可通过 CONFLUENCE_FLOW_HOME 指定。profiles 保存非秘密连接；credentials 保存 Windows DPAPI CurrentUser 密文；snapshots 保存读取底稿；read-cache 保存阅读缓存索引；scans 保存批量摘要及分页结果；drafts 保存待发布内容；operations 保存提交回执；installation.json 记录运行层位置。快照与草稿是用户资料，不属于仓库或测试文件。
+默认 ~/.confluence-flow，可通过 CONFLUENCE_FLOW_HOME 指定。profiles 保存非秘密连接；credentials 保存 Windows DPAPI CurrentUser 密文；snapshots 保存读取底稿；read-cache 保存阅读缓存索引；scans 保存批量摘要及分页结果；drafts 保存待发布内容；delete-plans 保存删除预览令牌；operations 保存提交回执（含删除的逐页记录，供恢复）；installation.json 记录运行层位置。快照与草稿是用户资料，不属于仓库或测试文件。
 
-每天第一次调用（CLI、MCP、DSH 或界面均可）会先做一次清理，再执行请求：snapshots、scans、read-cache、drafts 保留 7 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同一进程当天后续调用不再检查；多个进程用 maintenance/ 下的当天标记文件抢占，只有一个执行。清理只扫描上述目录，实测十几毫秒，失败不影响本次请求。超过 7 天的 snapshotId 不再可用，需要重新读取；更早的页面内容可在 Confluence 页面历史中找回。
+每天第一次调用（CLI、MCP、DSH 或界面均可）会先做一次清理，再执行请求：snapshots、scans、read-cache、drafts 保留 7 天，delete-plans 保留 1 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同一进程当天后续调用不再检查；多个进程用 maintenance/ 下的当天标记文件抢占，只有一个执行。清理只扫描上述目录，实测十几毫秒，失败不影响本次请求。超过 7 天的 snapshotId 不再可用，需要重新读取；更早的页面内容可在 Confluence 页面历史中找回。
 
 Windows 凭据通过子进程标准输入保护，不放入参数或工具结果。它依赖当前 Windows 用户，不能抵御同一用户下任意代码访问。其他系统使用 credentialStore=environment，变量名为 CONFLUENCE_FLOW_AUTH_<大写连接别名，非字母数字替换为下划线>，值为 basic 或 bearer 认证 JSON；不要在聊天、仓库或配置示例中写真实值。
 

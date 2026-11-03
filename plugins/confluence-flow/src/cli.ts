@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { createInterface } from "node:readline/promises";
 import { ConfluenceService } from "./runtime/service.js";
+import type { DeleteAuthorization, DeleteTarget } from "./runtime/deletes.js";
 import { importObsidian, saveProfile, getProfile } from "./runtime/config.js";
 import { installSkills } from "./runtime/skills.js";
 import { startMcp } from "./runtime/mcp.js";
 import { serve } from "./runtime/http.js";
 import { message } from "./runtime/store.js";
 
-const help = `Confluence Flow 0.5.0
+const help = `Confluence Flow 0.6.0
   confluence-flow call --input request.json [--wiki-file content.wiki]
   confluence-flow read --page ID_OR_URL [--grep IDOC --context 120] [--head 30] [--format wiki|outline|full]
   confluence-flow read --snapshot-id SNAPSHOT_ID --offset NEXT_OFFSET
@@ -22,6 +24,9 @@ const help = `Confluence Flow 0.5.0
   confluence-flow commit --draft-id ID --request-id UNIQUE_ID
   confluence-flow upload --page ID --files A.png,B.drawio [--comment 备注] [--apply --request-id UNIQUE_ID]
   confluence-flow move --page ID --parent NEW_PARENT_ID [--expected-version N] [--apply --request-id UNIQUE_ID]
+  confluence-flow delete-preview --page ID [--keep-root true]
+  confluence-flow delete --page ID --token TOKEN --title 根页标题 --count N --request-id UNIQUE_ID
+  confluence-flow restore --delete-request-id ID [--apply --request-id UNIQUE_ID]
   confluence-flow profiles | doctor | children --page ID | attachments --page ID
   confluence-flow operation-status --request-id UNIQUE_ID
   confluence-flow auth import-obsidian --source PATH [--enable-writes]
@@ -33,10 +38,41 @@ const help = `Confluence Flow 0.5.0
 create/update/upload/move 默认仅预览。提交需明确用户指令；apply=true 时必须提供 requestId。
 upload 的 --files 以英文逗号分隔，相对路径按当前目录解析；同名附件上传为新版本。
 move 把页面连同子页面移到同空间的新父页下，正文不变，页面产生一个小改动版本。
+delete 把子树移到回收站，须先 delete-preview，并在交互式终端输入根页标题确认；agent 请用 confluence_flow_delete 工具。
 参数 --input 接受 JSON 文件，--wiki-file 读取 UTF-8 wiki，避免多行 shell 转义。
 --storage-file 读取 UTF-8 storage（XHTML），与 wiki 二选一，用于合并单元格等 wiki 无法表达的格式，提交前经服务器解析校验。
 读取默认使用五分钟缓存与 8 KiB JSON 预算；--refresh 强制最新。full 为显式完整输出。
 `;
+/** CLI 删除由用户在交互式终端输入根页标题确认；非交互调用（agent 经 Skill 脚本执行）一律拒绝。 */
+async function terminalConfirm(
+  target: DeleteTarget,
+  signal: AbortSignal,
+): Promise<DeleteAuthorization> {
+  if (!process.stdin.isTTY || !process.stderr.isTTY) {
+    throw new Error(
+      "CLI 删除需要用户在交互式终端中输入标题确认，未删除任何页面；agent 请改用 confluence_flow_delete 工具（DSH 或 MCP），由宿主确认",
+    );
+  }
+  const prompt = createInterface({
+    input: process.stdin,
+    output: process.stderr,
+  });
+  try {
+    const scope = target.keepRoot
+      ? `《${target.title}》下的全部子页面共 ${target.count} 页（保留该页面本身）`
+      : `《${target.title}》${target.count > 1 ? `及其全部子页面共 ${target.count} 页` : ""}`;
+    const answer = await prompt.question(
+      `将把${scope}移到回收站（空间 ${target.spaceKey}）。\n输入根页面标题确认，其他输入取消：`,
+      { signal },
+    );
+    if (answer.trim() !== target.title.trim()) {
+      throw new Error("输入与标题不一致，已取消，未删除任何页面");
+    }
+    return { method: "terminal" };
+  } finally {
+    prompt.close();
+  }
+}
 function options(args: string[]): Record<string, any> {
   const result: Record<string, any> = {};
   for (let index = 0; index < args.length; index++) {
@@ -153,12 +189,13 @@ async function main() {
     "maxMatches",
     "head",
     "maxBytes",
+    "count",
   ]) {
     if (input[key] !== undefined) {
       input[key] = Number(input[key]);
     }
   }
-  for (const key of ["raw", "apply", "caseSensitive", "refresh"]) {
+  for (const key of ["raw", "apply", "caseSensitive", "refresh", "keepRoot"]) {
     if (input[key] !== undefined) {
       if (![true, false, "true", "false"].includes(input[key])) {
         throw new Error(`${key} 必须是 true 或 false`);
@@ -168,14 +205,28 @@ async function main() {
   }
   const service = new ConfluenceService();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120_000);
+  const deleting = input.operation === "delete";
+  // 删除含终端确认与逐页请求，放宽到 10 分钟。
+  const timer = setTimeout(
+    () => controller.abort(),
+    deleting ? 600_000 : 120_000,
+  );
   const cancel = () => controller.abort();
   process.once("SIGINT", cancel);
   process.once("SIGTERM", cancel);
   try {
-    process.stdout.write(
-      JSON.stringify(await service.execute(input, controller.signal)) + "\n",
-    );
+    let result;
+    if (deleting) {
+      const { operation, ...rest } = input;
+      result = await service.executeDelete(
+        rest,
+        (target) => terminalConfirm(target, controller.signal),
+        controller.signal,
+      );
+    } else {
+      result = await service.execute(input, controller.signal);
+    }
+    process.stdout.write(JSON.stringify(result) + "\n");
   } finally {
     clearTimeout(timer);
     service.dispose();

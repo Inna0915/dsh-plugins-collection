@@ -67,7 +67,13 @@ export async function setup(options = {}) {
     attachments: new Map([["9", { id: "9", title: "示例.png", version: 1 }]]),
     uploads: [],
     failUpload: false,
+    // 删除：deletes 记录 DELETE 顺序；rejectDelete/failDelete 指定页面返回 403/500。
+    deletes: [],
+    restores: [],
+    homepageId: "100",
   };
+  const parentOf = (page) => String(page.ancestors.at(-1)?.id ?? "");
+  const current = (page) => page && page.status !== "trashed";
   const rawAttachment = (row) => ({
     id: row.id,
     title: row.title,
@@ -142,7 +148,19 @@ export async function setup(options = {}) {
       return;
     }
     if (url.pathname === "/rest/api/user/current") {
-      send(200, { displayName: "示例用户" });
+      send(200, {
+        displayName: "示例用户",
+        username: "fixture-user",
+        userKey: "key-fixture",
+      });
+      return;
+    }
+    const space = url.pathname.match(/^\/rest\/api\/space\/([^/]+)$/);
+    if (space) {
+      send(200, {
+        key: decodeURIComponent(space[1]),
+        homepage: { id: state.homepageId },
+      });
       return;
     }
     // 与真实服务器一致：storage 无法解析时仍返回 200，正文为 fatal-render-error 错误块。
@@ -191,8 +209,18 @@ export async function setup(options = {}) {
       send(200, { results: [...state.pages.values()], _links: {} });
       return;
     }
-    if (url.pathname.endsWith("/child/page")) {
-      send(200, { results: [state.pages.get("1")], _links: {} });
+    const childPath = url.pathname.match(/^\/rest\/api\/content\/(\d+)\/child\/page$/);
+    if (childPath) {
+      const start = Number(url.searchParams.get("start") || 0);
+      const limit = Number(url.searchParams.get("limit") || 25);
+      const rows = [...state.pages.values()].filter(
+        (page) =>
+          current(page) && page.id !== childPath[1] && parentOf(page) === childPath[1],
+      );
+      send(200, {
+        results: rows.slice(start, start + limit),
+        _links: start + limit < rows.length ? { next: "next" } : {},
+      });
       return;
     }
     if (url.pathname.endsWith("/child/attachment")) {
@@ -207,8 +235,60 @@ export async function setup(options = {}) {
     }
     const id = url.pathname.match(/^\/rest\/api\/content\/(\d+)$/)?.[1];
     if (id && req.method === "GET") {
+      // 与真实服务器一致：默认只返回当前页面，status=trashed 只返回回收站页面。
       const page = state.pages.get(id);
-      send(page ? 200 : 404, page || {});
+      const trashed = url.searchParams.get("status") === "trashed";
+      const found = page && (trashed ? page.status === "trashed" : current(page));
+      send(found ? 200 : 404, found ? page : {});
+      return;
+    }
+    if (id && req.method === "DELETE") {
+      state.deletes.push(id);
+      if (state.rejectDelete === id) {
+        send(403, {});
+        return;
+      }
+      if (state.failDelete === id) {
+        send(500, {});
+        return;
+      }
+      const page = state.pages.get(id);
+      if (!current(page)) {
+        send(404, {});
+        return;
+      }
+      page.status = "trashed";
+      // Confluence 删除单页不级联：现存子页挂到被删页的父页下。
+      for (const child of state.pages.values()) {
+        if (current(child) && child.id !== id && parentOf(child) === id) {
+          child.ancestors = page.ancestors.slice();
+        }
+      }
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+    if (id && req.method === "PUT" && url.searchParams.get("status") === "trashed") {
+      state.restores.push({ id, input });
+      const page = state.pages.get(id);
+      if (state.rejectRestore) {
+        send(403, {});
+        return;
+      }
+      if (!page || page.status !== "trashed") {
+        send(404, {});
+        return;
+      }
+      if (input.status !== "current" || input.version.number !== page.version.number + 1) {
+        send(409, {});
+        return;
+      }
+      page.status = "current";
+      page.version = { ...page.version, number: input.version.number };
+      if (state.restoreToTop) {
+        page.ancestors = [];
+      }
+      send(200, page);
       return;
     }
     if (req.method === "POST" && url.pathname === "/rest/api/content") {

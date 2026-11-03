@@ -23,12 +23,20 @@ export interface Page {
   storage: string;
   updated?: string;
 }
-/** 页面层级元数据；ancestorIds 自根到直接父页，末项为父页。 */
-export interface PageNode {
+/** 页面版本摘要；modifierKey 为最后修改人的用户名或 userKey，用于判断是否他人修改。 */
+export interface PageInfo {
   id: string;
   title: string;
-  spaceKey: string;
   version: number;
+  updated?: string;
+  modifier?: string;
+  modifierKey?: string;
+  /** 当前账号能否删除；服务器未返回 operations 时为 undefined（未知）。 */
+  canDelete?: boolean;
+}
+/** 页面层级元数据；ancestorIds 自根到直接父页，末项为父页。 */
+export interface PageNode extends PageInfo {
+  spaceKey: string;
   ancestorIds: string[];
   url: string;
 }

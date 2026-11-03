@@ -57,7 +57,7 @@ export function createHttpHandler(service: ConfluenceService) {
     }
     const url = new URL(req.url || "/", "http://localhost");
     if (url.pathname === "/confluence-flow/bootstrap" && req.method === "GET") {
-      send(res, 200, { token, version: "0.5.0" });
+      send(res, 200, { token, version: "0.6.0" });
       return;
     }
     const provided =

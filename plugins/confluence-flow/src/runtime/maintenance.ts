@@ -11,6 +11,8 @@ export const retentionDays: Record<string, number> = {
   "read-cache": 7,
   drafts: 7,
   operations: 30,
+  // 删除预览令牌 30 分钟有效，过期文件次日清理。
+  "delete-plans": 1,
 };
 let checked = "";
 

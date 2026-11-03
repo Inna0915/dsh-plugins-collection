@@ -14,12 +14,17 @@ export const operationNames = [
   "commit",
   "upload",
   "move",
+  "delete-preview",
+  "restore",
   "operation-status",
 ] as const;
 export const toolShape = {
   operation: z.enum(operationNames),
   profile: z.string().default("work-confluence").describe("已配置的连接别名"),
-  page: z.string().optional().describe("页面 ID、完整 URL 或发布位置别名"),
+  page: z
+    .string()
+    .optional()
+    .describe("页面 ID、完整 URL 或发布位置别名；delete-preview 为要删除的子树根页"),
   pages: z
     .array(z.string().min(1).max(1000))
     .min(1)
@@ -130,11 +135,43 @@ export const toolShape = {
   apply: z
     .boolean()
     .default(false)
-    .describe("create/update/upload/move 默认生成预览；明确授权的写入设为 true"),
+    .describe(
+      "create/update/upload/move/restore 默认生成预览；明确授权的写入设为 true",
+    ),
   draftId: z.string().optional(),
   requestId: z.string().optional(),
+  deleteRequestId: z
+    .string()
+    .max(160)
+    .optional()
+    .describe("restore 要恢复的删除操作 requestId"),
+  keepRoot: z
+    .boolean()
+    .optional()
+    .describe("delete-preview 只删除该页面下的子页面，保留页面本身"),
 };
 export const toolSchema = z.object(toolShape).strict();
 export type ToolInput = z.infer<typeof toolSchema>;
 export const toolDescription =
-  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。合并单元格等 wiki 无法表达的格式用 storage（XHTML）代替 wiki，经服务器解析校验。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。move+page+parent 把页面连同子页面移到同空间新父页下，正文不变，先预览，apply=true+稳定 requestId 提交。";
+  "搜索 Confluence，返回摘要和 totalSize，默认多词 AND。read 默认仅 wiki、8 KiB JSON 预算，可 grep/head，snapshotId+offset 本地续读；scan+pages 批量缓存并仅返回命中次数和片段，scanId+start 继续结果，勿重复抓取。获取编辑章节标识用 format=outline；full 仅在需要完整 UI 数据时显式选择。写入需用户指令、apply=true 或 commit、稳定 requestId；更新须 expectedVersion，冲突重新读，不重发未知结果。合并单元格等 wiki 无法表达的格式用 storage（XHTML）代替 wiki，经服务器解析校验。upload+page+files 上传本机文件为页面附件（同名生成新版本），先预览，apply=true+稳定 requestId 提交，结果不明不重传。move+page+parent 把页面连同子页面移到同空间新父页下，正文不变，先预览，apply=true+稳定 requestId 提交。delete-preview+page 列出页面连同全部子页面（最多 100 页；keepRoot=true 只列子页面、保留该页）并返回 token，不删除；实际删除用 confluence_flow_delete。restore+deleteRequestId 预览恢复，apply=true+新的 requestId 从回收站按原层级恢复。";
+
+export const deleteShape = {
+  profile: z.string().default("work-confluence").describe("已配置的连接别名"),
+  page: z
+    .string()
+    .min(1)
+    .describe("要删除的子树根页面 ID 或 URL，须与 delete-preview 相同"),
+  token: z.string().min(1).max(80).describe("delete-preview 返回的 token"),
+  title: z.string().min(1).max(255).describe("根页面标题，须与预览一致"),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .describe("预览中将删除的页面数（预览返回的 count），须与预览一致"),
+  requestId: z.string().min(1).describe("稳定请求标识；每次删除使用新的标识"),
+};
+export const deleteSchema = z.object(deleteShape).strict();
+export type DeleteToolInput = z.infer<typeof deleteSchema>;
+export const deleteDescription =
+  "把 Confluence 页面连同全部子页面（或按预览 keepRoot 只删子页面、保留该页）移到回收站（不永久删除），从最深层逐页删除。先用 confluence_flow 的 delete-preview 取得 token 与页面清单并告知用户；page/token/title（根页标题）/count 须与预览一致，并使用稳定 requestId。DSH 中：用户本人消息里写明删除、页面 ID/链接/完整标题及范围（连同子页，或只删其下页面）则直接执行，否则弹窗请用户确认；被拒绝不要重试。预览后页面有变化会拒绝，需重新预览。结果不明时用 operation-status 核实，禁止换 requestId 重发；恢复用 confluence_flow 的 restore。";

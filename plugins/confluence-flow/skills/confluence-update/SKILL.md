@@ -1,6 +1,6 @@
 ---
 name: confluence-update
-description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本；也可把本机文件上传为页面附件（同名附件生成新版本），或把页面连同子页面移动到同空间的新父页下。
+description: 修改已有 Confluence 页面，支持追加正文、替换指定章节和整页更新，保留未修改区域并校验页面版本；也可把本机文件上传为页面附件（同名附件生成新版本），把页面连同子页面移动到同空间的新父页下，或经用户确认把页面子树移到回收站并可恢复。
 ---
 
 # 修改 Confluence 页面
@@ -71,3 +71,30 @@ node <本Skill目录>/scripts/run.mjs move --page PAGE_ID --parent NEW_PARENT_ID
 ```
 
 回执 `changed=true` 带新版本号。服务器明确拒绝（如版本冲突 409）记 failed，重新预览后换新 requestId；`unknown` 表示结果不明，先用 `children` 查看目标父页核实位置，不得自动重发。批量调整先建好目标父页，再逐页移动，整棵子树只需移动其根页。
+
+## 删除页面（移到回收站）
+
+只在用户明确要求删除时使用；“整理”“清理”等说法不等于删除，先问清楚。删除只移到回收站，不永久清除，单次最多 100 页。上文“已有授权无需重复确认”不适用于删除。
+
+1. 用 `confluence_flow` 的 `delete-preview` 列出要删除的页面：默认连同根页删除整棵子树；用户只要删“某页下的文档”时加 `keepRoot=true`，保留该页本身。预览返回 `token`（30 分钟有效）、`count`、页面清单和 `recentByOthers`（他人近 7 天修改的页）。包含空间首页、连接配置的根页或发布位置，或当前账号对任何一页没有删除权限时，预览直接拒绝。
+2. 向用户说明根页、范围（是否保留根页）、页数和他人近期修改的页面。
+3. 调用独立工具 `confluence_flow_delete`，携带 `page`、`token`、`title`（根页标题）、`count` 与新的稳定 `requestId`。授权由宿主完成：
+   - DSH：用户本人消息里写明删除、页面 ID/链接/完整标题和范围（“及子页/连同”或“下的所有文档/不包括这个页面”）则直接执行；否则弹窗确认。全访问会话不能弹窗，未明确指定时会拒绝并给出指引。
+   - Claude Code / Codex（MCP）：由客户端对该工具弹出确认；不要把它加入自动允许列表。
+   - 被拒绝时不要重试，除非用户再次明确要求。
+
+```json
+{"operation":"delete-preview","page":"12345","keepRoot":true}
+```
+
+预览后页面有任何增减、移动或修改都会拒绝，需重新预览。删除自最深层逐页进行：服务器拒绝记 failed、结果不明记 unknown，都会立即停止且不自动重发，用 `operation-status` 查看逐页状态。
+
+恢复：`restore` + `deleteRequestId` 先预览，再加 `apply=true` 与新的 `requestId` 自上而下恢复并放回原父页；从回收站恢复通常需要空间管理员权限。
+
+CLI 的 `delete` 需要用户在交互式终端输入根页标题确认，agent 经 Skill 脚本执行会被拒绝；没有上述工具时请用户自己在终端执行：
+
+```text
+node <本Skill目录>/scripts/run.mjs delete-preview --page PAGE_ID [--keep-root true]
+node <本Skill目录>/scripts/run.mjs delete --page PAGE_ID --token TOKEN --title 根页标题 --count N --request-id REQUEST_ID
+node <本Skill目录>/scripts/run.mjs restore --delete-request-id REQUEST_ID [--apply true --request-id NEW_REQUEST_ID]
+```
