@@ -1,6 +1,8 @@
 # DSH 最近会话与工作区折叠
 
-版本 0.1.7；已验证支持 DeepSeek Harness Desktop 0.2.1-rc.3、0.2.1-rc.5。
+版本 0.1.8；兼容 DeepSeek Harness Desktop 0.2.1-rc.3、0.2.1-rc.5、0.2.2-rc.1。
+
+0.1.8 修复升级到 0.2.2-rc.1 后因旧版兼容声明被跳过的问题。保留原来的最近会话、置顶与工作区折叠行为；验证范围见仓库 `docs/compatibility-2026-11-05.md`。
 
 - 工作区顶层文件夹默认显示 5 个，每次展开 5 个，可收回前 5 个。
 - 工作区下面显示跨工作区的最近会话，默认 5 条，每次展开 5 条；点击打开原会话。
@@ -28,7 +30,7 @@ pwsh -NoProfile -File scripts/verify.ps1
 pwsh -NoProfile -File scripts/install-local.ps1
 ```
 
-脚本把发布文件复制到 `%USERPROFILE%/.dsh/local-plugins/dsh-sidebar-recents`，建立 Desktop profile 的依赖目录链接，并只在 `package.json` 中登记该依赖与 bundle。写入前备份 manifest，检测并发变化并原子写入。现有 `cordis.patch.yml`、模型、凭据、代理和其他插件设置不改动。启用的 DSH HMR 负责加载。
+脚本把发布文件复制到 `%USERPROFILE%/.dsh/local-plugins/dsh-sidebar-recents`，建立 Desktop profile 的依赖目录链接，并只在 `package.json` 中登记该依赖与 bundle。写入前备份 manifest，检测并发变化并原子写入。现有 `cordis.patch.yml`、模型、凭据、代理和其他插件设置不改动。已装载插件可由宿主 HMR 更新；启动时被版本检查跳过的插件可能需要重新启动 DSH。以安装目录的当前版本运行时回执确认激活。
 
 禁用可在 DSH 插件页操作，或执行：
 

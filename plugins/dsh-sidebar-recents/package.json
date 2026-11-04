@@ -1,13 +1,13 @@
 {
   "name": "dsh-sidebar-recents",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "最近会话与工作区折叠：默认五项、点击标题收起、原会话跳转与收起全部文件夹。",
   "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=20.19",
-    "dsh": "0.2.1-rc.3 || 0.2.1-rc.5"
+    "dsh": "0.2.1-rc.3 || 0.2.1-rc.5 || 0.2.2-rc.1"
   },
   "main": "./dist/plugin.js",
   "exports": {

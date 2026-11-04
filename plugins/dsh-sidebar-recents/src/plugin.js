@@ -9,7 +9,7 @@ export function apply(ctx) {
   const activatedAt = new Date().toISOString();
   const writeReceipt = (active) => writeFileSync(receiptPath, JSON.stringify({
     plugin: 'dsh-sidebar-recents',
-    version: '0.1.7',
+    version: '0.1.8',
     pid: process.pid,
     active,
     activatedAt,

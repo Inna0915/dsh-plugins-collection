@@ -1,6 +1,8 @@
 # 项目打包看板
 
-插件版本 0.1.6，已验证支持 DSH Desktop 0.2.1-rc.3、0.2.1-rc.5。入口位于「会话看板」正上方，原生主面板展示项目、构建详情与产物；历史任务收进详情栏的下拉框，不再显示三列任务看板。
+插件版本 0.1.7，兼容 DSH Desktop 0.2.1-rc.3、0.2.1-rc.5、0.2.2-rc.1。入口位于「会话看板」正上方，原生主面板展示项目、构建详情与产物；历史任务收进详情栏的下拉框，不再显示三列任务看板。
+
+0.1.7 修复升级到 0.2.2-rc.1 后被宿主版本检查跳过、入口消失的问题。保留旧版支持，不使用版本豁免。验证范围见仓库 `docs/compatibility-2026-11-05.md`。
 
 首次主动打开才加载面板和打包引擎、读取配置及识别工作区。启动时不扫描项目、不启动 Python/Maven、不访问 Jenkins 或仓库。关闭面板停止监控；正在执行的任务继续，结束后释放空闲引擎。重新打开可查看任务历史。
 
@@ -28,7 +30,7 @@
 
 ## 开发与安装
 
-运行 `scripts/verify.ps1` 完成有界验证，`scripts/install-local.ps1` 安装。`-Disable` 仅移除本插件 bundle。安装不修改官方文件，不退出 DSH；宿主 HMR 负责装载。
+运行 `scripts/verify.ps1` 完成有界验证，`scripts/install-local.ps1` 安装。`-Disable` 仅移除本插件 bundle。安装不修改官方文件，不退出 DSH；已装载插件可由宿主 HMR 更新，但启动时因版本不匹配而被跳过的插件可能需要重新启动 DSH。以安装目录 `runtime-status.json` 的版本、当前宿主 PID 和 `active: true` 确认激活。
 
 `engine/core/` 来源于 PackageTool 1.6.1（aa63f5c），保留业务实现。增加了显式产物模块适配；`engine/service.py` 是无界面工作流。`dist/client.js` 只含入口和懒加载壳，`dist/panel.js` 在主动打开后下载。`dist/runtime.js` 由宿主路由首次请求时导入。
 
