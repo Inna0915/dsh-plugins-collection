@@ -1,5 +1,11 @@
 # Jira Flow 验证记录
 
+## 2026-11-05 创建后默认待办（Skill）
+
+- `jira-create`（插件内置版与本地定制版）新增创建成功后默认流转到「To Do 待办」：读取该任务当次真实流转，不硬编码状态或 transition ID；已是待办则跳过，没有待办流转、缺少必填字段或提交失败时保留已创建任务并报告实际状态，不重建。
+- 只读验证：PDSTDTTA-14610 处于 Funnel 漏斗时，`transitions` 返回 481「To Do 待办」且 `fields` 为空；`issue` 正常返回 `status` 与 `updated`。MCP 与已安装 Skill 的 CLI 包装脚本均成功读取。
+- 未执行真实创建或流转写入；未改插件代码、版本或 dist。
+
 ## 0.1.8：2026-10-26 创建图片附件与补传
 
 - `jira-create` 新增带图创建；`jira-update-progress` 新增已有任务图片上传。CLI 支持重复 `--image`，MCP / DSH 支持 `imagePaths`、`attach` 与只读 `attachment-settings`。两份变更 Skill 通过官方 quick_validate，并已同步至本机安装目录；运行层指向 0.1.8。DSH 本地插件链接使用同一构建，工具与 Skill 注册需宿主重新加载后生效。

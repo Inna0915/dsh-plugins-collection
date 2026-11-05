@@ -12,7 +12,7 @@ DSH Desktop 定制插件和配套 agent skill 的唯一源码仓库。
 | `plugins/dsh-sidebar-recents` | 最近会话与工作区折叠 | `~/Documents/助手/dsh-sidebar-recents` |
 | `plugins/codex-monitor` | 会话看板 | `~/.dsh/local-plugins/20260930/codex-monitor` |
 | `plugins/meal-panel` | 饭否午晚 | `~/.dsh/local-plugins/meal-panel` |
-| `skills/jira-create` | 本地定制版（默认 Story，禁止 Task） | `~/.agents/skills/jira-create` |
+| `skills/jira-create` | 本地定制版（默认 Story，禁止 Task；创建后默认待办） | `~/.agents/skills/jira-create` |
 | `skills/jira-personal-report` | 个人周报/月报 | `~/.agents/skills/jira-personal-report` |
 | `skills/codex-worker` | 委派 Codex CLI | `~/.claude/skills/codex-worker` |
 | `skills/dsh-worker` | 委派 DSH CLI | `~/.claude/skills/dsh-worker` |
