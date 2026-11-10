@@ -9,6 +9,9 @@ window.__ModuleLoader__.load({
     const primitives = require("@deepseek-ai/dsh-client-ui-primitives");
     const VERSION = "0.6.0";
     const MAIN_PANEL_ID = "codex-monitor";
+    const RUNNING_TAB_ID = "codex-monitor/running";
+    const RUNNING_TAB_KIND = "codex-monitor-running";
+    const RUNNING_TAB_LABEL = "运行中的会话";
     const MonitorIcon = primitives.IconChecklistOutlineRegular || primitives.IconChecklistOutline14;
     const RefreshIcon = primitives.IconRefreshOutlineRegular || primitives.IconRefreshOutline16;
     const SearchIcon = primitives.IconSearchOutlineRegular || primitives.IconSearchOutline16;
@@ -119,12 +122,12 @@ window.__ModuleLoader__.load({
     function request(path, options) {
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const signal = options?.signal ? AbortSignal.any([controller.signal, options.signal]) : controller.signal;
       const init = Object.assign({
         method: "GET",
         cache: "no-store",
-        headers: { accept: "application/json" },
-        signal: controller.signal
-      }, options || {});
+        headers: { accept: "application/json" }
+      }, options, { signal });
       if (init.body !== undefined) {
         init.headers = Object.assign({}, init.headers, { "content-type": "application/json; charset=utf-8" });
         init.body = JSON.stringify(init.body);
@@ -429,7 +432,7 @@ window.__ModuleLoader__.load({
         ),
         React.createElement("div", { className: "cdm-cardActions" },
           React.createElement("button", { type: "button", className: "cdm-reviewBtn", onClick: () => props.onPreview(session) }, "查看会话"),
-          session.status === "running" ? React.createElement("button", {
+          session.status === "running" && !props.compact ? React.createElement("button", {
             type: "button",
             className: "cdm-reviewBtn",
             disabled: props.dismissDisabled || props.dismissing || !session.observedAt,
@@ -843,13 +846,130 @@ window.__ModuleLoader__.load({
       );
     }
 
-    const inject = ["slots", "layout"];
+    const RUNNING_CSS = `
+      .cdm-runningEntry{display:grid;place-items:center;width:30px;height:30px;padding:6px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+      .cdm-runningEntry:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
+      .cdm-runningEntry>svg{width:16px;height:16px}
+      .cdm-runningHead{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--dsw-alias-divider-1,rgba(127,127,127,.2))}
+      .cdm-runningHead>.cdm-title{font-size:13px}
+      .cdm-runningList{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px;overflow-y:auto}
+      .cdm-runningList>.cdm-card{min-width:0;padding:9px}
+      .cdm-runningList .cdm-cardIdentity{margin-bottom:6px}
+      .cdm-runningList .cdm-agentLogo{width:26px;height:26px}
+      .cdm-runningList .cdm-agentLogo img{width:21px;height:21px}
+      .cdm-runningList .cdm-cardActions{justify-content:flex-end}
+      .cdm-runningList>.cdm-sourceWarning{font-size:12px;padding:2px 3px;overflow-wrap:anywhere}
+      .cdm-runningPanel .cdm-preview{width:100%}
+    `;
+
+    function RunningPanel({ useTabInfo }) {
+      const { tab } = useTabInfo();
+      const active = tab.visible;
+      const [snapshot, setSnapshot] = React.useState(null);
+      const [error, setError] = React.useState("");
+      const [previewId, setPreviewId] = React.useState(null);
+
+      React.useEffect(() => {
+        if (!active) return;
+        const controller = new AbortController();
+        let loading = false;
+        const load = async () => {
+          if (loading || document.visibilityState === "hidden") return;
+          loading = true;
+          try {
+            const next = await request("/codex-monitor/sessions", { signal: controller.signal });
+            if (controller.signal.aborted) return;
+            const sessions = next.sessions.filter((session) => session.status === "running");
+            setSnapshot({ ...next, sessions });
+            setPreviewId((id) => id && sessions.some((session) => session.sessionId === id) ? id : null);
+            setError("");
+          } catch (failure) {
+            if (controller.signal.aborted) return;
+            setPreviewId(null);
+            setError(failure instanceof Error ? failure.message : String(failure));
+          } finally {
+            loading = false;
+          }
+        };
+        load();
+        const timer = window.setInterval(load, POLL_MS);
+        document.addEventListener("visibilitychange", load);
+        return () => {
+          controller.abort();
+          window.clearInterval(timer);
+          document.removeEventListener("visibilitychange", load);
+        };
+      }, [active]);
+
+      const sessions = error ? [] : snapshot?.sessions || [];
+      const loading = !error && (!snapshot || (!snapshot.generatedAt && snapshot.refreshing));
+      const unavailable = Object.entries(snapshot?.sources || {})
+        .filter(([, source]) => source.status === "degraded" || source.status === "unavailable")
+        .map(([key]) => PROVIDERS[key] || key);
+      const preview = active && sessions.find((session) => session.sessionId === previewId);
+      return React.createElement("section", { className: "cdm-panel cdm-runningPanel cdm-running", "aria-label": RUNNING_TAB_LABEL },
+        React.createElement("header", { className: "cdm-runningHead" },
+          React.createElement("h2", { className: "cdm-title" }, RUNNING_TAB_LABEL),
+          snapshot && !loading && !error ? React.createElement("span", { className: "cdm-laneCount", "aria-live": "polite" }, String(sessions.length)) : null
+        ),
+        React.createElement("div", { className: "cdm-runningList", "aria-busy": loading },
+          error ? React.createElement("div", { className: "cdm-sourceWarning", role: "status", title: error }, "暂时无法读取会话，正在重试") : null,
+          !error && unavailable.length ? React.createElement("div", { className: "cdm-sourceWarning", role: "status" }, unavailable.join("、") + " 会话源暂不可用") : null,
+          loading ? React.createElement("div", { className: "cdm-empty" }, "正在读取会话…") : null,
+          !error && !loading && !sessions.length ? React.createElement("div", { className: "cdm-empty" }, "暂无正在执行的会话") : null,
+          sessions.map((session) => React.createElement(SessionCard, {
+            key: session.sessionId, session, compact: true, onPreview: () => setPreviewId(session.sessionId)
+          }))
+        ),
+        preview ? React.createElement(ConversationPreview, { key: preview.sessionId, session: preview, onClose: () => setPreviewId(null) }) : null
+      );
+    }
+
+    function openRunningTab(sidebar) {
+      const sessionId = sidebar.mounted.getSnapshot();
+      if (!sessionId) throw new Error("会话工作区尚未就绪，请稍后重试");
+      const existing = sidebar.openTabs.getSnapshot().find((tab) => tab.sessionId === sessionId && tab.kind === RUNNING_TAB_KIND);
+      if (!existing) sidebar.openTab(RUNNING_TAB_KIND);
+      if (!sidebar.isExpanded()) sidebar.toggleExpanded();
+      if (existing) sidebar.focus(existing.tabId);
+    }
+
+    const inject = ["slots", "layout", "sidebarRight", "sidebarRightTabs"];
     function apply(ctx) {
+      function RunningEntry() {
+        const [error, setError] = React.useState("");
+        return React.createElement("button", {
+          type: "button", className: "cdm-runningEntry", "aria-label": "在右侧栏打开运行中的会话",
+          title: error || RUNNING_TAB_LABEL,
+          onClick: () => {
+            try {
+              openRunningTab(ctx.sidebarRight);
+              setError("");
+            } catch (failure) {
+              setError(failure instanceof Error ? failure.message : String(failure));
+            }
+          }
+        }, React.createElement(MonitorIcon, null));
+      }
+
       const style = document.createElement("style");
       style.dataset.plugin = "codex-monitor/client";
-      style.textContent = CSS + PREVIEW_CSS;
+      style.textContent = CSS + PREVIEW_CSS + RUNNING_CSS;
       document.head.appendChild(style);
       ctx.effect(() => () => style.remove(), "codex-monitor: stylesheet");
+      ctx.effect(() => ctx.sidebarRightTabs.register({
+        id: RUNNING_TAB_ID,
+        kind: RUNNING_TAB_KIND,
+        title: () => RUNNING_TAB_LABEL,
+        guide: [{ id: RUNNING_TAB_KIND, order: 34, title: () => RUNNING_TAB_LABEL, icon: MonitorIcon,
+          description: () => "查看 Codex、DSH、Kimi 和 Claude 正在执行的会话" }]
+      }), "codex-monitor: running tab type");
+      ctx.effect(() => ctx.slots.inject("sidebar.right.pane.tab", () => ctx.slots.register(
+        { name: "sidebar.right.pane.tab", key: RUNNING_TAB_ID }, RunningPanel
+      )), "codex-monitor: running tab body");
+      ctx.effect(() => ctx.slots.inject("conversation.session.header.actions", () => ctx.slots.register(
+        { name: "conversation.session.header.actions", id: RUNNING_TAB_ID, order: 34 }, RunningEntry
+      )), "codex-monitor: conversation entry");
       ctx.slots.inject("main", () => ctx.slots.register(
         { name: "main", key: MAIN_PANEL_ID, id: MAIN_PANEL_ID, label: "会话看板" },
         BoardPanel
