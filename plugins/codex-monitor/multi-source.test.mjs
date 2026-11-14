@@ -18,7 +18,7 @@ const later = '2026-10-25T01:01:00.000Z'
 const end = '2026-10-25T01:02:00.000Z'
 function row(id, extra = {}) { return { sessionId: id, title: 'same title', source: 'cli', status: 'turn_completed', observedAt: later, updatedAt: later, lifecycleEvent: 'turn_completed', ...extra } }
 function source(rows) { return { queryAll: async () => rows, querySession: async (id) => rows.find((r) => r.sessionId === id) || null, readConversation: async (id, cursor) => ({ sessionId: id, cursor, messages: [] }) } }
-function aggregate(options = {}) { return createSessionSource({ codexSource: source([]), kimiSource: source([]), claudeSource: source([]), ...options }) }
+function aggregate(options = {}) { return createSessionSource({ codexSource: source([]), kimiSource: source([]), claudeSource: source([]), agySource: source([]), ...options }) }
 
 test('四个来源共享原始 ID 时互不覆盖，保留旧 Codex UUID，预览和查询定向路由', async () => {
   const ids = [uuid, `dsh:${uuid}`, `kimi:${uuid}`, `claude:${uuid}`]

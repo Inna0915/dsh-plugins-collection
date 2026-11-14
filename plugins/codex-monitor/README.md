@@ -1,10 +1,10 @@
 # 会话看板（原 Codex 监控）
 
-在原 `codex-monitor` 插件内统一展示 Codex、DSH、Kimi 和 Claude 主会话，菜单名称为“会话看板”。无需启用单独的 Kimi 插件，不更改任何宿主、模型、机器人、Hook 或 MCP 配置。
+在原 `codex-monitor` 插件内统一展示 Codex、DSH、Kimi、Claude 和 Antigravity（agy）主会话，菜单名称为“会话看板”。无需启用单独的 Kimi 插件，不更改任何宿主、模型、机器人、Hook 或 MCP 配置。
 
 点击侧栏“会话看板”后，在 DSH 主内容区展示看板，与 Jira Flow 使用相同的主页面切换方式；侧栏仍可正常操作，不再弹出遮罩窗口。各列独立滚动，窄面板可横向滚动查看其他列。“查看会话”保留面板内的只读预览，Esc 仅关闭预览。切换到其他页面不会停止后台完成通知。
 
-在 DSH 会话标题栏点击“运行中的会话”图标，也可以从右侧栏的标签选择器打开同名标签。右栏按现有看板的运行状态展示 Codex、DSH、Kimi 和 Claude 会话，可直接预览。标签可见时每 5 秒读取后台快照，轮次结束后卡片随下次状态更新自动移除。审核和通知设置在左侧菜单打开的完整看板中操作。
+在 DSH 会话标题栏点击“运行中的会话”图标，也可以从右侧栏的标签选择器打开同名标签。右栏按现有看板的运行状态展示 Codex、DSH、Kimi、Claude 和 Antigravity 会话，可直接预览。标签可见时每 5 秒读取后台快照，轮次结束后卡片随下次状态更新自动移除。审核和通知设置在左侧菜单打开的完整看板中操作。
 
 ## 多客户端会话
 
@@ -14,12 +14,13 @@
 | DSH | 可选接入宿主 `sessionQuery` / `sessions` 服务，读取所有模型的主会话；通过真实 `turn/start`、`turn/end` 判断状态，排除委派子会话；外部 Host / CLI 会话读取原始持久化日志，避免历史恢复补出的中断事件误判运行状态 |
 | Kimi | 读取 `.kimi-code` 的索引、状态和主智能体 wire；兼容旧 `.kimi/sessions` 并排除迁移重复、归档和子会话；按实际事件判断正常完成或中断 |
 | Claude | 读取 `.claude/projects` 主会话 JSONL 和 `.claude/sessions` 客户端状态；排除 subagents 与内部请求内容；最终回复 `end_turn` 作为完成事实，缺少明确结束且无活跃客户端状态时标为待确认；不添加 Hook、不启动 Claude |
+| Antigravity | 读取 `~/.gemini/antigravity` 的 `conversation_summaries.db` 和各会话 SQLite；排除子代理与归档会话。客户端记录为执行中、且 `daemon/hub_*.json` 登记的 agy 进程仍存活时显示运行中；进程已不在时标为待确认。空闲且最后一步为已完成的回复时作为完成，被取消或停在其他步骤时记为中断。预览与最终回复取自 agy 的文字索引，只含提问与文字回复；模型、思考强度和 Token 存在私有 protobuf 中，显示“未记录”。不调用 hub 接口、不使用其 CSRF 令牌、不写入 agy 数据目录 |
 
 环境变量 `KIMI_CODE_HOME` / `KIMI_HOME` / `CLAUDE_CONFIG_DIR` 可用于已有的自定义目录；本次实现不写入或修改这些变量。DSH 内使用 Kimi 模型的会话只归入 DSH，独立 Kimi 客户端的会话归入 Kimi。
 
-每个来源显示最新 30 条，另保留该来源的运行记录。支持客户端筛选、子来源筛选、搜索、分页预览、复制原生会话 ID、单条和批量审核。审核只更新本插件的运行记录；提交时重新核对是否已开始新轮次，不删除或修改各客户端的原始会话。新来源使用 `dsh:`、`kimi:`、`kimi-cli:`、`claude:` 标识，避免与 Codex UUID 或其他来源冲突。
+每个来源显示最新 30 条，另保留该来源的运行记录。支持客户端筛选、子来源筛选、搜索、分页预览、复制原生会话 ID、单条和批量审核。审核只更新本插件的运行记录；提交时重新核对是否已开始新轮次，不删除或修改各客户端的原始会话。新来源使用 `dsh:`、`kimi:`、`kimi-cli:`、`claude:`、`agy:` 标识，避免与 Codex UUID 或其他来源冲突。
 
-卡片顶部通过官方客户端 Logo、Agent 名称和启动来源区分 Codex / DSH / Kimi / Claude，右侧显示所属状态，任务标题单独突出展示。Logo 内置于客户端，支持离线显示；DSH 使用其他模型时仍显示 DSH 标识。图标来源见 [assets/agent-logos/README.md](assets/agent-logos/README.md)。
+卡片顶部通过官方客户端 Logo、Agent 名称和启动来源区分 Codex / DSH / Kimi / Claude / Antigravity，右侧显示所属状态，任务标题单独突出展示。Logo 内置于客户端，支持离线显示；DSH 使用其他模型时仍显示 DSH 标识。图标来源见 [assets/agent-logos/README.md](assets/agent-logos/README.md)。
 
 来源健康状态分别展示。Claude 与 DSH 的可读历史日志缺少状态事实时，卡片标为“待确认”，不因此显示“数据源部分降级”；读取失败、来源不可用或运行记录丢失仍标为“异常”。某个来源读取失败时，其他来源继续工作；保留之前已展示的条目供确认，不会当成已完成或已删除。运行期间发现的新完成轮次沿用当前 Windows / IM 通知设置，消息注明客户端；历史完成和中断不触发完成通知，不修改原通知开关或接收目标。
 

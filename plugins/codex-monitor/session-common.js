@@ -1,5 +1,5 @@
 const CODEX_ID = /^[0-9a-f]{8}-[0-9a-f-]{27}$/i
-const EXTERNAL_ID = /^(dsh|kimi|kimi-cli|claude):[A-Za-z0-9_-]{1,100}$/
+const EXTERNAL_ID = /^(dsh|kimi|kimi-cli|claude|agy):[A-Za-z0-9_-]{1,100}$/
 
 export function validSessionId(value) {
   return typeof value === 'string' && (CODEX_ID.test(value) || EXTERNAL_ID.test(value))
@@ -11,7 +11,7 @@ export function sessionProvider(sessionId) {
   return prefix === 'kimi-cli' ? 'kimi' : prefix || null
 }
 
-export const PROVIDER_LABELS = Object.freeze({ codex: 'Codex', dsh: 'DSH', kimi: 'Kimi', claude: 'Claude' })
+export const PROVIDER_LABELS = Object.freeze({ codex: 'Codex', dsh: 'DSH', kimi: 'Kimi', claude: 'Claude', agy: 'Antigravity' })
 
 export function iso(value) {
   if (value === null || value === undefined || value === '') return null

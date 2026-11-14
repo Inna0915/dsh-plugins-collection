@@ -2,6 +2,7 @@ import { createSessionSource as createCodexSource } from './session-source.js'
 import { createCodeSource } from './kimi-source.js'
 import { createDshSource } from './dsh-source.js'
 import { createClaudeSource } from './claude-source.js'
+import { createAgySource } from './agy-source.js'
 import { sessionProvider, validSessionId, PROVIDER_LABELS } from './session-common.js'
 import { previewError } from './conversation.js'
 import { performance } from 'node:perf_hooks'
@@ -13,7 +14,8 @@ export function createSessionSource(options = {}) {
     codex: options.codexSource || createCodexSource(options.codex),
     dsh: options.dshSource || null,
     kimi: options.kimiSource || createCodeSource(options.kimi),
-    claude: options.claudeSource || createClaudeSource(options.claude)
+    claude: options.claudeSource || createClaudeSource(options.claude),
+    agy: options.agySource || createAgySource(options.agy)
   }
   const perProviderLimit = options.perProviderLimit || 30
   const previous = new Map()

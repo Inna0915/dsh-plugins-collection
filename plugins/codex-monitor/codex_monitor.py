@@ -23,7 +23,7 @@ import urllib.request
 
 DEFAULT_BASE = 'http://127.0.0.1:3080'
 DEFAULT_TIMEOUT = 5.0
-SESSION_ID_PATTERN = re.compile(r'^(?:(?i:[0-9a-f]{8}-[0-9a-f-]{27})|(?:dsh|kimi|kimi-cli|claude):[a-zA-Z0-9_-]{1,100})$')
+SESSION_ID_PATTERN = re.compile(r'^(?:(?i:[0-9a-f]{8}-[0-9a-f-]{27})|(?:dsh|kimi|kimi-cli|claude|agy):[a-zA-Z0-9_-]{1,100})$')
 
 
 for _stream in (sys.stdout, sys.stderr):

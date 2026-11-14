@@ -58,7 +58,7 @@ test('Claude 从活动描述文件到看板保持运行状态，进程退出后�
   await writeFile(descriptor, JSON.stringify({ pid: 99, sessionId: id, status: 'busy', statusUpdatedAt: start }))
   let alive = true
   const claude = createClaudeSource({ claudeHome: home, isAlive: () => alive })
-  const source = createSessionSource({ codexSource: emptySource, kimiSource: emptySource, dshSource: emptySource, claudeSource: claude })
+  const source = createSessionSource({ codexSource: emptySource, kimiSource: emptySource, dshSource: emptySource, claudeSource: claude, agySource: emptySource })
   const monitor = createMonitor(source)
   t.after(() => monitor.close())
   monitor.requestDefault(); await monitor.waitForIdle()
@@ -83,7 +83,7 @@ test('有效的 Claude 和 DSH 历史缺少状态事实时标为待确认，不�
   const claude = claudeSession(workingSummary())
   const dsh = parseDshSession({ id: 'empty', createdAt: start }, [])
   let failure = false
-  const source = createSessionSource({ codexSource: emptySource, kimiSource: emptySource,
+  const source = createSessionSource({ codexSource: emptySource, kimiSource: emptySource, agySource: emptySource,
     dshSource: { queryAll: async () => [dsh] },
     claudeSource: { queryAll: async () => { if (failure) throw new Error('read failed'); return [claude] } } })
   const monitor = createMonitor(source)

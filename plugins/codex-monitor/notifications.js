@@ -20,7 +20,7 @@ function cleanError(error) {
 
 function completionSummary(session, details = {}) {
   const provider = PROVIDER_LABELS[sessionProvider(session.sessionId)] || 'Codex'
-  const source = { app: 'Codex App', codex_app: 'Codex App', 'codex-app': 'Codex App', vscode: 'VS Code', cli: 'CLI', dsh: 'DSH', 'kimi-vscode': 'Kimi · VS Code', 'kimi-cli': 'Kimi · CLI', 'kimi-desktop': 'Kimi · Desktop', 'kimi-unknown': 'Kimi', 'claude-vscode': 'Claude · VS Code', 'claude-cli': 'Claude · CLI', claude: 'Claude' }[String(session.source || '').toLowerCase()] || cleanText(session.source, 40) || provider
+  const source = { app: 'Codex App', codex_app: 'Codex App', 'codex-app': 'Codex App', vscode: 'VS Code', cli: 'CLI', dsh: 'DSH', 'kimi-vscode': 'Kimi · VS Code', 'kimi-cli': 'Kimi · CLI', 'kimi-desktop': 'Kimi · Desktop', 'kimi-unknown': 'Kimi', 'claude-vscode': 'Claude · VS Code', 'claude-cli': 'Claude · CLI', claude: 'Claude', 'agy-hub': 'Antigravity · Hub', 'agy-cli': 'Antigravity · CLI' }[String(session.source || '').toLowerCase()] || cleanText(session.source, 40) || provider
   const duration = typeof details.durationMs === 'number' && details.durationMs >= 0 ? formatDuration(details.durationMs) : '未记录'
   const model = cleanText(details.model || session.model, 160) || '未记录'
   const effort = cleanText(details.reasoningEffort || session.reasoningEffort, 40) || '未记录'
