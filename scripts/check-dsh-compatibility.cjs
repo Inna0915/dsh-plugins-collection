@@ -25,14 +25,21 @@ for (const directory of fs.readdirSync(path.join(root, 'plugins'))) {
     // Guard the actual upgrade failure, plus retention of previously supported hosts.
     const old = { ...manifest, engines: { ...manifest.engines, dsh: '0.2.1-rc.3 || 0.2.1-rc.5' } };
     assert.ok(evaluatePluginCompatibility(old, {}, '0.2.2-rc.1'));
-    for (const version of ['0.2.1-rc.3', '0.2.1-rc.5', '0.2.2-rc.1']) {
+    for (const version of ['0.2.1-rc.3', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3']) {
       assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined, `${manifest.name}: ${version} rejected`);
     }
-    assert.ok(evaluatePluginCompatibility(manifest, {}, '0.3.0'), `${manifest.name}: unaudited minor admitted`);
+    // rc.2 never ran on this machine (its installer failed on 2026-11-12), so it stays unaudited.
+    for (const version of ['0.2.2-rc.2', '0.3.0']) {
+      assert.ok(evaluatePluginCompatibility(manifest, {}, version), `${manifest.name}: unaudited ${version} admitted`);
+    }
   }
 }
 
 // Contract tripwires complement, rather than replace, UI and behavior tests.
+// From 0.2.2-rc.3 the official packages ship minified; compare without whitespace
+// and with one quote style so formatting changes alone do not trip the checks.
+const normalize = (text) => text.replace(/\s+/g, '').replace(/[`']/g, '"');
+const readContractSource = (name, file) => normalize(fs.readFileSync(path.join(appRoot, 'node_modules/@deepseek-ai', name, 'lib', file), 'utf8'));
 const contracts = {
   'dsh-client-ui-sidebar': ['"sidebar.footer.action"', '"sidebar.workspaces"', '{ wide }'],
   'dsh-client-ui-layout': ['selectPanel(panelId)', 'hasMainPanel(panelId)'],
@@ -42,8 +49,8 @@ const contracts = {
   'dsh-client-ui-sidebar-right': ['openTab(kind, options', 'isExpanded()', 'toggleExpanded()', 'this.openTabs =', 'this.mounted =', 'bindCommands:', '"sidebar.right.pane.tab"'],
 };
 for (const [name, fragments] of Object.entries(contracts)) {
-  const code = fs.readFileSync(path.join(appRoot, 'node_modules/@deepseek-ai', name, 'lib/client.js'), 'utf8');
-  for (const fragment of fragments) assert.ok(code.includes(fragment), `${name}: changed contract ${fragment}`);
+  const code = readContractSource(name, 'client.js');
+  for (const fragment of fragments) assert.ok(code.includes(normalize(fragment)), `${name}: changed contract ${fragment}`);
 }
 const hostContracts = {
   'dsh-host-webserver': ['register(route)', 'route.kind === "exact"'],
@@ -54,7 +61,7 @@ const hostContracts = {
   'dsh-user-approval': ['async request(', '"allowed-once"', 'overrideOf(session)'],
 };
 for (const [name, fragments] of Object.entries(hostContracts)) {
-  const code = fs.readFileSync(path.join(appRoot, 'node_modules/@deepseek-ai', name, 'lib/index.js'), 'utf8');
-  for (const fragment of fragments) assert.ok(code.includes(fragment), `${name}: changed contract ${fragment}`);
+  const code = readContractSource(name, 'index.js');
+  for (const fragment of fragments) assert.ok(code.includes(normalize(fragment)), `${name}: changed contract ${fragment}`);
 }
 console.log(JSON.stringify({ runtime, exemptionsUsed: false, plugins: rows, clientContractChecks: Object.keys(contracts).length, hostContractChecks: Object.keys(hostContracts).length }, null, 2));
