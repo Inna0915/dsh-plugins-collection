@@ -19,6 +19,7 @@
     { "name": "jira-weekly-report", "target": "plugins/jira-flow/skills/jira-weekly-report" },
     { "name": "jira-create", "target": "skills/jira-create" },
     { "name": "jira-personal-report", "target": "skills/jira-personal-report" },
+    { "name": "dsh-meal-order", "target": "skills/dsh-meal-order", "roots": ["~/.agents/skills", "~/.codex/skills"] },
     { "name": "confluence-publish", "target": "plugins/confluence-flow/skills/confluence-publish" },
     { "name": "confluence-query", "target": "plugins/confluence-flow/skills/confluence-query" },
     { "name": "confluence-update", "target": "plugins/confluence-flow/skills/confluence-update" },
