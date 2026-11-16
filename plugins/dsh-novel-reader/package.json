@@ -1,0 +1,17 @@
+{
+  "name": "dsh-novel-reader",
+  "version": "0.1.0",
+  "description": "在 DSH Desktop 阅读起点和番茄官网，提问和记笔记",
+  "type": "module",
+  "engines": { "dsh": "0.2.2-rc.1" },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web" }
+  }
+}
