@@ -1,4 +1,4 @@
-#Requires -Version 7
+﻿#Requires -Version 7
 param([Parameter(Mandatory)][string]$ScratchRoot)
 $ErrorActionPreference = 'Stop'
 $scripts = Split-Path -Parent $PSScriptRoot
@@ -102,6 +102,31 @@ try {
     $status = Complete (Start-Run 'bad-model' 'must not run' @('-Model','not-configured'))
     Assert ($status.exitCode -ne 0 -and -not $status.sessionId) 'Invalid model silently replaced'
     $results.Add(@{ name='invalid_model_fails_before_execution'; passed=$true })
+
+    # Git single-repo + umbrella worktree isolation & session resume
+    $gitRepo = Join-Path $scratch 'dsh-git-repo'
+    New-Item -ItemType Directory -Path $gitRepo -Force | Out-Null
+    & git -C $gitRepo init -q
+    & git -C $gitRepo config user.name 'test'
+    & git -C $gitRepo config user.email 'test@example.com'
+    Set-Content -LiteralPath (Join-Path $gitRepo 'README.md') -Value 'base' -NoNewline -Encoding utf8
+    & git -C $gitRepo add README.md
+    & git -C $gitRepo commit -q -m 'init'
+    $wtPrompt = Join-Path $scratch 'dsh-wt.md'
+    Set-Content -LiteralPath $wtPrompt -Value 'TEST_TOUCH_WORKTREE' -NoNewline -Encoding utf8
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $scripts 'Invoke-DshTask.ps1') -Task 'dsh-wt1' -Project $gitRepo -PromptFile $wtPrompt -DshEntry (Join-Path $PSScriptRoot 'Fake-Dsh.mjs') -Model 'deepseek/deepseek-flash' -TimeoutSeconds 20 | Out-Null
+    $wtStFile = Get-ChildItem -LiteralPath (Join-Path $gitRepo 'work/alpha/logs/dsh-wt1') -Filter '*.status.json' | Select-Object -First 1
+    $wtSt = Get-Content -LiteralPath $wtStFile.FullName -Raw | ConvertFrom-Json
+    Assert ($wtSt.worktree.used -eq $true -and $wtSt.cwd -ne $gitRepo) 'DSH worktree was not used'
+    Assert ((Test-Path -LiteralPath (Join-Path $wtSt.cwd 'worker-touched.txt')) -and -not (Test-Path -LiteralPath (Join-Path $gitRepo 'worker-touched.txt'))) 'DSH worktree isolation leaked'
+
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $scripts 'Invoke-DshTask.ps1') -Task 'dsh-wt1-r2' -Project $gitRepo -PromptFile $wtPrompt -DshEntry (Join-Path $PSScriptRoot 'Fake-Dsh.mjs') -SessionId $wtSt.sessionId -Model 'deepseek/deepseek-flash' -TimeoutSeconds 20 | Out-Null
+    $r2StFile = Get-ChildItem -LiteralPath (Join-Path $gitRepo 'work/alpha/logs/dsh-wt1-r2') -Filter '*.status.json' | Select-Object -First 1
+    $r2St = Get-Content -LiteralPath $r2StFile.FullName -Raw | ConvertFrom-Json
+    Assert ($r2St.state -eq 'finished' -and $r2St.cwd -eq $wtSt.cwd) 'DSH worktree resume failed'
+    & (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $scripts 'Remove-TaskWorktree.ps1') -Project $gitRepo -Task 'dsh-wt1' -DeleteBranch -Force | Out-Null
+    Assert (-not (Test-Path -LiteralPath $wtSt.cwd)) 'DSH Remove-TaskWorktree failed'
+    $results.Add(@{ name='git_worktree_isolation_resume_and_cleanup'; passed=$true })
     $results | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $scripts '../references/offline-verification.json') -Encoding utf8
     $results | ConvertTo-Json
 } finally {

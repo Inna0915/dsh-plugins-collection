@@ -1,4 +1,4 @@
-#Requires -Version 7
+﻿#Requires -Version 7
 # Offline test double; never calls a model or reads authentication files.
 $CliArgs = @($args)
 $ErrorActionPreference = 'Stop'
@@ -10,6 +10,9 @@ $finalPath = $CliArgs[$finalIndex + 1]
 $markerRoot = Split-Path -Parent $finalPath
 @{ arguments = $CliArgs; prompt = $prompt; cwd = (Get-Location).Path } |
     ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $markerRoot 'fake-input.json') -Encoding utf8
+if ($prompt.Contains('TEST_TOUCH_WORKTREE')) {
+    Set-Content -LiteralPath (Join-Path (Get-Location).Path 'worker-touched.txt') -Value 'codex-touched' -NoNewline -Encoding utf8
+}
 $resumeIndex = [Array]::IndexOf($CliArgs, 'resume')
 $threadId = if ($resumeIndex -ge 0) { $CliArgs[$resumeIndex + 1] } else { '01234567-1234-1234-1234-123456789abc' }
 @{ type = 'thread.started'; thread_id = $threadId } | ConvertTo-Json -Compress

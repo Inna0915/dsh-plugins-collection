@@ -6,7 +6,7 @@ DSH 调度使用本机 npm 包 0.2.1-rc.2 的 headless profile。Node 24 路径�
 
 ## 默认与覆盖
 
-默认 provider 为 magpie，模型为 clinepass/cline-pass/deepseek-v4.1-flash-1017，effort 为 max。DSH 权限为 danger-full-access，审批 never。此设置仅应用于本次 DSH 子进程。
+默认 provider 为 magpie，模型为 workbuddy/deepseek-v4.1-flash，effort 为 max。DSH 权限为 danger-full-access，审批 never。此设置仅应用于本次 DSH 子进程。
 
 每轮只从桌面配置的 llm-pi-ai.providers 中提取指定 provider；不启动桌面插件。当前 magpie 使用本地网关，必须保持该网关可用。它通过 MAGPIE_GATEWAY_KEY 引用认证；密钥继续使用现有 DSH 环境加载顺序：启动环境、项目 .env、DSH home .env。不要把密钥写进交接或日志。
 
@@ -30,7 +30,8 @@ $script = 'C:/Users/OMEN/.claude/skills/dsh-worker/scripts/Invoke-DshTask.ps1'
 | 全访问 | 默认，或 `-Mode danger-full-access`（yolo 是别名） |
 | 指定总超时 | `-TimeoutSeconds 1800` |
 | 查看请求，不调用模型 | `-DryRun` |
-| 仅作提示词范围约束 | `-Dir '子目录'`；这不是独立的沙箱边界 |
+| 仅作提示词范围约束 | `-Dir '子目录'`；启用 Worktree 时自动映射到对应隔离路径 |
+| Worktree 隔离控制 | 默认 `-WorktreeMode auto`（写模式下自动隔离单仓或多子仓，只读原位）；传 `-NoWorktree` 可强制原位执行 |
 
 模型及 effort 必须存在于选定 provider 的模型声明中。该流程只支持桌面 llm-pi-ai 静态 provider 配置，不自动安装 provider 插件或转换桌面账号登录。未配置模型或不支持的 effort 会明确失败。模型和 effort 覆盖同样适用于续接。
 

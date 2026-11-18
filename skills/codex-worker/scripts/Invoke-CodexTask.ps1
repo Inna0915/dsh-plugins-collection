@@ -1,4 +1,4 @@
-#Requires -Version 7
+﻿#Requires -Version 7
 <#
 .SYNOPSIS
 Delegate a task to Codex CLI, recording each run and cleaning up its process job.
@@ -22,6 +22,8 @@ param(
     [ValidatePattern('^[A-Za-z0-9_.]+=.+$')][string[]]$ExtraConfig,
     [switch]$Fast,
     [ValidateRange(1, 86400)][int]$TimeoutSeconds = 1800,
+    [ValidateSet('auto', 'required', 'off')][string]$WorktreeMode = 'auto',
+    [switch]$NoWorktree,
     [string]$CodexPath,
     [switch]$SkipGitRepoCheck,
     [switch]$DryRun
@@ -33,6 +35,12 @@ if (-not $IsWindows) { throw 'This dispatcher requires Windows and PowerShell 7.
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $OutputEncoding = [Text.UTF8Encoding]::new($false)
 if ($Mode -eq 'danger-full-access') { $Mode = 'yolo' }
+if ($NoWorktree) {
+    if ($PSBoundParameters.ContainsKey('WorktreeMode') -and $WorktreeMode -ne 'off') {
+        throw '-NoWorktree cannot be combined with -WorktreeMode auto/required.'
+    }
+    $WorktreeMode = 'off'
+}
 if ($Fast) {
     if ($PSBoundParameters.ContainsKey('ServiceTier') -and $ServiceTier -ne 'fast') {
         throw '-Fast cannot be combined with a different -ServiceTier.'
@@ -81,9 +89,11 @@ if ($extension -eq '.ps1') {
     $prefixArguments = @('-NoLogo', '-NoProfile', '-File', $CodexPath)
 }
 
+. (Join-Path $PSScriptRoot 'TaskWorktree.ps1')
+
 $runId = 'codex-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 6)
 $logDir = Join-Path $Project "work\alpha\logs\$Task"
-$tmpDir = Join-Path $Project "work\alpha\tmp\$Task"
+$sessionDir = Join-Path $Project 'work\alpha\sessions\codex'
 $statusPath = Join-Path $logDir "$runId.status.json"
 $eventsPath = Join-Path $logDir "$runId.events.jsonl"
 $stderrPath = Join-Path $logDir "$runId.stderr.log"
@@ -91,7 +101,38 @@ $finalPath = Join-Path $logDir "$runId.final.md"
 $savedPromptPath = Join-Path $logDir "$runId.prompt.md"
 $workerStatusPath = Join-Path $logDir "$runId.worker.json"
 
-$cliArguments = @('exec', '-C', $Project)
+$mutex = $null
+$locked = $false
+$previousSessionCwd = ''
+if (-not $DryRun -and $SessionId) {
+    $mutex = [Threading.Mutex]::new($false, "Local\CodexDelegate-$SessionId")
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (-not $locked) {
+        $mutex.Dispose()
+        throw '此会话已有调度器正在执行，请等原调用结束后再续接。'
+    }
+    $sessionRecordPath = Join-Path $sessionDir "$SessionId.json"
+    if (Test-Path -LiteralPath $sessionRecordPath) {
+        try {
+            $prevRec = Get-Content -LiteralPath $sessionRecordPath -Raw -Encoding utf8 | ConvertFrom-Json
+            if ($prevRec.cwd) { $previousSessionCwd = [string]$prevRec.cwd }
+        } catch { }
+    }
+}
+
+try {
+    $workspaceInfo = Resolve-WorkerWorkspace -Project $Project -Dir $Dir -Task $Task -Mode $Mode `
+        -WorktreeMode $WorktreeMode -PreviousCwd $previousSessionCwd -DryRun:$DryRun
+} catch {
+    if ($locked) { $mutex.ReleaseMutex() }
+    if ($mutex) { $mutex.Dispose() }
+    throw
+}
+$effectiveProject = $workspaceInfo.effectiveProject
+$effectiveDir = $workspaceInfo.effectiveDir
+$tmpDir = Join-Path $effectiveProject "work\alpha\tmp\$Task"
+
+$cliArguments = @('exec', '-C', $effectiveProject)
 if ($SkipGitRepoCheck) { $cliArguments += '--skip-git-repo-check' }
 # Put configuration on the actual exec/resume invocation, including resumed runs.
 if ($SessionId) { $cliArguments += @('resume', $SessionId) }
@@ -110,11 +151,14 @@ switch ($Mode) {
 }
 foreach ($override in $ExtraConfig) { $cliArguments += @('-c', $override) }
 $cliArguments += @('--model', $Model, '-c', "model_reasoning_effort=`"$Effort`"", '--json', '-o', $finalPath, '-')
-$scope = if ($Dir) { $Dir } else { $Project }
+$scope = if ($effectiveDir) { $effectiveDir } else { $effectiveProject }
+$worktreeNote = if ($workspaceInfo.used) {
+    "`n隔离工作树：$effectiveProject（源项目：$Project；拓扑：$($workspaceInfo.topology)）`n重要约束：本次执行位于独立 Git Worktree，交接正文中若出现源项目路径 $Project\...，请一律映射到当前工作树 $effectiveProject\... 内读写，严禁跨目录直接修改源项目工作树！`n"
+} else { '' }
 $prompt = @"
 【Claude Code → Codex 交接】任务：$Task
-项目工作目录：$Project
-本次处理范围：$scope
+项目工作目录：$effectiveProject
+本次处理范围：$scope$worktreeNote
 先读取工作目录及涉及路径上适用的 AGENTS.md，遵守其中的代码、验证与清理规则。
 临时脚本、草稿和中间文件仅放在：$tmpDir
 本次调用总超时为 $TimeoutSeconds 秒；每个构建或测试也必须有明确超时。
@@ -125,14 +169,13 @@ $prompt = @"
 "@ + (Get-Content -LiteralPath $PromptFile -Raw -Encoding utf8)
 
 if ($DryRun) {
-    [ordered]@{ cli = $CodexPath; cwd = $Project; model = $Model; effort = $Effort; mode = $Mode
-        serviceTier = $ServiceTier; timeoutSeconds = $TimeoutSeconds; arguments = $cliArguments; promptFile = $PromptFile } | ConvertTo-Json -Depth 5
+    [ordered]@{ cli = $CodexPath; cwd = $effectiveProject; sourceProject = $Project; worktree = $workspaceInfo
+        model = $Model; effort = $Effort; mode = $Mode
+        serviceTier = $ServiceTier; timeoutSeconds = $TimeoutSeconds; arguments = $cliArguments; promptFile = $PromptFile } | ConvertTo-Json -Depth 6
     exit 0
 }
 
 if (-not ('CodexDelegate.WindowsJob' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'WindowsJob.cs') }
-$mutex = $null
-$locked = $false
 $job = $null
 $runner = $null
 $files = @()
@@ -141,7 +184,8 @@ $eventsReader = $null
 $pendingEvent = ''
 $exitCode = 1
 $status = [ordered]@{
-    runId = $runId; task = $Task; cli = $CodexPath; cwd = $Project; dir = $Dir
+    runId = $runId; task = $Task; cli = $CodexPath; cwd = $effectiveProject; sourceProject = $Project; dir = $effectiveDir
+    worktreeMode = $WorktreeMode; worktree = $workspaceInfo
     requestedModel = $Model; requestedEffort = $Effort; requestedMode = $Mode
     requestedServiceTier = $ServiceTier
     appliedSettings = $null; serviceTierVerified = $false; settingsVerificationError = $null
@@ -154,7 +198,7 @@ $status = [ordered]@{
     final = $finalPath; tmpDir = $tmpDir
 }
 function Save-Status {
-    $status | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statusPath -Encoding utf8
+    $status | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $statusPath -Encoding utf8
 }
 function Read-Progress {
     if (Test-Path -LiteralPath $workerStatusPath) {
@@ -173,6 +217,11 @@ function Read-Progress {
             if ($event.type -eq 'thread.started' -and $event.thread_id) {
                 if (-not $status.sessionId) { Write-Output "会话：$($event.thread_id)" }
                 $status.sessionId = $event.thread_id
+                if (-not $SessionId -and $event.thread_id -match '^[0-9a-fA-F-]{36}$') {
+                    New-Item -ItemType Directory -Force -Path $sessionDir | Out-Null
+                    @{ sessionId = $event.thread_id; cwd = $effectiveProject; sourceProject = $Project; task = $Task; mode = $Mode; runId = $runId } |
+                        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $sessionDir "$($event.thread_id).json") -Encoding utf8
+                }
             }
             if ($event.type -eq 'turn.completed') { $status.turnCompleted = $true }
             if ($event.type -eq 'turn.failed') { $status.error = $event.error.message }
@@ -181,16 +230,12 @@ function Read-Progress {
 }
 
 try {
-    if ($SessionId) {
-        $mutex = [Threading.Mutex]::new($false, "Local\CodexDelegate-$SessionId")
-        try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
-        if (-not $locked) { throw '此会话已有调度器正在执行，请等原调用结束后再续接。' }
-    }
     New-Item -ItemType Directory -Force -Path $logDir, $tmpDir | Out-Null
     Set-Content -LiteralPath $savedPromptPath -Value $prompt -NoNewline -Encoding utf8
     Save-Status
     Write-Output "状态：$statusPath"
     Write-Output "进度：$eventsPath"
+    if ($workspaceInfo.used) { Write-Output "隔离工作树：$effectiveProject ($($workspaceInfo.topology))" }
     Write-Output "模型：$Model / $Effort；服务档位：$ServiceTier；权限：$Mode；超时：$TimeoutSeconds 秒"
     $job = [CodexDelegate.WindowsJob]::new()
     $files = @(
@@ -199,7 +244,7 @@ try {
     )
     $eventsReader = [IO.StreamReader]::new([IO.FileStream]::new($eventsPath, 'Open', 'Read', 'ReadWrite'), [Text.Encoding]::UTF8)
     $start = [Diagnostics.ProcessStartInfo]::new($pwshPath)
-    $start.WorkingDirectory = $Project
+    $start.WorkingDirectory = $effectiveProject
     $start.UseShellExecute = $false
     $start.CreateNoWindow = $true
     $start.RedirectStandardInput = $true
@@ -218,7 +263,7 @@ try {
         $runner.StandardError.BaseStream.CopyToAsync($files[1])
     )
     $request = @{ executable = $executable; arguments = @($prefixArguments + $cliArguments)
-        cwd = $Project; prompt = $prompt; workerStatus = $workerStatusPath } | ConvertTo-Json -Depth 5 -Compress
+        cwd = $effectiveProject; prompt = $prompt; workerStatus = $workerStatusPath } | ConvertTo-Json -Depth 5 -Compress
     $sendRequest = $runner.StandardInput.WriteAsync($request)
     while (-not $sendRequest.Wait(100)) {
         if ($timer.Elapsed.TotalSeconds -ge $TimeoutSeconds) { throw [TimeoutException]::new('发送交接内容超时。') }

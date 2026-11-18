@@ -14,7 +14,8 @@
 | `-Fast` / `-ServiceTier` | `-Fast` 等同 `-ServiceTier fast`；不传则为 `default`；续接同样显式应用 |
 | `-TimeoutSeconds` | 默认 1800，允许 1–86400；清理还有约 20 秒收尾上限 |
 | `-SessionId` | 明确的会话 UUID；不使用 --last |
-| `-Dir` | 可选，项目内目录，作为交接范围；并不创建额外沙箱 |
+| `-Dir` | 可选，项目内目录，作为交接范围；启用 Worktree 时自动映射到对应隔离路径 |
+| `-WorktreeMode` / `-NoWorktree` | 默认 `auto`（可写模式下对单 Git 仓或多子仓聚合目录自动建立独立 Git Worktree，`read-only` 原位执行）；`-NoWorktree` 等同 `-WorktreeMode off`；`required` 要求目标必为 Git 仓 |
 | `-CodexPath` | 可选，明确的 .exe 或 .ps1 CLI 入口；默认优先本机原生 codex.exe |
 | `-SkipGitRepoCheck` | 仅用于已确认的非 Git 项目 |
 | `-DryRun` | 查看参数，不调用模型，不创建执行日志 |

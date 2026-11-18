@@ -22,6 +22,7 @@ description: 在 Windows 上让 Claude Code 委派任务给本机 Codex CLI，�
 1. 从当前项目确定绝对工作路径。遵守适用的 AGENTS.md，保留用户已有修改；把工作树基线与当前授权范围写进交接。
 2. 在 `<项目>/work/alpha/tmp/<任务名>/` 写 UTF-8 交接文件。包含目标、允许修改范围、必要背景、验收标准、验证命令及停止条件；不用完整历史对话替代清晰任务。任务名使用短名称，不含路径分隔符。
 3. 将该文件传给脚本的 `-PromptFile`，项目路径传给 `-Project`。默认全访问；用户需要只读或工作区限制时，显式传 `-Mode read-only` / `workspace-write`。受限模式遇到 ACL/沙箱错误时报告原因，不擅自修改系统 ACL 或放宽用户指定的限制。
+   - **默认 Git Worktree 隔离（`WorktreeMode=auto`）**：非只读模式下，若 `-Project` 是 Git 仓库（自动建于 `<父目录>/.worktrees/<仓库名>/<Task>`，分支 `worker/<Task>`）或是聚合多子仓目录如 `fms269` / `fms-p275`（自动在 `<项目>/work/alpha/worktrees/<Task>/` 下为各子仓建立独立 Worktree 并同步根 `AGENTS.md`），Codex 默认在隔离工作树中修改与构建，不触碰主工作树已有未提交改动；`-SessionId` 续接自动回到原工作树。`read-only` 模式默认原位只读；确需原位直接改主工作树时显式传 `-NoWorktree`（或 `-WorktreeMode off`）。
 4. 调度器默认总超时 1800 秒；按任务设置有限的 `-TimeoutSeconds`，每项构建和测试仍需自身的超时及进程清理。宿主不能前台等待长任务时使用其后台运行能力，并持续检查本轮状态；不要因为暂时没有输出而重复下发。
 5. 从脚本输出获得本轮 status、events 和 final 路径。确认状态、退出码、`cleanupVerified`，再检查业务结果。Fast 调用还要检查 `serviceTierVerified=true` 和 `appliedSettings.serviceTier=priority`；缺少证据就明确报告未核实，不能仅凭启动命令宣称 Fast 生效。退出码 0 不是业务验收完成的证明。
 
@@ -44,7 +45,7 @@ PowerShell 调用结构（替换项目、任务名和交接文件）：
 - 同一目标在现有授权内可以继续补充；目标改变时另开会话。不要让 Claude 和 Codex 同时修改同一文件。
 - 没有有效修复进展、超时、登录失败或权限不足时，停止重复调度并报告具体阻塞。模型调用失败不得擅自换模型。
 - 需要中止时依据本轮状态中的 `runnerPid` 确认进程身份后结束调度器；其作业对象会清理本轮后代进程。不要按 java/node/pwsh 等镜像名批量结束进程。
-- 完成后停止本任务进程，清理已经不用的临时交接与中间文件。日志是验收记录，可保留；删除范围仅限本次任务确认拥有的文件。
+- 完成后停止本任务进程，清理已经不用的临时交接与中间文件。若启用了 Worktree 隔离（见 `status.worktree`），先在隔离工作树核验 diff、提交并合入/cherry-pick 到主工作树后，调用 `${CLAUDE_SKILL_DIR}/scripts/Remove-TaskWorktree.ps1 -Project <项目> -Task <任务名> [-DeleteBranch]` 安全回收 Worktree。日志是验收记录，可保留；删除范围仅限本次任务确认拥有的文件。
 
 ## 参数证据与使用量
 

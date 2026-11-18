@@ -1,4 +1,4 @@
-#Requires -Version 7
+﻿#Requires -Version 7
 [CmdletBinding()]
 param([Parameter(Mandatory)][string]$ScratchRoot)
 $ErrorActionPreference = 'Stop'
@@ -134,6 +134,66 @@ try {
     Assert-True ($dryConfig.model -eq 'gpt-6.1-sol' -and $dryConfig.effort -eq 'max') 'Dry-run defaults differ.'
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $project 'work\alpha\logs\dry-run'))) 'Dry-run created execution logs.'
     $results.Add(@{ name = 'dry_run_does_not_start_cli'; passed = $true })
+
+    # Git single-repo worktree isolation, session resume in same worktree, read-only bypass, and Remove-TaskWorktree
+    $gitRepo = Join-Path $scratch 'single-git-repo'
+    New-Item -ItemType Directory -Path $gitRepo -Force | Out-Null
+    & git -C $gitRepo init -q
+    & git -C $gitRepo config user.name 'test'
+    & git -C $gitRepo config user.email 'test@example.com'
+    Set-Content -LiteralPath (Join-Path $gitRepo 'README.md') -Value 'base' -NoNewline -Encoding utf8
+    & git -C $gitRepo add README.md
+    & git -C $gitRepo commit -q -m 'init'
+    # Dirty file in main working tree must remain untouched and worker edits must stay in worktree
+    Set-Content -LiteralPath (Join-Path $gitRepo 'dirty-main.txt') -Value 'main-uncommitted' -NoNewline -Encoding utf8
+    $wtPromptFile = Join-Path $scratch 'wt-prompt.md'
+    Set-Content -LiteralPath $wtPromptFile -Value 'TEST_TOUCH_WORKTREE' -NoNewline -Encoding utf8
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File $dispatcher -Task 'wt-feat' -Project $gitRepo -PromptFile $wtPromptFile -CodexPath $fixture | Out-Null
+    $wtStatusFile = Get-ChildItem -LiteralPath (Join-Path $gitRepo 'work\alpha\logs\wt-feat') -Filter '*.status.json' | Select-Object -First 1
+    $wtStatus = Get-Content -LiteralPath $wtStatusFile.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+    Assert-True ($wtStatus.worktree.used -eq $true -and $wtStatus.worktree.topology -eq 'single-repo') 'Single-repo worktree was not activated.'
+    Assert-True ($wtStatus.cwd -ne $gitRepo) 'Worker ran in main repo instead of worktree.'
+    Assert-True (Test-Path -LiteralPath (Join-Path $wtStatus.cwd 'worker-touched.txt')) 'Worker edit did not land in worktree.'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $gitRepo 'worker-touched.txt'))) 'Worker edit leaked into main repo.'
+
+    # Resume with a different task label must still land back in the original session worktree
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File $dispatcher -Task 'wt-feat-r2' -Project $gitRepo -PromptFile $wtPromptFile -CodexPath $fixture -SessionId $wtStatus.sessionId | Out-Null
+    $r2StatusFile = Get-ChildItem -LiteralPath (Join-Path $gitRepo 'work\alpha\logs\wt-feat-r2') -Filter '*.status.json' | Select-Object -First 1
+    $r2Status = Get-Content -LiteralPath $r2StatusFile.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+    Assert-True ($r2Status.cwd -eq $wtStatus.cwd) 'Session resume did not reuse original worktree.'
+
+    # Read-only mode runs in-place without spinning up a worktree
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File $dispatcher -Task 'ro-audit' -Project $gitRepo -PromptFile $wtPromptFile -CodexPath $fixture -Mode 'read-only' | Out-Null
+    $roStatusFile = Get-ChildItem -LiteralPath (Join-Path $gitRepo 'work\alpha\logs\ro-audit') -Filter '*.status.json' | Select-Object -First 1
+    $roStatus = Get-Content -LiteralPath $roStatusFile.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+    Assert-True ($roStatus.worktree.used -eq $false -and $roStatus.cwd -eq $gitRepo) 'Read-only mode unexpectedly created worktree.'
+
+    # Remove-TaskWorktree cleans up worktree cleanly when forced
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File (Join-Path $scriptRoot 'Remove-TaskWorktree.ps1') -Project $gitRepo -Task 'wt-feat' -DeleteBranch -Force | Out-Null
+    Assert-True (-not (Test-Path -LiteralPath $wtStatus.cwd)) 'Remove-TaskWorktree did not delete worktree.'
+    $results.Add(@{ name = 'git_single_repo_worktree_isolation_resume_and_cleanup'; passed = $true })
+
+    # Multi-repo umbrella workspace (like fms269 containing fms + fms-p269)
+    $umbrella = Join-Path $scratch 'umbrella-ws'
+    New-Item -ItemType Directory -Path $umbrella -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $umbrella 'AGENTS.md') -Value '# Umbrella rules' -NoNewline -Encoding utf8
+    foreach ($subName in @('fms', 'fms-p269')) {
+        $subDir = Join-Path $umbrella $subName
+        New-Item -ItemType Directory -Path $subDir -Force | Out-Null
+        & git -C $subDir init -q
+        & git -C $subDir config user.name 'test'
+        & git -C $subDir config user.email 'test@example.com'
+        Set-Content -LiteralPath (Join-Path $subDir 'pom.xml') -Value "<project>$subName</project>" -NoNewline -Encoding utf8
+        & git -C $subDir add pom.xml
+        & git -C $subDir commit -q -m 'init'
+    }
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File $dispatcher -Task 'umb-task' -Project $umbrella -PromptFile $wtPromptFile -CodexPath $fixture -SkipGitRepoCheck | Out-Null
+    $umbStatusFile = Get-ChildItem -LiteralPath (Join-Path $umbrella 'work\alpha\logs\umb-task') -Filter '*.status.json' | Select-Object -First 1
+    $umbStatus = Get-Content -LiteralPath $umbStatusFile.FullName -Raw -Encoding utf8 | ConvertFrom-Json
+    Assert-True ($umbStatus.worktree.used -eq $true -and $umbStatus.worktree.topology -eq 'umbrella-multi-repo') 'Umbrella worktree was not activated.'
+    Assert-True ((Test-Path -LiteralPath (Join-Path $umbStatus.cwd 'AGENTS.md')) -and (Test-Path -LiteralPath (Join-Path $umbStatus.cwd 'fms\pom.xml')) -and (Test-Path -LiteralPath (Join-Path $umbStatus.cwd 'fms-p269\pom.xml'))) 'Umbrella child repos or AGENTS.md missing in worktree.'
+    & (Join-Path $PSHOME 'pwsh.exe') -NoLogo -NoProfile -File (Join-Path $scriptRoot 'Remove-TaskWorktree.ps1') -Project $umbrella -Task 'umb-task' -DeleteBranch -Force | Out-Null
+    $results.Add(@{ name = 'git_umbrella_multi_repo_worktree_isolation'; passed = $true })
 } finally {
     foreach ($process in $ownedProcesses) {
         if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit(5000) | Out-Null }

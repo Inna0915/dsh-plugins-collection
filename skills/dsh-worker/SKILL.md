@@ -1,6 +1,6 @@
 ---
 name: dsh-worker
-description: 在 Windows Claude Code 中把任务交给本机 DSH CLI，负责交接、精确会话续接和结果验收。用于用户要求“让 DSH 干活”“交给 DeepSeek Harness”或调用 /dsh-worker 时。暂时默认使用桌面端 magpie 的 DeepSeek V4.1 Flash 1017 / max，DSH 权限默认全访问。
+description: 在 Windows Claude Code 中把任务交给本机 DSH CLI，负责交接、精确会话续接和结果验收。用于用户要求“让 DSH 干活”“交给 DeepSeek Harness”或调用 /dsh-worker 时。默认使用桌面端 magpie 的 workbuddy/deepseek-v4.1-flash / max，DSH 权限默认全访问。
 ---
 
 # DSH 执行助手
@@ -11,7 +11,7 @@ Claude Code 负责理解需求、准备交接和验收，DSH headless CLI 负责
 ## 调用
 
 - 入口：`${CLAUDE_SKILL_DIR}/scripts/Invoke-DshTask.ps1`。
-- 默认值来自 [defaults.json](config/defaults.json)：`magpie / clinepass/cline-pass/deepseek-v4.1-flash-1017 / max`。
+- 默认值来自 [defaults.json](config/defaults.json)：`magpie / workbuddy/deepseek-v4.1-flash / max`。
 - 按用户授权，DSH 默认 `danger-full-access`、审批策略 `never`；不需要另加 yolo 参数。全权限不扩展具体任务范围。
 - 连接信息每轮读取桌面端所选 provider 配置；默认模型固定在 defaults.json，不跟随桌面端切换。API Key 通过已有环境变量引用读取。
 - 通过 `-Provider`、`-Model`、`-Effort` 覆盖单次调用，只有用户指定时才换模型。权限可用 `-Mode read-only` 或 `workspace-write` 收紧。
@@ -22,6 +22,7 @@ Claude Code 负责理解需求、准备交接和验收，DSH headless CLI 负责
 1. 确定当前项目的绝对路径，读取适用的 AGENTS.md，检查用户已有修改和正在执行的任务。不要接管当前 Codex/DSH 桌面会话，不要与它们同时修改相同文件。
 2. 在 `<项目>/work/alpha/tmp/<任务名>/` 写 UTF-8 交接文件：目标、允许修改范围、必要背景、验收标准、验证命令及停止条件。无需复制全部对话。
 3. 传入 `-Project`、`-Task`、`-PromptFile`。默认总超时 1800 秒，可通过 `-TimeoutSeconds` 调整，禁止无限等待。构建、测试仍需单独限定超时并清理其进程。
+   - **默认 Git Worktree 隔离（`WorktreeMode=auto`）**：非只读模式下，单 Git 仓库自动隔离至 `<父目录>/.worktrees/<仓库名>/<Task>`（分支 `worker/<Task>`），多子仓聚合目录（如 `fms269`、`fms-p275`）自动隔离至 `<项目>/work/alpha/worktrees/<Task>/` 下各子仓 Worktree，避免污染主工作树未提交修改；`-SessionId` 续接自动复用同一隔离工作树。只读模式（`-Mode read-only`）默认原位执行；确需原位直接改主工作树时显式传 `-NoWorktree`。
 4. 持续检查脚本输出的 status 和 events 文件。宿主需后台执行长任务时，使用宿主的后台任务能力并持续追踪该次调用；不要因暂时无输出而重复下发。
 5. 检查 `state=finished`、`exitCode=0`、`turnCompleted=true`、`cleanupVerified=true`、`overlayRemoved=true` 和非空 final.md，再通过实际文件、diff 和测试记录验收业务结果。
 
@@ -44,6 +45,6 @@ Bash 工具中请使用 Bash 引号和续行规则调用 `pwsh.exe -File`，不�
 - 登录、网关、模型权限或协议错误必须如实报告。不得偷偷换模型，不得反复无限重试。
 - 正常、失败和超时退出会清理整个本次进程作业。中止时先核对 status.runnerPid 和进程命令行，再停止该调度器；Windows Job 会清理后代进程，禁止按 node/java/pwsh 镜像名批量结束。
 - 强制结束父进程时，状态文件可能仍显示 running，临时覆盖文件也可能保留。确认本次进程已停止后，只删除对应 runId 的 `.patch.json` 和本任务不再使用的交接文件。
-- 完成后清理本任务临时文件；日志是验收记录，可保留。DSH 会话保存在用户 DSH home 中，可用于后续续接。
+- 完成后清理本任务临时文件；若启用了 Worktree 隔离（见 `status.worktree`），验收并将代码合入/cherry-pick 回主工作树后，调用 `${CLAUDE_SKILL_DIR}/scripts/Remove-TaskWorktree.ps1 -Project <项目> -Task <任务名> [-DeleteBranch]` 清理隔离目录。日志是验收记录，可保留。DSH 会话保存在用户 DSH home 中，可用于后续续接。
 
 详见 [参数、日志与排错](references/usage.md) 和 [安装验证](references/validation.md)。该 skill 只在本机 Windows Claude Code 中生效；它不修改 Claude Code 本身的工具审批设置。

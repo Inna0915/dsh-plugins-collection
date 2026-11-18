@@ -7,7 +7,10 @@ export async function runCli() {
   const args = process.argv.slice(2);
   const patch = JSON.parse(fs.readFileSync(args[args.indexOf('--patch') + 1], 'utf8'));
   const task = /任务：([^\r\n]+)/.exec(prompt)[1];
-  const logs = path.join(process.cwd(), 'work/alpha/logs', task);
+  const logs = process.env.DSH_DELEGATE_LOG_DIR || path.join(process.cwd(), 'work/alpha/logs', task);
+  if (prompt.includes('TEST_TOUCH_WORKTREE')) {
+    fs.writeFileSync(path.join(process.cwd(), 'worker-touched.txt'), `touched:${task}`);
+  }
   fs.writeFileSync(path.join(logs, 'fake-input.json'), JSON.stringify({ args, prompt, patch, cwd: process.cwd(), mode: process.env.DSH_PERMISSION_MODE }));
   const id = args.includes('--session-id') ? args[args.indexOf('--session-id') + 1] : 'session-01234567-1234-1234-1234-123456789abc';
   console.log(JSON.stringify({ type: 'session', sessionId: id }));

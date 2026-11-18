@@ -1,6 +1,6 @@
 {
   "provider": "magpie",
-  "model": "clinepass/cline-pass/deepseek-v4.1-flash-1017",
+  "model": "workbuddy/deepseek-v4.1-flash",
   "effort": "max",
   "mode": "danger-full-access",
   "nodePath": "C:/Users/OMEN/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
