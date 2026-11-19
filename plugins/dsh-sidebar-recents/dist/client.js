@@ -664,6 +664,55 @@ function createWorkspaceChrome(ctx) {
   };
 }
 
+// src/client/directory-flow-compat.js
+var SIDEBAR_FLOW_SLOT = "sidebar.workspaces.directoryFlow";
+var HERO_FLOW_SLOT = "conversation.hero.workspace.directoryFlow";
+var PICKER_FACTORY_NAME = "workspace.picker";
+var PICKER_FLOW_SLOT = "workspace.picker.directoryFlow";
+function WorkspacePickerCompatStub() {
+  return null;
+}
+function installDirectoryFlowCompat(ctx) {
+  const slots = ctx?.slots;
+  if (slots === void 0 || typeof slots.inject !== "function" || typeof slots.spec !== "function" || typeof slots.registerFactory !== "function") {
+    return () => {
+    };
+  }
+  return slots.inject(
+    SIDEBAR_FLOW_SLOT,
+    () => slots.inject(HERO_FLOW_SLOT, () => {
+      let cancelled = false;
+      let disposeFactory = null;
+      queueMicrotask(() => {
+        if (cancelled) return;
+        if (slots.spec(SIDEBAR_FLOW_SLOT) === void 0) return;
+        if (slots.spec(HERO_FLOW_SLOT) === void 0) return;
+        if (slots.spec(PICKER_FLOW_SLOT) !== void 0) return;
+        try {
+          disposeFactory = slots.registerFactory(
+            {
+              name: PICKER_FACTORY_NAME,
+              scope: "root",
+              children: {
+                [PICKER_FLOW_SLOT]: { kind: "single", scope: "root" }
+              }
+            },
+            WorkspacePickerCompatStub
+          );
+        } catch (error) {
+          console.warn("sidebar-recents: workspace.picker compat shim skipped:", error);
+        }
+      });
+      return () => {
+        cancelled = true;
+        const dispose = disposeFactory;
+        disposeFactory = null;
+        dispose?.();
+      };
+    })
+  );
+}
+
 // src/client/recents-panel.js
 var import_react3 = __toESM(require("react"), 1);
 var import_react_dom = require("react-dom");
@@ -1490,6 +1539,7 @@ var import_dsh_client_store = require("@deepseek-ai/dsh-client-store");
 var inject = ["slots", "sessions", "workspaces", "uiWorkspace", "uiSession"];
 function apply(ctx) {
   const disposeStyles = injectStyles();
+  installDirectoryFlowCompat(ctx);
   const chrome = createWorkspaceChrome(ctx);
   const workspacePins = createWorkspacePinStore(import_dsh_client_store.createSnapshotStore);
   ctx.effect(

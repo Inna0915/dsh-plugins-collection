@@ -7,3 +7,4 @@ import './activity.test.js';
 import './pins.test.js';
 import './chrome.test.js';
 import './panel.test.js';
+import './directory-flow-compat.test.js';

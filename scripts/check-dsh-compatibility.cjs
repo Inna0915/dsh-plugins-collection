@@ -22,16 +22,22 @@ for (const directory of fs.readdirSync(path.join(root, 'plugins'))) {
   rows.push({ name: manifest.name, version: manifest.version, compatible: issue === undefined, requirements: issue?.requirements });
   if (issue) process.exitCode = 1;
   if (['dsh-project-package', 'dsh-sidebar-recents'].includes(manifest.name)) {
-    // Guard the actual upgrade failure, plus retention of previously supported hosts.
-    const old = { ...manifest, engines: { ...manifest.engines, dsh: '0.2.1-rc.3 || 0.2.1-rc.5' } };
-    assert.ok(evaluatePluginCompatibility(old, {}, '0.2.2-rc.1'));
-    for (const version of ['0.2.1-rc.3', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3']) {
+    // Guard the actual rc.5 upgrade failure under old exact-pin declarations.
+    const old = { ...manifest, engines: { ...manifest.engines, dsh: '0.2.1-rc.3 || 0.2.1-rc.5 || 0.2.2-rc.1 || 0.2.2-rc.3' } };
+    assert.ok(evaluatePluginCompatibility(old, {}, '0.2.2-rc.5'));
+    // Lower-bound range (>=0.2.1-rc.3) keeps historical hosts and admits future upgrades (includePrerelease: true).
+    for (const version of ['0.2.1-rc.3', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3', '0.2.2-rc.5', '0.2.2', '0.2.3-rc.1', '0.3.0-rc.1', '0.3.0', '1.0.0']) {
       assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined, `${manifest.name}: ${version} rejected`);
     }
-    // rc.2 never ran on this machine (its installer failed on 2026-11-12), so it stays unaudited.
-    for (const version of ['0.2.2-rc.2', '0.3.0']) {
-      assert.ok(evaluatePluginCompatibility(manifest, {}, version), `${manifest.name}: unaudited ${version} admitted`);
+    for (const version of ['0.2.0', '0.2.1-rc.2']) {
+      assert.ok(evaluatePluginCompatibility(manifest, {}, version), `${manifest.name}: below-floor ${version} admitted`);
     }
+  }
+  if (manifest.name === 'dsh-novel-reader') {
+    for (const version of ['0.2.2-rc.1', '0.2.2-rc.5', '0.2.2', '0.3.0']) {
+      assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined, `${manifest.name}: ${version} rejected`);
+    }
+    assert.ok(evaluatePluginCompatibility(manifest, {}, '0.2.1-rc.5'), `${manifest.name}: below-floor 0.2.1-rc.5 admitted`);
   }
 }
 

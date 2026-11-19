@@ -1,5 +1,6 @@
 import React from 'react';
 import { createWorkspaceChrome } from './chrome.js';
+import { installDirectoryFlowCompat } from './directory-flow-compat.js';
 import { RecentsPanel } from './recents-panel.js';
 import { injectStyles } from './styles.js';
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store';
@@ -15,6 +16,7 @@ export const inject = ['slots', 'sessions', 'workspaces', 'uiWorkspace', 'uiSess
 
 export function apply(ctx) {
   const disposeStyles = injectStyles();
+  installDirectoryFlowCompat(ctx);
   const chrome = createWorkspaceChrome(ctx);
   const workspacePins = createWorkspacePinStore(createSnapshotStore);
 
