@@ -14,6 +14,9 @@ const HAN = /\p{Script=Han}/u
 const CJK_NEAR = /[\p{Script=Han}，。；：？！、“”‘’「」『』《》（）…—]/u
 const HALF_TO_FULL = { '?': '？', '!': '！', ',': '，', ';': '；', ':': '：' }
 const NOTE_ENTRY = /^(\S+?)\s+([^\s：:]+)\s*[：:]\s*(.+)$/u
+/** 整段只是编者注（如古文观止《烛之武退秦师》末尾的「（選自《左傳》）」），不属于原文。 */
+const SOURCE_NOTE = /^[（(][^（）()]*[選选節节录錄出]自[^（）()]*[）)]$/u
+
 /** 繁转简不会处理的常见异体字（实测 opencc-js t→cn）。只报告，不改原文。 */
 export const VARIANTS = Object.freeze({ 崐: '昆', 茍: '苟', 猨: '猿', 桮: '杯', 胷: '胸', 鬭: '斗', 菓: '果', 竝: '并', 鴈: '雁', 麤: '粗', 甯: '宁' })
 
@@ -106,6 +109,10 @@ export async function cleanParagraphs(paragraphs, { traditional = false, t2s } =
   const out = []
   for (const raw of paragraphs) {
     if (typeof raw !== 'string') throw new CleanError('段落必须是文本')
+    if (SOURCE_NOTE.test(raw.trim())) {
+      report.warnings.push(`删去编者注「${raw.trim()}」（不属于原文）`)
+      continue
+    }
     const extracted = extractInlineNotes(raw)
     report.notes += extracted.notes.length
     report.warnings.push(...extracted.warnings)

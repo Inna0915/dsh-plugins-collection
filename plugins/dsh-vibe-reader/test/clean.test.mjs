@@ -62,3 +62,11 @@ test('variant characters that t2s leaves alone are reported, never changed', asy
   assert.deepEqual(report.variants, [{ char: '崐', common: '昆', count: 1 }, { char: '茍', common: '苟', count: 1 }])
   assert.match(report.warnings.join(), /崐（通行作「昆」）.*茍（通行作「苟」）.*请问用户/)
 })
+
+test('editor source notes such as 「（選自《左傳》）」 are dropped and reported', async () => {
+  const { paragraphs, report } = await cleanParagraphs(['子犯請擊之。', '（選自《左傳》）'], { traditional: true })
+  assert.deepEqual(paragraphs.map((paragraph) => paragraph.text), ['子犯请击之。'])
+  assert.match(report.warnings.join(), /删去编者注「（選自《左傳》）」/)
+  const kept = await cleanParagraphs(['（甲）乙丙。'])
+  assert.equal(kept.paragraphs.length, 1, 'ordinary text in brackets stays')
+})
