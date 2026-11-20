@@ -9,8 +9,4 @@ export * from "./runtime/output.js";
 export * from "./runtime/maintenance.js";
 export * from "./runtime/deletes.js";
 export * from "./runtime/delete-authority.js";
-export { authorizeInDsh, deleteReason } from "./dsh/approval.js";
 export { createHttpHandler, serve } from "./runtime/http.js";
-export { apply as dshApply } from "./dsh/plugin.js";
-export { captureCurrentComposer } from "./client/composer.js";
-export { openWorkspaceBoard } from "./client/workspace.js";

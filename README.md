@@ -7,7 +7,7 @@ DSH Desktop 定制插件和配套 agent skill 的唯一源码仓库。
 | 目录 | 内容 | 原位置（现为指向本仓库的 junction） |
 |---|---|---|
 | `plugins/jira-flow` | 任务看板 dsh-jira-flow，含 jira-* skill | `D:/dev/vscode/jira-flow` |
-| `plugins/confluence-flow` | Confluence 文档 dsh-confluence-flow，含 confluence-* skill | `D:/dev/vscode/confluence-flow` |
+| `plugins/confluence-flow` | Confluence 运行层（CLI / MCP）与 confluence-* skill；DSH 插件部分已于 2026-11-20 移除 | `D:/dev/vscode/confluence-flow` |
 | `plugins/dsh-project-package` | 项目打包 | `~/Documents/助手/dsh-project-package` |
 | `plugins/dsh-sidebar-recents` | 最近会话与工作区折叠 | `~/Documents/助手/dsh-sidebar-recents` |
 | `plugins/codex-monitor` | 会话看板 | `~/.dsh/local-plugins/20260930/codex-monitor` |
@@ -37,7 +37,8 @@ pwsh -NoProfile -File scripts/Sync-Links.ps1 -Apply   # 修正指向错误或缺
 
 ## 安装方式
 
-- jira-flow、confluence-flow、codex-monitor、meal-panel：DSH 直接从本仓库工作区加载，改动 dist 或源码会影响正在运行的宿主。
+- jira-flow、codex-monitor、meal-panel：DSH 直接从本仓库工作区加载，改动 dist 或源码会影响正在运行的宿主。
+- confluence-flow：不再是 DSH 插件。Claude / Codex 的 MCP 和 `~/.confluence-flow/installation.json` 经 `D:/dev/vscode/confluence-flow` 运行 `dist/cli.js`，改动 dist 会影响正在运行的 MCP；DSH 会话经 `~/.agents/skills` 使用三个 confluence-* skill。
 - dsh-vibe-reader：Desktop 插件管理以本地目录（`link:`）安装 `plugins/dsh-vibe-reader`，改源码即影响正在运行的宿主。
 - dsh-project-package、dsh-sidebar-recents：通过各自的 `scripts/install-local.ps1` 复制到 `~/.dsh/local-plugins` 安装，改源码后需重新安装。
 

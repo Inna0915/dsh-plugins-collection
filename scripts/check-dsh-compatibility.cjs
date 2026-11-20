@@ -14,6 +14,7 @@ const rows = [];
 for (const directory of fs.readdirSync(path.join(root, 'plugins'))) {
   const packageRoot = path.join(root, 'plugins', directory);
   const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+  if (!manifest.dsh) continue; // not a DSH plugin (confluence-flow keeps only its CLI / MCP runtime and skills)
   const issue = evaluatePluginCompatibility(manifest, {}, runtime);
   const entry = manifest.exports['.'];
   const client = manifest.exports['./client'];
@@ -32,12 +33,6 @@ for (const directory of fs.readdirSync(path.join(root, 'plugins'))) {
     for (const version of ['0.2.0', '0.2.1-rc.2']) {
       assert.ok(evaluatePluginCompatibility(manifest, {}, version), `${manifest.name}: below-floor ${version} admitted`);
     }
-  }
-  if (manifest.name === 'dsh-novel-reader') {
-    for (const version of ['0.2.2-rc.1', '0.2.2-rc.5', '0.2.2', '0.3.0']) {
-      assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined, `${manifest.name}: ${version} rejected`);
-    }
-    assert.ok(evaluatePluginCompatibility(manifest, {}, '0.2.1-rc.5'), `${manifest.name}: below-floor 0.2.1-rc.5 admitted`);
   }
 }
 

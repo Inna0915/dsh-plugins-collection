@@ -1,6 +1,8 @@
 # Confluence Flow
 
-Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 DSH / CLI / MCP / Skills 共用的运行层。
+Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面版本检查，以及 CLI / MCP / Skills 共用的运行层。
+
+原来的 DSH 插件（全页面板、工作区分栏、加入会话草稿、DSH 原生工具 `confluence_flow` / `confluence_flow_delete`）已于 2026-11-20 移除，本目录只保留运行层和 Skills。DSH 会话从 `~/.agents/skills` 加载这三个 Skill，经 `scripts/run.mjs` 调用 CLI。
 
 ## 当前能力（0.6.0）
 
@@ -11,8 +13,7 @@ Confluence 文档工作台：标准 wiki 读写、正文与右侧目录、页面
 - 页面移动（0.4.0）：页面连同子页面移到同空间新父页下，正文原样回传，产生一个小改动版本；先预览，已在目标下不写入，拒绝成环和跨空间，结果不明不重发。
 - storage 正文（0.5.0）：create/update 可用 storage（XHTML）代替 wiki，表达合并单元格等 wiki 无法表达的格式；预览时经服务器非持久化转换校验，无法解析即拒绝并带回解析位置。
 - 删除到回收站（0.6.0）：页面连同子页面，或只删某页下的子页面（keepRoot），单次最多 100 页；预览令牌绑定页面集合与版本，删除权限预先整体检查，自最深层逐页删除，结果不明不重发；可按删除记录恢复。删除是独立工具 `confluence_flow_delete`，由宿主确认（见“删除与授权”）。
-- DSH 全页与工作区分栏，页面加入当前会话草稿，保留已有输入。
-- confluence_flow 原生工具和 stdio MCP；confluence-query / confluence-publish / confluence-update Skills。
+- stdio MCP（`confluence_flow`、`confluence_flow_delete`）；confluence-query / confluence-publish / confluence-update Skills。
 
 读取会保留原始 storage 底稿。wiki 是阅读/编写表示，任意旧页面不保证无损反向转换。部分修改保留范围外的原始字符。复杂宏在本地预览显示占位或内容摘要；Jira 宏读取为 `{jira:key=…}` / `{jira:jqlQuery=…}` 引用，可交给 Jira 工具查询，写回时由 Confluence 的格式转换还原为宏；最终动态效果请打开 Confluence 原网页。附件可列表和上传（图片、SVG、drawio、PDF、Office 文档）；本地预览以文本标注图片引用。
 
@@ -25,10 +26,7 @@ Node.js 20.19+。Windows 安装、构建和测试使用 scripts/run-bounded.ps1�
 ```powershell
 ./scripts/run-bounded.ps1 -Executable node -CommandArgs @('C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js','install','--no-audit','--no-fund') -TimeoutSeconds 180
 ./scripts/run-bounded.ps1 -Executable node -CommandArgs @('scripts/build.mjs') -TimeoutSeconds 90
-& "$env:LOCALAPPDATA/Programs/DeepSeek Harness/resources/runtime/cli/bin/dsh.cmd" plugin --profile desktop add link:D:/dev/vscode/confluence-flow
 ```
-
-使用 DSH 桌面端随附的 CLI 安装 desktop profile；系统 PATH 中另一版本的 dsh 可能不能管理 desktop。DSH 正常重启或宿主支持的插件重载后，打开“Confluence 文档”。安装是本地链接，移动项目后需要重新安装链接。
 
 ```powershell
 node D:/dev/vscode/confluence-flow/dist/cli.js auth import-obsidian --source D:/vault/.obsidian/plugins/confluence-sync/data.json
@@ -37,11 +35,11 @@ node D:/dev/vscode/confluence-flow/dist/cli.js doctor
 node D:/dev/vscode/confluence-flow/dist/cli.js skills install
 ```
 
-Skills 安装到 ~/.agents/skills、~/.codex/skills 和 ~/.claude/skills；已有同名目录保留，不自动覆盖。`--output` 可指定其他路径。DSH 插件同时注册随包的 Skills。每个 Skill 的 scripts/run.mjs 通过 ~/.confluence-flow/installation.json 定位 CLI；不依赖 DSH 保持运行。
+Skills 安装到 ~/.agents/skills、~/.codex/skills 和 ~/.claude/skills；已有同名目录保留，不自动覆盖。`--output` 可指定其他路径。每个 Skill 的 scripts/run.mjs 通过 ~/.confluence-flow/installation.json 定位 CLI；不依赖 DSH 保持运行。
 
 ## Agent 使用
 
-DSH agent 直接调用 `confluence_flow`。Codex / Claude Code 可通过安装的 Skills 调用 CLI，也可以配置 MCP：
+Codex / Claude Code / DSH 都可通过安装的 Skills 调用 CLI；Codex / Claude Code 也可以配置 MCP：
 
 ```json
 {
@@ -62,7 +60,7 @@ command = "node"
 args = ["D:/dev/vscode/confluence-flow/dist/cli.js", "mcp"]
 ```
 
-配置中无需账号、密码或 token。MCP 使用与 DSH 相同的工具名和参数。`confluence_flow` 可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、upload、move、delete-preview、restore、operation-status；删除使用独立工具 `confluence_flow_delete`。`node dist/cli.js --help` 查看 CLI 参数。
+配置中无需账号、密码或 token。`confluence_flow` 可用操作：profiles、doctor、search、read、scan、children、attachments、preview、create、update、commit、upload、move、delete-preview、restore、operation-status；删除使用独立工具 `confluence_flow_delete`。`node dist/cli.js --help` 查看 CLI 参数。
 
 本机交付已通过客户端命令注册，无需重复手动配置。其他机器可使用 `codex mcp add confluence-flow -- node <CLI绝对路径> mcp`，或 `claude mcp add --transport stdio --scope user confluence-flow -- node <CLI绝对路径> mcp`。官方接入说明：[Codex MCP](https://developers.openai.com/codex/mcp)、[Claude Code MCP](https://code.claude.com/docs/en/mcp)。
 
@@ -121,17 +119,16 @@ node dist/cli.js restore --delete-request-id UNIQUE_REQUEST_ID [--apply true --r
 
 | 入口 | 授权方式 |
 | --- | --- |
-| DSH 工具 `confluence_flow_delete` | 用户本人在当前（非子代理）会话的最近消息里写明删除、页面 ID/链接/完整标题和范围，则直接执行；否则通过 DSH 审批在这次工具调用上弹窗，“允许一次”才执行。全访问会话（审批策略 never）不弹窗，未明确指定时拒绝并提示 |
 | MCP 工具 `confluence_flow_delete` | 标注 `destructiveHint`，由 Claude Code / Codex 对该工具的确认决定；不要把它加入自动允许列表 |
 | CLI `delete` | 用户在交互式终端输入根页标题确认；非交互调用（agent 经 Skill 脚本执行）拒绝 |
 
-“明确指定”是保守的文字核对：含否定（不要删/先别删）、询问、页面内局部删除（段落、表格、附件）或范围不符（例如消息说“不包括这个页面”而本次会删除该页）时都判为未指定，退回弹窗。标题须作为完整词出现，避免同前缀标题误配。由其他 agent 代发消息驱动的 DSH 会话（如经 CLI 委派）无法与用户本人区分，应依赖审批弹窗。
+运行层仍保留“明确指定”的文字核对（`designation`），供以后的宿主入口复用；当前 MCP 与 CLI 入口不使用它。
 
 ## 用户数据
 
 默认 ~/.confluence-flow，可通过 CONFLUENCE_FLOW_HOME 指定。profiles 保存非秘密连接；credentials 保存 Windows DPAPI CurrentUser 密文；snapshots 保存读取底稿；read-cache 保存阅读缓存索引；scans 保存批量摘要及分页结果；drafts 保存待发布内容；delete-plans 保存删除预览令牌；operations 保存提交回执（含删除的逐页记录，供恢复）；installation.json 记录运行层位置。快照与草稿是用户资料，不属于仓库或测试文件。
 
-每天第一次调用（CLI、MCP、DSH 或界面均可）会先做一次清理，再执行请求：snapshots、scans、read-cache、drafts 保留 7 天，delete-plans 保留 1 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同一进程当天后续调用不再检查；多个进程用 maintenance/ 下的当天标记文件抢占，只有一个执行。清理只扫描上述目录，实测十几毫秒，失败不影响本次请求。超过 7 天的 snapshotId 不再可用，需要重新读取；更早的页面内容可在 Confluence 页面历史中找回。
+每天第一次调用（CLI、MCP 或界面均可）会先做一次清理，再执行请求：snapshots、scans、read-cache、drafts 保留 7 天，delete-plans 保留 1 天，operations 保留 30 天；profiles、credentials、installation.json 不动。同一进程当天后续调用不再检查；多个进程用 maintenance/ 下的当天标记文件抢占，只有一个执行。清理只扫描上述目录，实测十几毫秒，失败不影响本次请求。超过 7 天的 snapshotId 不再可用，需要重新读取；更早的页面内容可在 Confluence 页面历史中找回。
 
 Windows 凭据通过子进程标准输入保护，不放入参数或工具结果。它依赖当前 Windows 用户，不能抵御同一用户下任意代码访问。其他系统使用 credentialStore=environment，变量名为 CONFLUENCE_FLOW_AUTH_<大写连接别名，非字母数字替换为下划线>，值为 basic 或 bearer 认证 JSON；不要在聊天、仓库或配置示例中写真实值。
 

@@ -174,4 +174,4 @@ export const deleteShape = {
 export const deleteSchema = z.object(deleteShape).strict();
 export type DeleteToolInput = z.infer<typeof deleteSchema>;
 export const deleteDescription =
-  "把 Confluence 页面连同全部子页面（或按预览 keepRoot 只删子页面、保留该页）移到回收站（不永久删除），从最深层逐页删除。先用 confluence_flow 的 delete-preview 取得 token 与页面清单并告知用户；page/token/title（根页标题）/count 须与预览一致，并使用稳定 requestId。DSH 中：用户本人消息里写明删除、页面 ID/链接/完整标题及范围（连同子页，或只删其下页面）则直接执行，否则弹窗请用户确认；被拒绝不要重试。预览后页面有变化会拒绝，需重新预览。结果不明时用 operation-status 核实，禁止换 requestId 重发；恢复用 confluence_flow 的 restore。";
+  "把 Confluence 页面连同全部子页面（或按预览 keepRoot 只删子页面、保留该页）移到回收站（不永久删除），从最深层逐页删除。先用 confluence_flow 的 delete-preview 取得 token 与页面清单并告知用户；page/token/title（根页标题）/count 须与预览一致，并使用稳定 requestId。由宿主（Claude Code / Codex 的工具确认）决定是否执行；被拒绝不要重试。预览后页面有变化会拒绝，需重新预览。结果不明时用 operation-status 核实，禁止换 requestId 重发；恢复用 confluence_flow 的 restore。";

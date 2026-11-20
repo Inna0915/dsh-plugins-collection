@@ -1,7 +1,7 @@
 {
   "links": [
     { "path": "D:/dev/vscode/jira-flow", "target": "plugins/jira-flow", "usedBy": "DSH profile link、Claude/Codex MCP、~/.jira-flow/installation.json" },
-    { "path": "D:/dev/vscode/confluence-flow", "target": "plugins/confluence-flow", "usedBy": "DSH profile link、Claude/Codex MCP、~/.confluence-flow/installation.json" },
+    { "path": "D:/dev/vscode/confluence-flow", "target": "plugins/confluence-flow", "usedBy": "Claude/Codex MCP、~/.confluence-flow/installation.json（DSH 插件已移除）" },
     { "path": "~/.dsh/local-plugins/20260930/codex-monitor", "target": "plugins/codex-monitor", "usedBy": "DSH profile link" },
     { "path": "~/.dsh/local-plugins/meal-panel", "target": "plugins/meal-panel", "usedBy": "DSH profile link" },
     { "path": "~/Documents/助手/dsh-project-package", "target": "plugins/dsh-project-package", "usedBy": "旧源码路径兼容" },

@@ -50,7 +50,7 @@ async function terminalConfirm(
 ): Promise<DeleteAuthorization> {
   if (!process.stdin.isTTY || !process.stderr.isTTY) {
     throw new Error(
-      "CLI 删除需要用户在交互式终端中输入标题确认，未删除任何页面；agent 请改用 confluence_flow_delete 工具（DSH 或 MCP），由宿主确认",
+      "CLI 删除需要用户在交互式终端中输入标题确认，未删除任何页面；agent 请改用 MCP 工具 confluence_flow_delete，由宿主确认",
     );
   }
   const prompt = createInterface({

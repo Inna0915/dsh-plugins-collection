@@ -319,7 +319,7 @@ export class ConfluenceService {
     return jsonOutput(await this.executeInternal(raw, signal));
   }
   /**
-   * 删除只走此入口，且必须由调用方提供授权方（DSH 弹窗/用户消息、MCP 宿主确认、终端确认）；
+   * 删除只走此入口，且必须由调用方提供授权方（MCP 宿主确认、终端确认）；
    * 通用 execute 与本机面板接口不接受删除。
    */
   async executeDelete(

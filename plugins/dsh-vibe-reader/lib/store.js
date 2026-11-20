@@ -1,6 +1,6 @@
 /**
  * 本地数据：书库扫描（只读）与 state.json（进度、背诵等级、出卡记录、设置）。
- * 写入一律「临时文件 + 改名」，并按文件串行，参考 novel-reader 的 createLibrary。
+ * 写入一律「临时文件 + 改名」，并按文件串行。
  */
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
