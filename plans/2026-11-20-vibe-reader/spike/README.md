@@ -32,7 +32,7 @@
 ## 重跑
 
 ```bash
-NODE=C:/Users/OMEN/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe
+NODE=node                                   # Node 24+（自检需要 zlib.zstdDecompressSync）
 "$NODE" --test spike.test.mjs
 "$NODE" run-headless-selftest.mjs          # 加 --keep 保留 .task-tmp/<runId>/ 下的事件和 stderr
 ```
