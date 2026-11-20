@@ -12,6 +12,7 @@ DSH Desktop 定制插件和配套 agent skill 的唯一源码仓库。
 | `plugins/dsh-sidebar-recents` | 最近会话与工作区折叠 | `~/Documents/助手/dsh-sidebar-recents` |
 | `plugins/codex-monitor` | 会话看板 | `~/.dsh/local-plugins/20260930/codex-monitor` |
 | `plugins/meal-panel` | 饭否午晚 | `~/.dsh/local-plugins/meal-panel` |
+| `plugins/dsh-vibe-reader` | 闲庭：间隙读、背古诗文（右侧栏） | 无，新建于本仓库 |
 | `skills/jira-create` | 本地定制版（默认 Story，禁止 Task；创建后默认待办） | `~/.agents/skills/jira-create` |
 | `skills/jira-personal-report` | 个人周报/月报 | `~/.agents/skills/jira-personal-report` |
 | `skills/codex-worker` | 委派 Codex CLI | `~/.claude/skills/codex-worker` |
@@ -37,6 +38,7 @@ pwsh -NoProfile -File scripts/Sync-Links.ps1 -Apply   # 修正指向错误或缺
 ## 安装方式
 
 - jira-flow、confluence-flow、codex-monitor、meal-panel：DSH 直接从本仓库工作区加载，改动 dist 或源码会影响正在运行的宿主。
+- dsh-vibe-reader：Desktop 插件管理以本地目录（`link:`）安装 `plugins/dsh-vibe-reader`，改源码即影响正在运行的宿主。
 - dsh-project-package、dsh-sidebar-recents：通过各自的 `scripts/install-local.ps1` 复制到 `~/.dsh/local-plugins` 安装，改源码后需重新安装。
 
 构建和测试按各插件目录内的 README / AGENTS.md 执行。
