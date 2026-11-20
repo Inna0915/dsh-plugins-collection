@@ -7,6 +7,7 @@ kind: prose
 source: chinese-poetry/蒙学/guwenguanzhi.json
 edition: 古文观止（chinese-poetry 繁体本转简，抽出夹注）
 verified: corpus
+color: 晚波蓝
 fingerprint: sha256:f2cf0c6f3ee79f5426ab35ff072a45fa02d4147e9222a781ffbe19e08aeefa3e
 tags: [楼记, 洞庭, 忧乐, 古文观止]
 ---

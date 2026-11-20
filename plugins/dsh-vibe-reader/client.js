@@ -1,7 +1,9 @@
 window.__ModuleLoader__.load({
   id: 'dsh-vibe-reader',
   factory(require) {
-    const { createElement: h, useEffect, useMemo, useState, useSyncExternalStore } = require('react')
+    const { createElement: h, useEffect, useMemo, useRef, useState, useSyncExternalStore } = require('react')
+    let primitives = null
+    try { primitives = require('@deepseek-ai/dsh-client-ui-primitives') || null } catch { primitives = null }
     const kind = 'vibe-reader'
     const tabId = 'dsh-vibe-reader/reader'
     const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state' }
@@ -186,6 +188,32 @@ window.__ModuleLoader__.load({
       return pieces
     }
 
+    const LEADING_PUNCT = /^[，。；：、？！”’」』）》…—]+/u
+
+    /**
+     * Group each glossed word with its gloss and any punctuation that follows,
+     * so a wide 双行夹注 never pushes 「。」 to the start of the next line.
+     */
+    function renderPlan(pieces) {
+      const plan = []
+      let skip = 0
+      pieces.forEach((piece, index) => {
+        const text = piece.text.slice(skip)
+        skip = 0
+        if (!text) return
+        const item = { text, quote: piece.quote, noted: piece.noted, glosses: piece.glossesAfter, tail: null }
+        if (piece.glossesAfter.length && pieces[index + 1]) {
+          const lead = LEADING_PUNCT.exec(pieces[index + 1].text)?.[0] || ''
+          if (lead) {
+            item.tail = { text: lead, quote: pieces[index + 1].quote }
+            skip = lead.length
+          }
+        }
+        plan.push(item)
+      })
+      return plan
+    }
+
     function glossText(note) {
       return note.reading ? note.reading + ' ' + note.gloss : note.gloss
     }
@@ -213,6 +241,50 @@ window.__ModuleLoader__.load({
       return pool[pool.length - 1]
     }
 
+    const NUMERALS = ['零', '壹', '貳', '參', '肆', '伍', '陸', '柒', '捌', '玖']
+
+    /** 1 → 壹, 11 → 拾壹, 25 → 貳拾伍, 105 → 壹佰零伍（繁体大写，用于节序）。 */
+    function toNumeral(n) {
+      if (!Number.isInteger(n) || n <= 0 || n >= 1000) return String(n)
+      if (n < 10) return NUMERALS[n]
+      if (n < 100) {
+        const tens = Math.floor(n / 10)
+        return (tens === 1 ? '' : NUMERALS[tens]) + '拾' + (n % 10 ? NUMERALS[n % 10] : '')
+      }
+      const rest = n % 100
+      return NUMERALS[Math.floor(n / 100)] + '佰' + (rest === 0 ? '' : rest < 10 ? '零' + NUMERALS[rest] : (rest < 20 ? '壹' : '') + toNumeral(rest))
+    }
+
+    const SHELF_FILTERS = [['all', '全部'], ['poem', '诗词'], ['prose', '文章'], ['reciting', '背诵中'], ['unread', '未读']]
+
+    /**
+     * Shelf rows: recently read first (newest first), then the rest in library
+     * order. The query matches title, author, dynasty and tags, and also each
+     * section's title and poem author — those hits are listed so a click opens
+     * that section directly.
+     */
+    function shelfItems(rows, state, query = '', filter = 'all') {
+      const q = String(query).trim()
+      const items = rows.filter((row) => row.id).map((row, order) => {
+        const progress = state?.volumes?.[row.id]
+        const at = progress?.lastSection ? (row.sectionIds || []).indexOf(progress.lastSection) : -1
+        const reciting = (row.sectionIds || []).some((id) => (state?.cards?.[row.id + '#' + id]?.level || 0) > 0)
+        const own = !q || [row.title, row.author, row.dynasty, ...(row.tags || [])].some((value) => String(value || '').includes(q))
+        const sections = q ? (row.sectionList || []).map((section, index) => ({ ...section, position: index + 1 })).filter((section) => section.title.includes(q) || section.author.includes(q)) : []
+        return { row, order, readAt: progress?.readAt || '', position: at >= 0 ? at + 1 : 0, total: row.sectionCount || 0, reciting, own, sections }
+      }).filter((item) => (item.own || item.sections.length) && (
+        filter === 'all' ||
+        (filter === 'poem' && item.row.kind === 'poem') ||
+        (filter === 'prose' && item.row.kind !== 'poem') ||
+        (filter === 'reciting' && item.reciting) ||
+        (filter === 'unread' && !item.readAt)
+      ))
+      return {
+        recent: items.filter((item) => item.readAt).sort((a, b) => b.readAt.localeCompare(a.readAt)),
+        unread: items.filter((item) => !item.readAt).sort((a, b) => a.order - b.order)
+      }
+    }
+
     function fitsVertical(text) {
       const lines = text.split('\n')
       return lines.length <= 8 && lines.every((line) => Array.from(line).length <= 14)
@@ -225,7 +297,7 @@ window.__ModuleLoader__.load({
       if (op.op === 'view') next.ui.view = op.view
       else if (op.op === 'progress') {
         next.ui.volume = op.volumeId
-        next.volumes[op.volumeId] = { ...(next.volumes[op.volumeId] || {}), lastSection: op.sectionId }
+        next.volumes[op.volumeId] = { ...(next.volumes[op.volumeId] || {}), lastSection: op.sectionId, readAt: new Date().toISOString() }
       } else if (op.op === 'settings') next.settings = { ...next.settings, ...op.patch }
       else if (op.op === 'level') next.cards[op.key] = { ...(next.cards[op.key] || {}), level: op.level }
       else if (op.op === 'rate') {
@@ -266,6 +338,7 @@ window.__ModuleLoader__.load({
       let chain = Promise.resolve()
       let progressTimer = null
       let progressOp = null
+      let loadedAt = 0
 
       function set(patch) {
         value = { ...value, ...patch }
@@ -316,10 +389,13 @@ window.__ModuleLoader__.load({
             await chain
             const data = await request(api.library)
             base = data.state
+            const revisions = new Map(data.volumes.map((row) => [row.id, row.revision]))
+            const volumes = Object.fromEntries(Object.entries(value.volumes).filter(([id, entry]) => entry.status === 'ready' && entry.volume.revision === revisions.get(id)))
+            loadedAt = Date.now()
             set({
               status: 'ready',
               library: data,
-              volumes: {},
+              volumes,
               state: display(),
               notice: data.recovered ? 'state.json 无法解析，已另存为 ' + data.recovered + '，进度从头开始' : value.notice
             })
@@ -349,6 +425,11 @@ window.__ModuleLoader__.load({
           progressTimer = schedule(flush, PROGRESS_DELAY_MS)
         },
         flush,
+        /** Reload when shown again, at most every few seconds (several panes may become visible together). */
+        refreshIfStale(maxAgeMs = 3000) {
+          if (value.status === 'loading' || Date.now() - loadedAt < maxAgeMs) return
+          this.load()
+        },
         setEncounter(key) {
           set({ encounterKey: key })
         },
@@ -400,13 +481,41 @@ window.__ModuleLoader__.load({
 .vr-text p{margin:0 0 .6em}
 .vr-quote{background:color-mix(in srgb,#e9c46a 20%,transparent);border-radius:2px}
 .vr-noted{text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 70%,transparent);text-underline-offset:4px}
-.vr-gloss{display:inline-flex;flex-direction:column;vertical-align:middle;font-size:9.5px;line-height:1.15;color:var(--vr-cinnabar);margin:0 2px;letter-spacing:0;font-family:inherit;cursor:pointer;max-width:12em}
+.vr-keep{white-space:nowrap}
+.vr-gloss{white-space:normal;display:inline-flex;flex-direction:column;vertical-align:middle;font-size:9.5px;line-height:1.15;color:var(--vr-cinnabar);margin:0 2px;letter-spacing:0;font-family:inherit;cursor:pointer;max-width:12em}
 .vr-gloss.vr-open{display:inline;font-size:11px;vertical-align:baseline}
 .vr-title{margin:0;font-size:17px;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
 .vr-guide{margin:0;padding:4px 8px;border-left:2px solid var(--vr-line);opacity:.8;font-size:12.5px}
-.vr-cells{display:flex;gap:3px;flex-wrap:wrap}
-.vr-cells button{width:18px;height:18px;padding:0;border-radius:4px}
-.vr-cells button[aria-current=true]{outline:2px solid currentColor;outline-offset:1px}
+.vr-body:focus{outline:none}
+.vr-volhead{display:flex!important;align-items:center;gap:8px;width:100%;border:0!important;padding:2px 0!important;text-align:left;background:transparent!important}
+.vr-spine{flex:none;width:4px;align-self:stretch;min-height:20px;border-radius:2px;background:var(--vr-accent,color-mix(in srgb,currentColor 22%,transparent))}
+.vr-voltitle{flex:none;max-width:60%;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:17px;font-weight:600;color:var(--vr-accent,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-volmeta{flex:1;min-width:0;font-size:12px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-volswitch{flex:none;font-size:11.5px;opacity:.6;border:1px solid var(--vr-line);border-radius:999px;padding:1px 9px}
+.vr-volhead:hover .vr-volswitch,.vr-volhead[aria-expanded=true] .vr-volswitch{opacity:1}
+.vr-shelf{display:grid;gap:2px}
+.vr-shelf-label{font-size:11.5px;opacity:.55;margin:10px 0 2px 2px}
+.vr-shelf-row{display:flex!important;align-items:stretch;gap:10px;width:100%;text-align:left;border:0!important;padding:7px 8px!important}
+.vr-shelf-row[aria-current=true]{background:var(--vr-soft)}
+.vr-shelf-main{flex:1;min-width:0;display:grid;gap:1px}
+.vr-shelf-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-shelf-row[aria-current=true] .vr-shelf-title{font-weight:600}
+.vr-shelf-meta{font-size:11.5px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-shelf-side{flex:none;display:grid;justify-items:end;align-content:center;gap:1px;font-size:11.5px;opacity:.75;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
+.vr-shelf-side em{font-style:normal;color:var(--vr-cinnabar);font-size:11px}
+.vr-search{width:100%;border:1px solid var(--vr-line);border-radius:6px;background:transparent;padding:5px 8px;margin-bottom:2px}
+.vr-cells{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:2px 1px 4px}
+.vr-cells button{flex:none;min-width:26px;height:26px;padding:0 5px;border-radius:5px;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:13px;line-height:1}
+.vr-cells button[aria-current=true]{border:1.5px solid var(--vr-accent,currentColor)!important;color:var(--vr-accent,inherit);font-weight:700}
+.vr-cells button{position:relative}
+.vr-cells button[data-level]::after{content:"";position:absolute;left:4px;bottom:2px;height:2px;width:calc((100% - 8px) * var(--lv));border-radius:1px;background:color-mix(in srgb,var(--vr-accent,#5a9e7c) 80%,transparent)}
+.vr-filters{gap:4px}
+.vr-filters button{border-radius:999px!important;padding:1px 10px!important;font-size:12px}
+.vr-shelf-group{display:grid}
+.vr-shelf-hits{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 22px;font-size:12px}
+.vr-shelf-hits button{padding:1px 8px!important;border-radius:999px!important;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
+.vr-head-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.vr-head-btn:hover{background:color-mix(in srgb,currentColor 8%,transparent)}
 .vr-dim{opacity:.45;cursor:pointer;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:13px;border:0!important;text-align:left;padding:2px 0!important;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vr-dim:hover{opacity:.75;background:transparent!important}
 .vr-trans{margin:0;padding:8px 10px;border-radius:6px;background:var(--vr-soft);font-size:13px;line-height:1.75}
@@ -422,6 +531,10 @@ window.__ModuleLoader__.load({
 .vr-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between}
 .vr-rate button{min-width:52px}
 .vr-error{color:var(--vr-cinnabar)}
+.vr-accent .vr-title{color:var(--vr-accent)}
+.vr-accent .vr-guide{border-left-color:var(--vr-accent)}
+.vr-card.vr-accent{border-top:3px solid var(--vr-accent)}
+
 `
 
     function durationText(ms) {
@@ -465,11 +578,14 @@ window.__ModuleLoader__.load({
         setOpenNotes(next)
       }
       return h('div', { className: 'vr-text' }, ...section.paragraphs.map((paragraph, index) => {
-        const pieces = textPieces(paragraph.text, paragraph.quotes, showGloss ? glosses[index] : [])
-        return h('p', { key: index }, ...pieces.flatMap((piece, pieceIndex) => [
-          h('span', { key: 'p' + pieceIndex, className: [piece.quote && 'vr-quote', piece.noted && 'vr-noted'].filter(Boolean).join(' ') || undefined }, ...lines(piece.text)),
-          ...piece.glossesAfter.map((gloss) => h(Gloss, { key: 'g' + gloss.start + gloss.note.word, note: gloss.note, open: openNotes.has(gloss.note.word), onToggle: () => toggle(gloss.note.word) }))
-        ]))
+        const plan = renderPlan(textPieces(paragraph.text, paragraph.quotes, showGloss ? glosses[index] : []))
+        return h('p', { key: index }, ...plan.map((item, itemIndex) => {
+          const text = h('span', { key: 't', className: [item.quote && 'vr-quote', item.noted && 'vr-noted'].filter(Boolean).join(' ') || undefined }, ...lines(item.text))
+          if (!item.glosses.length) return h('span', { key: itemIndex }, text)
+          return h('span', { key: itemIndex, className: 'vr-keep' }, text,
+            ...item.glosses.map((gloss) => h(Gloss, { key: 'g' + gloss.start + gloss.note.word, note: gloss.note, open: openNotes.has(gloss.note.word), onToggle: () => toggle(gloss.note.word) })),
+            item.tail ? h('span', { key: 'tail', className: item.tail.quote ? 'vr-quote' : undefined }, item.tail.text) : null)
+        }))
       }))
     }
 
@@ -546,6 +662,54 @@ window.__ModuleLoader__.load({
 
     // ---------------------------------------------------------------- views
 
+    function Shelf({ rows, state, currentId, onPick, onClose }) {
+      const [query, setQuery] = useState('')
+      const [filter, setFilter] = useState('all')
+      const { recent, unread } = shelfItems(rows, state, query, filter)
+      const first = [...recent, ...unread].find((item) => !item.row.errors.length)
+      const many = rows.filter((row) => row.id).length > 6
+      const row = (item) => {
+        const badge = volumeBadge(item.row)
+        const hits = item.sections.slice(0, 4)
+        const volumeButton = h('button', {
+          key: item.row.id, type: 'button', className: 'vr-shelf-row', 'aria-current': item.row.id === currentId,
+          disabled: item.row.errors.length > 0, title: item.row.errors.length ? item.row.errors.join('；') : undefined,
+          onClick: () => onPick(item.row)
+        },
+        h('span', { className: 'vr-spine', style: item.row.colorHex ? { background: item.row.colorHex } : undefined }),
+        h('span', { className: 'vr-shelf-main' },
+          h('span', { className: 'vr-shelf-title' }, item.row.title || item.row.file),
+          h('span', { className: 'vr-shelf-meta' }, [item.row.dynasty, item.row.author].filter(Boolean).join(' · ') || ' ')),
+        h('span', { className: 'vr-shelf-side' },
+          h('span', null, item.position ? '读到 ' + toNumeral(item.position) + '／' + toNumeral(item.total) : toNumeral(item.total) + ' 节'),
+          badge ? h('em', null, badge) : null))
+        if (!hits.length) return volumeButton
+        return h('div', { key: item.row.id, className: 'vr-shelf-group' }, volumeButton,
+          h('div', { className: 'vr-shelf-hits' },
+            ...hits.map((section) => h('button', { key: section.id, type: 'button', disabled: item.row.errors.length > 0, onClick: () => onPick(item.row, section.id) },
+              toNumeral(section.position) + '　' + section.title + (section.author && section.author.includes(query.trim()) ? ' · ' + section.author : ''))),
+            item.sections.length > hits.length ? h('span', { className: 'vr-muted' }, '另有 ' + (item.sections.length - hits.length) + ' 节') : null))
+      }
+      function enter() {
+        if (!first) return
+        const hit = first.own ? null : first.sections[0]
+        onPick(first.row, hit?.id)
+      }
+      return h('div', { className: 'vr-shelf', onKeyDown: (event) => { if (event.key === 'Escape') onClose() } },
+        h('input', {
+          className: 'vr-search', type: 'search', placeholder: '搜书名、作者、篇名、标签，回车打开', autoFocus: true, value: query,
+          onChange: (event) => setQuery(event.target.value),
+          onKeyDown: (event) => { if (event.key === 'Enter') enter() }
+        }),
+        many ? h('div', { className: 'vr-row vr-filters', role: 'group', 'aria-label': '筛选' },
+          ...SHELF_FILTERS.map(([value, label]) => h('button', { key: value, type: 'button', 'aria-pressed': filter === value, onClick: () => setFilter(value) }, label))) : null,
+        recent.length ? h('div', { className: 'vr-shelf-label' }, '最近读过') : null,
+        ...recent.map(row),
+        unread.length ? h('div', { className: 'vr-shelf-label' }, recent.length ? '未读' : '全部书卷') : null,
+        ...unread.map(row),
+        !recent.length && !unread.length ? h('p', { className: 'vr-muted vr-small' }, query || filter !== 'all' ? '没有匹配的书卷。语料里的篇目可以在任一会话里用刻书匠入藏。' : '书库里还没有书卷。在任一会话里用刻书匠（vibe-reader-engraver）入藏。') : null)
+    }
+
     function StudyView({ app, snapshot }) {
       const { library, state } = snapshot
       const rows = library.volumes
@@ -553,6 +717,9 @@ window.__ModuleLoader__.load({
       const entry = volumeId ? snapshot.volumes[volumeId] : undefined
       const [reciting, setReciting] = useState(false)
       const [showTranslation, setShowTranslation] = useState(false)
+      // First visit (no volume chosen yet): start on the shelf.
+      const [shelfOpen, setShelfOpen] = useState(!state.ui.volume || !volumeId)
+      const cellsRef = useRef(null)
       useEffect(() => { if (volumeId && !entry) app.ensureVolume(volumeId) }, [volumeId, entry])
 
       const volume = entry?.volume
@@ -564,6 +731,9 @@ window.__ModuleLoader__.load({
         setReciting(false)
         setShowTranslation(false)
       }, [volumeId, section?.id])
+      useEffect(() => {
+        cellsRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+      }, [volumeId, index, shelfOpen])
 
       function go(target) {
         if (!sections[target]) return
@@ -571,29 +741,44 @@ window.__ModuleLoader__.load({
       }
       const cardKey = volume && section ? volume.id + '#' + section.id : ''
 
-      return h('div', { className: 'vr-body' },
-        h('div', { className: 'vr-row' },
-          h('select', {
-            className: 'vr-grow', 'aria-label': '书卷', value: volumeId || '',
-            onChange: (event) => app.progress(event.target.value, state.volumes[event.target.value]?.lastSection || rows.find((row) => row.id === event.target.value)?.sectionIds?.[0] || 's1')
-          }, ...rows.map((row) => h('option', { key: row.id || row.file, value: row.id, disabled: !row.id || row.errors.length > 0 },
-            [row.title || row.file, row.author, volumeBadge(row)].filter(Boolean).join(' · '))))),
-        !volumeId ? h('p', { className: 'vr-muted' }, '书库里还没有可读的书卷。') : null,
+      const currentRow = rows.find((row) => row.id === volumeId)
+      const accent = volume?.colorHex || currentRow?.colorHex
+      function pick(row, sectionId) {
+        app.progress(row.id, sectionId || state.volumes[row.id]?.lastSection || row.sectionIds?.[0] || 's1')
+        setShelfOpen(false)
+      }
+      function onKeyDown(event) {
+        if (shelfOpen || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) return
+        if (event.key === 'ArrowLeft') go(index - 1)
+        else if (event.key === 'ArrowRight') go(index + 1)
+      }
+      const head = h('button', { type: 'button', className: 'vr-volhead', 'aria-expanded': shelfOpen, title: '切换书卷', onClick: () => setShelfOpen(!shelfOpen) },
+        h('span', { className: 'vr-spine' }),
+        h('span', { className: 'vr-voltitle' }, (state.ui.volume && currentRow?.title) || '选一卷'),
+        h('span', { className: 'vr-volmeta' }, state.ui.volume ? [currentRow?.dynasty, currentRow?.author].filter(Boolean).join(' · ') : ''),
+        h('span', { className: 'vr-volswitch' }, shelfOpen ? '收起' : '书架'))
+      if (shelfOpen || !volumeId) {
+        return h('div', { className: 'vr-body' + (accent ? ' vr-accent' : ''), style: accent ? { '--vr-accent': accent } : undefined },
+          head,
+          h(Shelf, { rows, state, currentId: volumeId, onPick: pick, onClose: () => setShelfOpen(false) }))
+      }
+      return h('div', { className: 'vr-body' + (accent ? ' vr-accent' : ''), style: accent ? { '--vr-accent': accent } : undefined, tabIndex: -1, onKeyDown },
+        head,
         entry?.status === 'loading' || (volumeId && !entry) ? h('p', { className: 'vr-muted' }, '展卷中…') : null,
         entry?.status === 'error' ? h('p', { className: 'vr-error' }, entry.error) : null,
         volume?.errors?.length ? h('div', { className: 'vr-notice' }, h('span', null, '这一卷有格式错误，暂不能阅读：' + volume.errors.join('；'))) : null,
         volume && !volume.errors.length && volume.integrity === 'mismatch' ? h('div', { className: 'vr-notice' }, h('span', null, '原文与入藏时的指纹不一致，可能被改动过。已暂停背诵，核对后用 scripts/fingerprint.mjs --write 更新指纹。')) : null,
         section && !volume.errors.length ? [
           h('div', { key: 'cells', className: 'vr-row' },
-            h('div', { className: 'vr-cells vr-grow', role: 'group', 'aria-label': '各节' }, ...sections.map((item, position) => {
+            h('div', { ref: cellsRef, className: 'vr-cells vr-grow', role: 'group', 'aria-label': '各节（← → 翻节）' }, ...sections.map((item, position) => {
               const level = state.cards[volume.id + '#' + item.id]?.level || 0
               return h('button', {
-                key: item.id, type: 'button', title: item.title + (level ? ' · L' + level : ''), 'aria-current': position === index,
-                style: { background: level ? `color-mix(in srgb, #5a9e7c ${12 + level * 14}%, transparent)` : undefined },
+                key: item.id, type: 'button', title: '第' + toNumeral(position + 1) + '節 · ' + item.title + (level ? ' · 背诵 L' + level : ''), 'aria-current': position === index,
+                'data-level': level || undefined,
+                style: level ? { '--lv': level / MAX_LEVEL } : undefined,
                 onClick: () => go(position)
-              })
-            })),
-            h('span', { className: 'vr-small vr-muted' }, (index + 1) + ' / ' + sections.length)),
+              }, toNumeral(position + 1))
+            }))),
           index > 0 ? h('button', { key: 'prev', type: 'button', className: 'vr-dim', onClick: () => go(index - 1) }, '↑ ' + sections[index - 1].title + '　' + sections[index - 1].paragraphs[0].text.replace(/\n/g, ' ')) : null,
           h('h3', { key: 'title', className: 'vr-title' }, section.title,
             section.meta.author ? h('span', { className: 'vr-small vr-muted' }, '　' + section.meta.author) : null),
@@ -648,8 +833,9 @@ window.__ModuleLoader__.load({
 
       const vertical = card.kind === 'poem' && state.settings.vertical && fitsVertical(card.text)
       const level = state.cards[card.key]?.level || 0
+      const accent = library.volumes.find((row) => row.id === card.volumeId)?.colorHex
       return h('div', { className: 'vr-body' },
-        h('div', { className: 'vr-card' },
+        h('div', { className: 'vr-card' + (accent ? ' vr-accent' : ''), style: accent ? { '--vr-accent': accent } : undefined },
           h('div', { className: 'vr-small vr-muted' }, card.kind === 'poem' ? '诗' : '名句', level ? ' · L' + level : ''),
           reciting
             ? h('div', { style: { width: '100%', textAlign: 'left' } }, h(Recite, {
@@ -779,7 +965,7 @@ window.__ModuleLoader__.load({
             app.flush()
             return
           }
-          if (app.getSnapshot().status === 'idle') app.load()
+          app.refreshIfStale()
           const timer = setInterval(() => setNow(Date.now()), 1000)
           return () => clearInterval(timer)
         }, [tab.visible])
@@ -811,6 +997,29 @@ window.__ModuleLoader__.load({
                 : h(EncounterView, { app, snapshot }))
       }
 
+      /** Open 闲庭 in the on-screen session; when it is already the visible tab, collapse the column instead. */
+      function toggleReader() {
+        try {
+          const active = ctx.sidebarRight.active()
+          if (active?.kind === kind && ctx.sidebarRight.isExpanded()) ctx.sidebarRight.hide(active.id)
+          else ctx.sidebarRight.openTab(kind)
+        } catch (error) {
+          console.warn('[vibe-reader] toggle failed', error)
+        }
+      }
+
+      function HeaderButton() {
+        const label = '闲庭：读一则古诗文'
+        if (primitives?.Button) {
+          return h(primitives.Button, { size: 'sm', 'aria-label': label, title: label, onClick: toggleReader }, h(BookIcon))
+        }
+        return h('button', { type: 'button', className: 'vr-head-btn', 'aria-label': label, title: label, onClick: toggleReader }, h('style', null, styles), h(BookIcon))
+      }
+
+      ctx.effect(() => ctx.slots.inject('conversation.session.header.utilities', () =>
+        ctx.slots.register({ name: 'conversation.session.header.utilities', id: 'vibe-reader' }, HeaderButton)
+      ), 'vibe-reader: header button')
+
       ctx.effect(() => ctx.sidebarRightTabs.register({
         id: tabId,
         kind,
@@ -826,7 +1035,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace'],
       apply,
-      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, glossLines, pickCard, fitsVertical, optimistic, createAppStore, views: { StudyView, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })

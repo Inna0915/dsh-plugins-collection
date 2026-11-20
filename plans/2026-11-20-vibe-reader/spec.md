@@ -1,6 +1,6 @@
 # 闲庭 · Vibe Reader 规格
 
-- 版本：v0.4，2026-11-20（M1 已实现，见 `plugins/dsh-vibe-reader`；本版补入实现中定下的细节：`verified` 三档、L5、内置书卷、接口）
+- 版本：v0.6，2026-11-20（M1、M2 已实现，见 `plugins/dsh-vibe-reader`；M2 计划与结果见 [m2-plan.md](m2-plan.md)。本版：入藏只走 skill，补做色表与 ctext）
 - 读者：插件作者本人，以及按本规格实现代码的 Agent（Claude Code / DSH）
 - 形态：DSH Desktop 右侧栏插件，与本仓库 `plugins/dsh-novel-reader` 同构（`index.js` 宿主端 + `client.js` 前端，无构建）
 - 已完成的验证：见 [spike/README.md](spike/README.md)
@@ -41,7 +41,7 @@
 | 默认模型回退 | `ctx.agentDefaultModel.currentSelection()` | 已实跑 | 返回 `{ provider, model, reasoningEffort? }`；Desktop 当前默认是贵模型，书童应单独配便宜模型 |
 | 降低推理强度 | `prepareCall` 的 `configure(controls, model)` 取 `model.reasoning.efforts[0]` | 已实跑 | flash 模型取到 `off` |
 | 插件注册 Agent 工具 | `ctx.tools.register(...)` | 已实跑 | jira-flow、confluence-flow 也在用；注册后对**所有会话**可见（§7.3） |
-| 插件注册 skill | `ctx.skills.register(...)` | 已有先例 | jira-flow、confluence-flow |
+| 插件注册 skill | `ctx.skills.register({ name, description, content, path, source: 'runtime', provider })` | **已实跑**（M2 headless） | Agent 通过内置的 `skill` 工具按名字加载 |
 | 会话运行状态 | `ctx.uiSession.sessionStatus.getSnapshot()` → `Map<sessionId, { running, pendingInteraction, completionUnread }>`；`subscribe(fn)` | **Desktop rc.5 实机可用** | 快照覆盖**全部会话**（实测 255 个），不只面板所在会话。主视图会话不会得到 `completionUnread`，需自己记录 `running` 由 true 变 false |
 | 会话标题与归属 | `ctx.sessions.list.getSnapshot()` → `{ ids, byId: { displayTitle, origin, parentId, blank, retainedBy.mainView, … } }` | **Desktop rc.5 实机可用** | 用来显示标题、排除子代理和空白会话、判断哪个会话在主视图 |
 | 跳转到会话 | `ctx.uiWorkspace.openSession(sessionId)` | **Desktop rc.5 实机可用** | 「回去处理」一键打开对应会话 |
@@ -66,7 +66,8 @@
 
 **结构**，从上到下：
 
-1. **顶栏**：当前书卷、视图切换（偶遇 / 修业）、Agent 状态提示条（§4.6）、`＋ 入藏`、`藏书阁`。
+0. **快速入口**：会话顶栏 `conversation.session.header.utilities` 里的书本按钮，点一下在当前会话打开闲庭，闲庭正显示时再点则收起右侧栏（`sidebarRight.active()` / `hide()` / `openTab()`）。按钮优先用宿主的 `dsh-client-ui-primitives` Button，取不到时用普通按钮。
+1. **顶栏**：视图切换（偶遇 / 修业）、Agent 状态提示条（§4.6）、设置。没有入藏入口：入藏只通过 skill（§4.8）。修业视图里选卷，卷名旁显示书卷色。
 2. **阅读区**：卡片或段落流。
 3. **底部**：本节操作（译 / 注 / 试背 / 问书童 / 存眉批），以及书童的回答抽屉。
 
@@ -98,6 +99,8 @@
 - 译文：每段可单独展开。
 - 竖排：只用于短诗卡片。侧栏很窄，长文竖排需要横向滚动，体验很差。
 - 进度：每次翻节都自动保存，不需要手动「记为续读」。
+- 卷首与书架：卷首一行是书卷色竖条、卷名、朝代作者和「书架」。书架在阅读区原地展开（不弹窗）：最近读过的按时间倒序在前，显示「读到 參／伍」，其余按书库顺序。搜索框常驻：匹配书名、作者、朝代、标签，以及卷内各节的篇名和诗人（命中的节列在书卷下，点击直接打开该节）；回车打开第一项。多于 6 卷时另有筛选：全部、诗词、文章、背诵中、未读。第一次进入修业、还没选过卷时直接打开书架。
+- 节序：繁体大写数字 壹 貳 參 肆 伍…（拾壹、貳拾伍…），当前节用书卷色描边；背过的节在格子底部显示等级细条（L5 满格），不填底色，免得看起来像选中；节多时横向滚动并自动滚到当前节。阅读区有焦点时 ← → 翻节。
 
 ### 4.5 背诵：逐级减少可见字
 
@@ -161,11 +164,15 @@
 
 ### 4.8 入藏
 
+入藏只有一个入口：在任一会话调用 skill `vibe-reader-engraver`（刻书匠）。面板上没有手动录入。
+
 三种来源，可信程度依次降低：
 
-1. **语料导入**：从 chinese-poetry、ctext 读取，经清洗、人工核对后入库（§6.1）。
-2. **粘贴原文**：用户贴入原文，AI 只负责分节、写注释、标名句；写盘前做原文校验。
-3. **AI 摘编**：没有原文可比对的内容（如「做一卷《天工开物》偶遇卡包」），写为 `source: ai`，界面显示「AI 摘编，未校对」。
+1. **找文章（语料）**：用户说篇名或名句，Agent 用工具 `search` 在语料里找（§6.1），多个结果时请用户选，`draft` 取得清洗后的原文和草稿，补注后 `import`，`verified: corpus`。
+2. **贴全文**：用户贴入完整原文，AI 只负责分节、写注释、标名句、配色；写盘前做原文校验。默认 `verified: false`，用户明确说已核对才为 `true`。
+3. **AI 摘编**：没有原文可比对的内容（如「做一卷《天工开物》偶遇卡包」），写为 `source: ai`，不能背诵。
+
+语料里找不到、用户也没给原文时，Agent 请用户粘贴，不得默写。
 
 ## 5. 数据
 
@@ -274,18 +281,27 @@ tags: [楼记, 洞庭, 忧乐]
 
 M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全部是繁简对应，没有多字、少字或异文。
 
-先秦两汉经典用 ctext API（限速每秒 1 次，繁体，同样需要清洗）。
+语料来源（`lib/corpus.js`）：
+
+| 档 | 集子 | 备注 |
+|---|---|---|
+| 常用（默认搜） | 古文观止、唐诗三百首、宋词三百首、诗经、千家诗、论语、大学 · 中庸 · 孟子、楚辞、纳兰性德词 | chinese-poetry，首次使用下载，约 3 MB |
+| 深度（`deep: true`） | 全唐诗（58 文件）、全宋词（23 文件）、元曲 | 首次约 36 MB，实测下载加建索引约 2 分钟，之后约 3 秒；opencc 约 350 万字/秒，可在内存中做全文检索 |
+| ctext（`ctext: true`） | 先秦两汉典籍 | `searchtexts`、`gettextinfo` 不需要认证；`gettext` 需要 API key（订阅），配置 `ctextApiKey` 或环境变量 `CTEXT_API_KEY`。用 `remap=gb` 直接取简体。目录型条目返回章节列表供选择 |
+
+搜索排序：标题完全一致 > 标题开头 > 标题包含 > 词牌前缀（「念奴娇·赤壁怀古」能找到只题「念奴娇」的词）> 全文（4 字以上，名句在开头的优先）。
 
 ### 6.2 传统色
 
-内置 zhongguose.com 的 526 色（aEboli/zhongguose-palette 保存了未改动的原始文件），只用这一个来源。不同来源同一色名的 HEX 不同，混用会不一致。AI 只能从色表中挑色名。
+内置 zhongguose.com 的 526 色（`data/zhongguose.json`：取自 aEboli/zhongguose-palette 的 `references/source.json` 原始色值，加上其派生的色系、四季、五行、色调、明度字段），只用这一个来源，因为不同来源同一色名的 HEX 不同。书卷 `color` 只写色名，必须在色表内（`import` 校验，不在表内时给出近似色名）；面板用其 HEX 作卷名、导读竖线、偶遇卡片顶边的强调色。工具 `colors` 按色系、季节筛选，只列明度 0.08～0.35、在浅色和深色主题下都看得清的色。常见的「苍翠」「朱砂」「天青」不在表内，所以不能让 AI 凭印象写色名。
 
 ### 6.3 原文校验（AI 写盘前必做）
 
 1. 用 §5.2 第 6 条的方法，从 AI 输出中提取规范化原文。
 2. 与输入原文（同样规范化后）逐字比对。
 3. 完全一致才写盘；不一致就拒绝，并把差异位置返回给调用方（Agent 或面板）。
-4. 同时校验格式：每节都有 `{#id}`，`==` 成对出现且不跨段，色名在色表内，`kind` 取值合法。
+4. 同时校验格式：每节都有 `{#id}`，`==` 成对出现且不跨行，`kind` 取值合法，色名在色表内。
+5. 实现：`lib/verify.js`（字符级 Myers diff，先去掉公共前后缀，编辑距离超过 400 时给一段粗粒度差异）与 `lib/importer.js`。
 
 ## 7. AI 接入
 
@@ -303,16 +319,20 @@ M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全�
 
 ### 7.3 刻书匠：工具 + skill
 
-- 工具 `vibe_reader`，操作：`list`、`read`、`import`（原文 + 注释草稿，执行 §6.3 校验，通过后写盘）、`verify`。
-- skill「刻书匠」：说明格式规范、分节规则（按自然段，每节约 1 分钟读完）、注释写法、色表约束；明确要求**不得默写原文**，原文必须由用户粘贴或从语料读取。
-- 工具对所有会话可见，工具描述要尽量短。建议开一个专门的「书房」会话做入藏，不混进编程上下文。
+- 工具 `vibe_reader`，操作：`search`（搜语料）、`draft`（由 ref 生成草稿与清洗后的原文）、`clean`（§6.1 清洗粘贴的原文，可繁转简，返回繁简对应表）、`import`（原文 + 书卷，执行 §6.3 校验，通过后写盘）、`colors`（查传统色）、`list`、`read`、`verify`。失败返回 `{ ok: false, stage, problems }`，不抛错，方便 Agent 改正后重试。
+- `import` 的 `verified`：`corpus` 来源为 `corpus`；`paste` 默认 `false`，只有用户明确说已核对才为 `true`；`ai` 来源不需要原文，固定 `false`。同 id 已在书库时需 `overwrite: true`，并报告原文是否变化、哪些节 ID 消失。
+- skill「刻书匠」（`skills/vibe-reader-engraver/SKILL.md`）：铁律（不得默写原文、正文一字不改、只用 `import` 写入、失败时改书卷不改原文）、流程、格式、分节、注释、译文、名句规则。
+- 实测（headless CLI，flash 模型，effort off）：Agent 先加载 skill，第一次 `import` 因把名句另抄一遍、正文多出 16 字被拒，按差异改正后第二次成功；书卷 6 条注释、脉络、译文、1 处名句，原文逐字一致。脚本：[m2-headless-import.mjs](m2-headless-import.mjs)。
+- 工具对所有会话可见，描述控制在 200 字以内（单测检查）。建议开一个专门的「书房」会话做入藏，不混进编程上下文。
+- 语料命令行 `scripts/import-corpus.mjs`：`search`、`draft`（`--out` 或 `--import`）、`prefetch`、`--list`，与工具共用 `lib/corpus.js`。
+- 第二次 headless 实测（只说「把刘禹锡的《陋室铭》入藏」）：skill → search（带作者）→ draft → colors → import，一次成功；原文与语料逐字一致，一段拆为 4 节（只动空行），13 条注释，色名「苔绿」。
 
 ## 8. 接口清单
 
 | 端 | 内容 |
 |---|---|
 | 前端 inject | `slots`、`sidebarRight`、`sidebarRightTabs`、`uiSession`、`sessions`、`uiWorkspace` |
-| 后端 inject | M1 只需 `connection`。M2 起其余服务可选，用 `ctx.inject([...], cb)` 挂接：`llm`、`agentDefaultModel`、`tools`、`skills` |
+| 后端 inject | 全部可选，用 `ctx.inject([...], cb)` 挂接：`connection`（面板 HTTP）、`tools`、`skills`（M2）；M4 加 `llm`、`agentDefaultModel`。headless 等没有 HTTP 的环境里，工具和 skill 照常可用 |
 | HTTP | M1 已实现：`GET api/vibe-reader/library`（书卷列表、偶遇卡片、state、书库目录）、`POST api/vibe-reader/volume`（`{ id }` → 整卷）、`POST api/vibe-reader/state`（`{ op: view / progress / rate / level / seen / settings }`）。只用固定路径，不依赖查询参数（宿主路由对查询串的处理没有文档）。以后：`POST api/vibe-reader/notes`、`POST api/vibe-reader/ask` |
 | 工具 | `vibe_reader` |
 | skill | `vibe-reader-engraver`（刻书匠） |
@@ -322,7 +342,7 @@ M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全�
 | 里程碑 | 内容 | 验收 |
 |---|---|---|
 | M1 阅读器（不接 AI）**已实现，Desktop 验收通过（2026-11-20）** | 解析器与原文指纹、`state.json`、偶遇与修业两个视图、夹注与译文、背诵等级、自动保存进度、Agent 状态提示条、跨会话跟随；3 卷人工核对的种子（唐诗若干首、《岳阳楼记》、《前赤壁赋》） | 单测覆盖解析、指纹、背诵等级、状态机；Desktop 实机：任一会话运行超过 10 秒出现「可读」；后台会话结束后出现在「已完成」，打开该会话后消失；审批出现在「需要你」；点列表条目能跳到对应会话，阅读器跟过去并停在同一节；没在读时切换会话不弹出右侧栏；关闭再打开回到原来的节 |
-| M2 入藏 | 语料导入脚本（chinese-poetry / ctext → 清洗）、粘贴原文 + AI 注释、`vibe_reader` 工具与刻书匠 skill、原文校验、色表 | 故意改动原文一个字，校验能拒绝；古文观止导入的篇目通过清洗规则 |
+| M2 入藏**已实现（2026-11-20），待 Desktop 验收**；ctext 取正文需用户自备 API key | 语料导入脚本（chinese-poetry / ctext → 清洗）、粘贴原文 + AI 注释、`vibe_reader` 工具与刻书匠 skill、原文校验、色表 | 故意改动原文一个字，校验能拒绝；古文观止导入的篇目通过清洗规则 |
 | M3 复习与偶遇 | Leitner 调度、出卡顺序、眉批回看、按节气选诗、只读模式 | 到期卡优先出现；评分后到期日变化正确 |
 | M4 书童 | `POST ask`、缓存与过期提示、`ask-log.jsonl`、存为眉批、CBDB 查询 | 同一问题第二次不调用模型；原文变动后缓存显示过期；会话日志中没有书童请求 |
 | 以后 | 相似句索引（4～5 字片段）、一般文章导入、换 ts-fsrs | — |
@@ -331,9 +351,9 @@ M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全�
 
 1. ~~全部会话视图待 Desktop 复验~~：已通过（探针第二轮、M1 验收）。
 2. **sessionStatus 的范围**：快照包含历史会话（实测 255 个）。只有运行中、需要你、已完成三组会列出来，数量不会大；但每次快照变化都要遍历一遍，M1 里如果卡顿，改为只处理变化的条目。
-3. **工具对所有会话可见**：`vibe_reader` 会出现在每个编程会话的工具列表里。尚未找到按会话限定插件工具的方法；先保持描述简短，必要时改为只用 skill 加 HTTP。
+3. **工具对所有会话可见**：`vibe_reader` 会出现在每个编程会话的工具列表里。尚未找到按会话限定插件工具的方法；描述已压到 200 字以内，必要时改为只用 skill 加 HTTP。
 4. **同一网关的并发**：书童与主 Agent 共用 magpie 网关，高频划词可能挤占额度。需要做节流（例如同一时间只允许一个请求，每分钟上限 N 次）。
-5. **OpenCC 依赖**：插件无构建，`opencc-js` 需要随插件附带，或只放在导入脚本里。
+5. ~~OpenCC 依赖~~：已定为插件依赖（`npm install` 装在插件目录，不提交 node_modules），宿主端按需加载；缺失时只有繁体导入不可用。实测 t2s 结果与人工核对的种子逐字一致。
 6. **右侧栏按会话保存**（已实测，跟随已通过）：切换会话后标签消失。按 §4.1 做跟随；副作用是读过的会话里都会留下一个阅读器标签（各会话布局独立，关掉一个不影响别的）。如果跟随在实机上不顺，备选是左侧栏 `sidebar.panellist`，代价是占满主栏、看不到会话。
 7. **窄侧栏排版**：M1 实测可以接受。已知问题：双行夹注较宽时会换行，把紧跟的句读挤到下一行开头（如「。少焉」），M2 顺带修。
 

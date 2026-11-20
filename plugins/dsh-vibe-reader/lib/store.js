@@ -5,6 +5,7 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { colorOf } from './palette.js'
 import { cardsOf, parseVolume, summarize } from './volume.js'
 
 export const MAX_LEVEL = 5
@@ -224,9 +225,12 @@ export function createLibrary(roots) {
     const info = await stat(file)
     const cached = cache.get(file)
     if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached.volume
-    const volume = info.size > MAX_VOLUME_BYTES
+    const parsed = info.size > MAX_VOLUME_BYTES
       ? { ...parseVolume('', name), errors: [`文件超过 ${MAX_VOLUME_BYTES / 1024 / 1024} MB`] }
       : parseVolume(await readFile(file, 'utf8'), name)
+    const color = colorOf(parsed.color)
+    const warnings = parsed.color && !color ? [...parsed.warnings, `色名「${parsed.color}」不在色表内，已忽略`] : parsed.warnings
+    const volume = { ...parsed, warnings, colorHex: color?.hex || '', path: file, revision: `${info.mtimeMs}:${info.size}` }
     cache.set(file, { mtimeMs: info.mtimeMs, size: info.size, volume })
     return volume
   }

@@ -1,0 +1,5268 @@
+{
+ "source": "https://zhongguose.com/colors.json（色值来自 zhongguose.com，作者 Perchouli）",
+ "via": "https://github.com/aEboli/zhongguose-palette references/source.json（原始色值）与 references/colors.json（family/season/wuxing/tone/luminance 派生字段）",
+ "fetched": "2026-11-20",
+ "count": 526,
+ "colors": [
+  {
+   "name": "乳白",
+   "pinyin": "rubai",
+   "hex": "#f9f4dc",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9001
+  },
+  {
+   "name": "杏仁黄",
+   "pinyin": "xingrenhuang",
+   "hex": "#f7e8aa",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.8039
+  },
+  {
+   "name": "茉莉黄",
+   "pinyin": "molihuang",
+   "hex": "#f8df72",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7395
+  },
+  {
+   "name": "麦秆黄",
+   "pinyin": "maiganhuang",
+   "hex": "#f8df70",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.739
+  },
+  {
+   "name": "油菜花黄",
+   "pinyin": "youcaihuahuang",
+   "hex": "#fbda41",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7103
+  },
+  {
+   "name": "佛手黄",
+   "pinyin": "foshouhuang",
+   "hex": "#fed71a",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6975
+  },
+  {
+   "name": "篾黄",
+   "pinyin": "miehuang",
+   "hex": "#f7de98",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7428
+  },
+  {
+   "name": "葵扇黄",
+   "pinyin": "kuishanhuang",
+   "hex": "#f8d86a",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7011
+  },
+  {
+   "name": "柠檬黄",
+   "pinyin": "ningmenghuang",
+   "hex": "#fcd337",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6756
+  },
+  {
+   "name": "金瓜黄",
+   "pinyin": "jinguahuang",
+   "hex": "#fcd217",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6685
+  },
+  {
+   "name": "藤黄",
+   "pinyin": "tenghuang",
+   "hex": "#ffd111",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.669
+  },
+  {
+   "name": "酪黄",
+   "pinyin": "laohuang",
+   "hex": "#f6dead",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7485
+  },
+  {
+   "name": "香水玫瑰黄",
+   "pinyin": "xiangshuimeiguihuang",
+   "hex": "#f7da94",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.7206
+  },
+  {
+   "name": "淡密黄",
+   "pinyin": "danmihuang",
+   "hex": "#f9d367",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6771
+  },
+  {
+   "name": "大豆黄",
+   "pinyin": "dadouhuang",
+   "hex": "#fbcd31",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6439
+  },
+  {
+   "name": "素馨黄",
+   "pinyin": "suxinhuang",
+   "hex": "#fccb16",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6347
+  },
+  {
+   "name": "向日葵黄",
+   "pinyin": "xiangrikuihuang",
+   "hex": "#fecc11",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.643
+  },
+  {
+   "name": "雅梨黄",
+   "pinyin": "yalihuang",
+   "hex": "#fbc82f",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6202
+  },
+  {
+   "name": "黄连黄",
+   "pinyin": "huanglianhuang",
+   "hex": "#fcc515",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6068
+  },
+  {
+   "name": "金盏黄",
+   "pinyin": "jinzhanhuang",
+   "hex": "#fcc307",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5974
+  },
+  {
+   "name": "蛋壳黄",
+   "pinyin": "dankehuang",
+   "hex": "#f8c387",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6074
+  },
+  {
+   "name": "肉色",
+   "pinyin": "rouse",
+   "hex": "#f7c173",
+   "family": "粉",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5915
+  },
+  {
+   "name": "鹅掌黄",
+   "pinyin": "ezhanghuang",
+   "hex": "#fbb929",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5537
+  },
+  {
+   "name": "鸡蛋黄",
+   "pinyin": "jidanhuang",
+   "hex": "#fbb612",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5401
+  },
+  {
+   "name": "鼬黄",
+   "pinyin": "youhuang",
+   "hex": "#fcb70a",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5458
+  },
+  {
+   "name": "榴萼黄",
+   "pinyin": "liuehuang",
+   "hex": "#f9a633",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4765
+  },
+  {
+   "name": "淡橘橙",
+   "pinyin": "danjucheng",
+   "hex": "#fba414",
+   "family": "橙",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4711
+  },
+  {
+   "name": "枇杷黄",
+   "pinyin": "pipahuang",
+   "hex": "#fca106",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.462
+  },
+  {
+   "name": "橙皮黄",
+   "pinyin": "chengpihuang",
+   "hex": "#fca104",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4619
+  },
+  {
+   "name": "北瓜黄",
+   "pinyin": "beiguahuang",
+   "hex": "#fc8c23",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.3957
+  },
+  {
+   "name": "杏黄",
+   "pinyin": "xinghuang",
+   "hex": "#f28e16",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.3828
+  },
+  {
+   "name": "雄黄",
+   "pinyin": "xionghuang",
+   "hex": "#ff9900",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4404
+  },
+  {
+   "name": "万寿菊黄",
+   "pinyin": "wanshoujuhuang",
+   "hex": "#fb8b05",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.3899
+  },
+  {
+   "name": "菊蕾白",
+   "pinyin": "juleibai",
+   "hex": "#e9ddb6",
+   "family": "白",
+   "season": "秋",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7241
+  },
+  {
+   "name": "秋葵黄",
+   "pinyin": "qiukuihuang",
+   "hex": "#eed045",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6372
+  },
+  {
+   "name": "硫华黄",
+   "pinyin": "liuhuahuang",
+   "hex": "#f2ce2b",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6319
+  },
+  {
+   "name": "柚黄",
+   "pinyin": "youhuang",
+   "hex": "#f1ca17",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.61
+  },
+  {
+   "name": "芒果黄",
+   "pinyin": "mangguohuang",
+   "hex": "#ddc871",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5787
+  },
+  {
+   "name": "蒿黄",
+   "pinyin": "haohuang",
+   "hex": "#dfc243",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5468
+  },
+  {
+   "name": "姜黄",
+   "pinyin": "jianghuang",
+   "hex": "#e2c027",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5401
+  },
+  {
+   "name": "香蕉黄",
+   "pinyin": "xiangjiaohuang",
+   "hex": "#e4bf11",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.538
+  },
+  {
+   "name": "草黄",
+   "pinyin": "caohuang",
+   "hex": "#d2b42c",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4653
+  },
+  {
+   "name": "新禾绿",
+   "pinyin": "xinhelv",
+   "hex": "#d2b116",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.452
+  },
+  {
+   "name": "月灰",
+   "pinyin": "yuehui",
+   "hex": "#b7ae8f",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4232
+  },
+  {
+   "name": "淡灰绿",
+   "pinyin": "danhuilv",
+   "hex": "#ad9e5f",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3416
+  },
+  {
+   "name": "草灰绿",
+   "pinyin": "caohuilv",
+   "hex": "#8e804b",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.217
+  },
+  {
+   "name": "苔绿",
+   "pinyin": "tailv",
+   "hex": "#887322",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1761
+  },
+  {
+   "name": "碧螺春绿",
+   "pinyin": "biluochunlv",
+   "hex": "#867018",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1672
+  },
+  {
+   "name": "燕羽灰",
+   "pinyin": "yanyuhui",
+   "hex": "#685e48",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1142
+  },
+  {
+   "name": "蟹壳灰",
+   "pinyin": "xiekehui",
+   "hex": "#695e45",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1144
+  },
+  {
+   "name": "潭水绿",
+   "pinyin": "tanshuilv",
+   "hex": "#645822",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.098
+  },
+  {
+   "name": "橄榄绿",
+   "pinyin": "ganlanlv",
+   "hex": "#5e5314",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.0862
+  },
+  {
+   "name": "蚌肉白",
+   "pinyin": "bangroubai",
+   "hex": "#f9f1db",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8816
+  },
+  {
+   "name": "豆汁黄",
+   "pinyin": "douzhihuang",
+   "hex": "#f8e8c1",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "极浅",
+   "luminance": 0.8152
+  },
+  {
+   "name": "淡茧黄",
+   "pinyin": "danjianhuang",
+   "hex": "#f9d770",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6991
+  },
+  {
+   "name": "乳鸭黄",
+   "pinyin": "ruyahuang",
+   "hex": "#ffc90c",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6306
+  },
+  {
+   "name": "荔肉白",
+   "pinyin": "liroubai",
+   "hex": "#f2e6ce",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7993
+  },
+  {
+   "name": "象牙黄",
+   "pinyin": "xiangyahuang",
+   "hex": "#f0d695",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6879
+  },
+  {
+   "name": "炒米黄",
+   "pinyin": "chaomihuang",
+   "hex": "#f4ce69",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.644
+  },
+  {
+   "name": "鹦鹉冠黄",
+   "pinyin": "yingwuguanhuang",
+   "hex": "#f6c430",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5929
+  },
+  {
+   "name": "木瓜黄",
+   "pinyin": "muguahuang",
+   "hex": "#f9c116",
+   "family": "黄",
+   "season": "夏",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5834
+  },
+  {
+   "name": "浅烙黄",
+   "pinyin": "qianlaohuang",
+   "hex": "#f9bd10",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5657
+  },
+  {
+   "name": "莲子白",
+   "pinyin": "lianzibai",
+   "hex": "#e5d3aa",
+   "family": "白",
+   "season": "夏",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.6615
+  },
+  {
+   "name": "谷黄",
+   "pinyin": "guhuang",
+   "hex": "#e8b004",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4822
+  },
+  {
+   "name": "栀子黄",
+   "pinyin": "zhizihuang",
+   "hex": "#ebb10d",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4914
+  },
+  {
+   "name": "芥黄",
+   "pinyin": "jiehuang",
+   "hex": "#d9a40e",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4133
+  },
+  {
+   "name": "银鼠灰",
+   "pinyin": "yinshuhui",
+   "hex": "#b5aa90",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4059
+  },
+  {
+   "name": "尘灰",
+   "pinyin": "chenhui",
+   "hex": "#b6a476",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.378
+  },
+  {
+   "name": "枯绿",
+   "pinyin": "kulv",
+   "hex": "#b78d12",
+   "family": "绿",
+   "season": "秋",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2916
+  },
+  {
+   "name": "鲛青",
+   "pinyin": "jiaoqing",
+   "hex": "#87723e",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1753
+  },
+  {
+   "name": "粽叶绿",
+   "pinyin": "zongyelv",
+   "hex": "#876818",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1512
+  },
+  {
+   "name": "灰绿",
+   "pinyin": "huilv",
+   "hex": "#8a6913",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1555
+  },
+  {
+   "name": "鹤灰",
+   "pinyin": "hehui",
+   "hex": "#4a4035",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0538
+  },
+  {
+   "name": "淡松烟",
+   "pinyin": "dansongyan",
+   "hex": "#4d4030",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0546
+  },
+  {
+   "name": "暗海水绿",
+   "pinyin": "anhaishuilv",
+   "hex": "#584717",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "深",
+   "luminance": 0.0664
+  },
+  {
+   "name": "棕榈绿",
+   "pinyin": "zonglvlv",
+   "hex": "#5b4913",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "深",
+   "luminance": 0.0704
+  },
+  {
+   "name": "米色",
+   "pinyin": "mise",
+   "hex": "#f9e9cd",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8283
+  },
+  {
+   "name": "淡肉色",
+   "pinyin": "danrouse",
+   "hex": "#f8e0b0",
+   "family": "粉",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.764
+  },
+  {
+   "name": "麦芽糖黄",
+   "pinyin": "maiyatanghuang",
+   "hex": "#f9d27d",
+   "family": "黄",
+   "season": "春",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6771
+  },
+  {
+   "name": "琥珀黄",
+   "pinyin": "hupohuang",
+   "hex": "#feba07",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.562
+  },
+  {
+   "name": "甘草黄",
+   "pinyin": "gancaohuang",
+   "hex": "#f3bf4c",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5684
+  },
+  {
+   "name": "初熟杏黄",
+   "pinyin": "chushuxinghuang",
+   "hex": "#f8bc31",
+   "family": "黄",
+   "season": "春",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5614
+  },
+  {
+   "name": "浅驼色",
+   "pinyin": "qiantuose",
+   "hex": "#e2c17c",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5576
+  },
+  {
+   "name": "沙石黄",
+   "pinyin": "shashihuang",
+   "hex": "#e5b751",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5112
+  },
+  {
+   "name": "虎皮黄",
+   "pinyin": "hupihuang",
+   "hex": "#eaad1a",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4745
+  },
+  {
+   "name": "土黄",
+   "pinyin": "tuhuang",
+   "hex": "#d6a01d",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.3953
+  },
+  {
+   "name": "百灵鸟灰",
+   "pinyin": "bailingniaohui",
+   "hex": "#b4a992",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4015
+  },
+  {
+   "name": "山鸡黄",
+   "pinyin": "shanjihuang",
+   "hex": "#b78b26",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.2867
+  },
+  {
+   "name": "龟背黄",
+   "pinyin": "guibeihuang",
+   "hex": "#826b48",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1573
+  },
+  {
+   "name": "苍黄",
+   "pinyin": "canghuang",
+   "hex": "#806332",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1374
+  },
+  {
+   "name": "莱阳梨黄",
+   "pinyin": "laiyanglihuang",
+   "hex": "#815f25",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1299
+  },
+  {
+   "name": "蜴蜊绿",
+   "pinyin": "yililv",
+   "hex": "#835e1d",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1292
+  },
+  {
+   "name": "松鼠灰",
+   "pinyin": "songshuhui",
+   "hex": "#4f4032",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0556
+  },
+  {
+   "name": "橄榄灰",
+   "pinyin": "ganlanhui",
+   "hex": "#503e2a",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0532
+  },
+  {
+   "name": "蟹壳绿",
+   "pinyin": "xiekelv",
+   "hex": "#513c20",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "深",
+   "luminance": 0.0509
+  },
+  {
+   "name": "古铜绿",
+   "pinyin": "gutonglv",
+   "hex": "#533c1b",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "深",
+   "luminance": 0.0515
+  },
+  {
+   "name": "焦茶绿",
+   "pinyin": "jiaochalv",
+   "hex": "#553b18",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "深",
+   "luminance": 0.0513
+  },
+  {
+   "name": "粉白",
+   "pinyin": "fenbai",
+   "hex": "#fbf2e3",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8956
+  },
+  {
+   "name": "落英淡粉",
+   "pinyin": "luoyingdanfen",
+   "hex": "#f9e8d0",
+   "family": "粉",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "极浅",
+   "luminance": 0.8241
+  },
+  {
+   "name": "瓜瓤粉",
+   "pinyin": "guarangfen",
+   "hex": "#f9cb8b",
+   "family": "粉",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6472
+  },
+  {
+   "name": "蜜黄",
+   "pinyin": "mihuang",
+   "hex": "#fbb957",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.559
+  },
+  {
+   "name": "金叶黄",
+   "pinyin": "jinyehuang",
+   "hex": "#ffa60f",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4857
+  },
+  {
+   "name": "金莺黄",
+   "pinyin": "jinyinghuang",
+   "hex": "#f4a83a",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4754
+  },
+  {
+   "name": "鹿角棕",
+   "pinyin": "lujiaozong",
+   "hex": "#e3bd8d",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.5465
+  },
+  {
+   "name": "凋叶棕",
+   "pinyin": "diaoyezong",
+   "hex": "#e7a23f",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4319
+  },
+  {
+   "name": "玳瑁黄",
+   "pinyin": "daimaohuang",
+   "hex": "#daa45a",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.4219
+  },
+  {
+   "name": "软木黄",
+   "pinyin": "ruanmuhuang",
+   "hex": "#de9e44",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.404
+  },
+  {
+   "name": "风帆黄",
+   "pinyin": "fengfanhuang",
+   "hex": "#dc9123",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.3559
+  },
+  {
+   "name": "桂皮淡棕",
+   "pinyin": "guipidanzong",
+   "hex": "#c09351",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.3267
+  },
+  {
+   "name": "猴毛灰",
+   "pinyin": "houmaohui",
+   "hex": "#97846c",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2416
+  },
+  {
+   "name": "山鸡褐",
+   "pinyin": "shanjihe",
+   "hex": "#986524",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1611
+  },
+  {
+   "name": "驼色",
+   "pinyin": "tuose",
+   "hex": "#66462a",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0737
+  },
+  {
+   "name": "茶褐",
+   "pinyin": "chahe",
+   "hex": "#5d3d21",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0577
+  },
+  {
+   "name": "古铜褐",
+   "pinyin": "gutonghe",
+   "hex": "#5c3719",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0508
+  },
+  {
+   "name": "荷花白",
+   "pinyin": "hehuabai",
+   "hex": "#fbecde",
+   "family": "白",
+   "season": "夏",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8577
+  },
+  {
+   "name": "玫瑰粉",
+   "pinyin": "meiguifen",
+   "hex": "#f8b37f",
+   "family": "粉",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5373
+  },
+  {
+   "name": "橘橙",
+   "pinyin": "jucheng",
+   "hex": "#f97d1c",
+   "family": "橙",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3489
+  },
+  {
+   "name": "美人焦橙",
+   "pinyin": "meirenjiaocheng",
+   "hex": "#fa7e23",
+   "family": "橙",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3537
+  },
+  {
+   "name": "润红",
+   "pinyin": "runhong",
+   "hex": "#f7cdbc",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6707
+  },
+  {
+   "name": "淡桃红",
+   "pinyin": "dantaohong",
+   "hex": "#f6cec1",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6759
+  },
+  {
+   "name": "海螺橙",
+   "pinyin": "hailuocheng",
+   "hex": "#f0945d",
+   "family": "橙",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中浅",
+   "luminance": 0.405
+  },
+  {
+   "name": "桃红",
+   "pinyin": "taohong",
+   "hex": "#f0ada0",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5095
+  },
+  {
+   "name": "颊红",
+   "pinyin": "jiahong",
+   "hex": "#eeaa9c",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4933
+  },
+  {
+   "name": "淡罂粟红",
+   "pinyin": "danyingsuhong",
+   "hex": "#eea08c",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4521
+  },
+  {
+   "name": "晨曦红",
+   "pinyin": "chenxihong",
+   "hex": "#ea8958",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3609
+  },
+  {
+   "name": "蟹壳红",
+   "pinyin": "xiekehong",
+   "hex": "#f27635",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3209
+  },
+  {
+   "name": "金莲花橙",
+   "pinyin": "jinlianhuacheng",
+   "hex": "#f86b1d",
+   "family": "橙",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3056
+  },
+  {
+   "name": "草莓红",
+   "pinyin": "caomeihong",
+   "hex": "#ef6f48",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3019
+  },
+  {
+   "name": "龙睛鱼红",
+   "pinyin": "longjingyuhong",
+   "hex": "#ef632b",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2745
+  },
+  {
+   "name": "蜻蜓红",
+   "pinyin": "qingtinghong",
+   "hex": "#f1441d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2292
+  },
+  {
+   "name": "大红",
+   "pinyin": "dahong",
+   "hex": "#f04b22",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2367
+  },
+  {
+   "name": "柿红",
+   "pinyin": "shihong",
+   "hex": "#f2481b",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2359
+  },
+  {
+   "name": "榴花红",
+   "pinyin": "liuhuahong",
+   "hex": "#f34718",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2363
+  },
+  {
+   "name": "银朱",
+   "pinyin": "yinzhu",
+   "hex": "#f43e06",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2269
+  },
+  {
+   "name": "朱红",
+   "pinyin": "zhuhong",
+   "hex": "#ed5126",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2403
+  },
+  {
+   "name": "鲑鱼红",
+   "pinyin": "guiyuhong",
+   "hex": "#f09c5a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4304
+  },
+  {
+   "name": "金黄",
+   "pinyin": "jinhuang",
+   "hex": "#f26b1f",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.2949
+  },
+  {
+   "name": "鹿皮褐",
+   "pinyin": "lupihe",
+   "hex": "#d99156",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.3567
+  },
+  {
+   "name": "醉瓜肉",
+   "pinyin": "zuiguarou",
+   "hex": "#db8540",
+   "family": "粉",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3221
+  },
+  {
+   "name": "麂棕",
+   "pinyin": "jizong",
+   "hex": "#de7622",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.286
+  },
+  {
+   "name": "淡银灰",
+   "pinyin": "danyinhui",
+   "hex": "#c1b2a3",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4582
+  },
+  {
+   "name": "淡赭",
+   "pinyin": "danzhe",
+   "hex": "#be7e4a",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.2636
+  },
+  {
+   "name": "槟榔综",
+   "pinyin": "binglangzong",
+   "hex": "#c1651a",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.2072
+  },
+  {
+   "name": "银灰",
+   "pinyin": "yinhui",
+   "hex": "#918072",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2267
+  },
+  {
+   "name": "海鸥灰",
+   "pinyin": "haiouhui",
+   "hex": "#9a8878",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2583
+  },
+  {
+   "name": "淡咖啡",
+   "pinyin": "dankafei",
+   "hex": "#945833",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1351
+  },
+  {
+   "name": "岩石棕",
+   "pinyin": "yanshizong",
+   "hex": "#964d22",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1191
+  },
+  {
+   "name": "芒果棕",
+   "pinyin": "mangguozong",
+   "hex": "#954416",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1058
+  },
+  {
+   "name": "石板灰",
+   "pinyin": "shibanhui",
+   "hex": "#624941",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0774
+  },
+  {
+   "name": "珠母灰",
+   "pinyin": "zhumuhui",
+   "hex": "#64483d",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0768
+  },
+  {
+   "name": "丁香棕",
+   "pinyin": "dingxiangzong",
+   "hex": "#71361d",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0624
+  },
+  {
+   "name": "咖啡",
+   "pinyin": "kafei",
+   "hex": "#753117",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0604
+  },
+  {
+   "name": "筍皮棕",
+   "pinyin": "sunpizong",
+   "hex": "#732e12",
+   "family": "棕",
+   "season": "春",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0564
+  },
+  {
+   "name": "燕颔红",
+   "pinyin": "yanhanhong",
+   "hex": "#fc6315",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2967
+  },
+  {
+   "name": "玉粉红",
+   "pinyin": "yufenhong",
+   "hex": "#e8b49a",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5213
+  },
+  {
+   "name": "金驼",
+   "pinyin": "jintuo",
+   "hex": "#e46828",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.2655
+  },
+  {
+   "name": "铁棕",
+   "pinyin": "tiezong",
+   "hex": "#d85916",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.218
+  },
+  {
+   "name": "蛛网灰",
+   "pinyin": "zhuwanghui",
+   "hex": "#b7a091",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.3725
+  },
+  {
+   "name": "淡可可棕",
+   "pinyin": "dankekezong",
+   "hex": "#b7511d",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1604
+  },
+  {
+   "name": "中红灰",
+   "pinyin": "zhonghonghui",
+   "hex": "#8b614d",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1457
+  },
+  {
+   "name": "淡土黄",
+   "pinyin": "dantuhuang",
+   "hex": "#8c4b31",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.1083
+  },
+  {
+   "name": "淡豆沙",
+   "pinyin": "dandousha",
+   "hex": "#873d24",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.0862
+  },
+  {
+   "name": "椰壳棕",
+   "pinyin": "yekezong",
+   "hex": "#883a1e",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中深",
+   "luminance": 0.0835
+  },
+  {
+   "name": "淡铁灰",
+   "pinyin": "dantiehui",
+   "hex": "#5b423a",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0643
+  },
+  {
+   "name": "中灰驼",
+   "pinyin": "zhonghuituo",
+   "hex": "#603d30",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0604
+  },
+  {
+   "name": "淡栗棕",
+   "pinyin": "danlizong",
+   "hex": "#673424",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0547
+  },
+  {
+   "name": "可可棕",
+   "pinyin": "kekezong",
+   "hex": "#652b1c",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0458
+  },
+  {
+   "name": "柞叶棕",
+   "pinyin": "zhayezong",
+   "hex": "#692a1b",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0474
+  },
+  {
+   "name": "野蔷薇红",
+   "pinyin": "yeqiangweihong",
+   "hex": "#fb9968",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4429
+  },
+  {
+   "name": "菠萝红",
+   "pinyin": "boluohong",
+   "hex": "#fc7930",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3458
+  },
+  {
+   "name": "藕荷",
+   "pinyin": "ouhe",
+   "hex": "#edc3ae",
+   "family": "粉",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.6009
+  },
+  {
+   "name": "陶瓷红",
+   "pinyin": "taocihong",
+   "hex": "#e16723",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2583
+  },
+  {
+   "name": "晓灰",
+   "pinyin": "xiaohui",
+   "hex": "#d4c4b7",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.569
+  },
+  {
+   "name": "余烬红",
+   "pinyin": "yujinhong",
+   "hex": "#cf7543",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2639
+  },
+  {
+   "name": "火砖红",
+   "pinyin": "huozhuanhong",
+   "hex": "#cd6227",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2186
+  },
+  {
+   "name": "火泥棕",
+   "pinyin": "huonizong",
+   "hex": "#aa6a4c",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "中",
+   "luminance": 0.1938
+  },
+  {
+   "name": "绀红",
+   "pinyin": "ganhong",
+   "hex": "#a6522c",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1432
+  },
+  {
+   "name": "橡树棕",
+   "pinyin": "xiangshuzong",
+   "hex": "#773d31",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0748
+  },
+  {
+   "name": "海报灰",
+   "pinyin": "haibaohui",
+   "hex": "#483332",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0398
+  },
+  {
+   "name": "玫瑰灰",
+   "pinyin": "meiguihui",
+   "hex": "#4b2e2b",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0362
+  },
+  {
+   "name": "火山棕",
+   "pinyin": "huoshanzong",
+   "hex": "#482522",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "极深",
+   "luminance": 0.0282
+  },
+  {
+   "name": "豆沙",
+   "pinyin": "dousha",
+   "hex": "#481e1c",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "极深",
+   "luminance": 0.0239
+  },
+  {
+   "name": "淡米粉",
+   "pinyin": "danmifen",
+   "hex": "#fbeee2",
+   "family": "粉",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "极浅",
+   "luminance": 0.8715
+  },
+  {
+   "name": "初桃粉红",
+   "pinyin": "chutaofenhong",
+   "hex": "#f6dcce",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.7524
+  },
+  {
+   "name": "介壳淡粉红",
+   "pinyin": "jieqiaodanfenhong",
+   "hex": "#f7cfba",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6794
+  },
+  {
+   "name": "淡藏花红",
+   "pinyin": "dancanghuahong",
+   "hex": "#f6ad8f",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5146
+  },
+  {
+   "name": "瓜瓤红",
+   "pinyin": "guaranghong",
+   "hex": "#f68c60",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.3919
+  },
+  {
+   "name": "芙蓉红",
+   "pinyin": "furonghong",
+   "hex": "#f9723d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3251
+  },
+  {
+   "name": "莓酱红",
+   "pinyin": "meijianghong",
+   "hex": "#fa5d19",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2822
+  },
+  {
+   "name": "法螺红",
+   "pinyin": "faluohong",
+   "hex": "#ee8055",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3427
+  },
+  {
+   "name": "落霞红",
+   "pinyin": "luoxiahong",
+   "hex": "#cf4813",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1795
+  },
+  {
+   "name": "淡玫瑰灰",
+   "pinyin": "danmeiguihui",
+   "hex": "#b89485",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.3306
+  },
+  {
+   "name": "蟹蝥红",
+   "pinyin": "xiemaohong",
+   "hex": "#b14b28",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1453
+  },
+  {
+   "name": "火岩棕",
+   "pinyin": "huoyanzong",
+   "hex": "#863020",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0729
+  },
+  {
+   "name": "赭石",
+   "pinyin": "zheshi",
+   "hex": "#862617",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0652
+  },
+  {
+   "name": "暗驼棕",
+   "pinyin": "antuozong",
+   "hex": "#592620",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0361
+  },
+  {
+   "name": "酱棕",
+   "pinyin": "jiangzong",
+   "hex": "#5a1f1b",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0323
+  },
+  {
+   "name": "栗棕",
+   "pinyin": "lizong",
+   "hex": "#5c1e19",
+   "family": "棕",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "深",
+   "luminance": 0.0327
+  },
+  {
+   "name": "洋水仙红",
+   "pinyin": "yangshuixianhong",
+   "hex": "#f4c7ba",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6363
+  },
+  {
+   "name": "谷鞘红",
+   "pinyin": "guqiaohong",
+   "hex": "#f17666",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3262
+  },
+  {
+   "name": "苹果红",
+   "pinyin": "pingguohong",
+   "hex": "#f15642",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2575
+  },
+  {
+   "name": "铁水红",
+   "pinyin": "tieshuihong",
+   "hex": "#f5391c",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2242
+  },
+  {
+   "name": "桂红",
+   "pinyin": "guihong",
+   "hex": "#f25a47",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2664
+  },
+  {
+   "name": "极光红",
+   "pinyin": "jiguanghong",
+   "hex": "#f33b1f",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2228
+  },
+  {
+   "name": "粉红",
+   "pinyin": "fenhong",
+   "hex": "#f2b9b2",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5679
+  },
+  {
+   "name": "舌红",
+   "pinyin": "shehong",
+   "hex": "#f19790",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4285
+  },
+  {
+   "name": "曲红",
+   "pinyin": "quhong",
+   "hex": "#f05a46",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2628
+  },
+  {
+   "name": "红汞红",
+   "pinyin": "honggonghong",
+   "hex": "#f23e23",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2244
+  },
+  {
+   "name": "淡绯",
+   "pinyin": "danfei",
+   "hex": "#f2cac9",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6534
+  },
+  {
+   "name": "无花果红",
+   "pinyin": "wuhuaguohong",
+   "hex": "#efafad",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5203
+  },
+  {
+   "name": "榴子红",
+   "pinyin": "liuzihong",
+   "hex": "#f1908c",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4054
+  },
+  {
+   "name": "胭脂红",
+   "pinyin": "yanzhihong",
+   "hex": "#f03f24",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2221
+  },
+  {
+   "name": "合欢红",
+   "pinyin": "hehuanhong",
+   "hex": "#f0a1a8",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4684
+  },
+  {
+   "name": "春梅红",
+   "pinyin": "chunmeihong",
+   "hex": "#f1939c",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4197
+  },
+  {
+   "name": "香叶红",
+   "pinyin": "xiangyehong",
+   "hex": "#f07c82",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3455
+  },
+  {
+   "name": "珊瑚红",
+   "pinyin": "shanhuhong",
+   "hex": "#f04a3a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2373
+  },
+  {
+   "name": "萝卜红",
+   "pinyin": "luobohong",
+   "hex": "#f13c22",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2205
+  },
+  {
+   "name": "淡茜红",
+   "pinyin": "danqianhong",
+   "hex": "#e77c8e",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3336
+  },
+  {
+   "name": "艳红",
+   "pinyin": "yanhong",
+   "hex": "#ed5a65",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2626
+  },
+  {
+   "name": "淡菽红",
+   "pinyin": "danshuhong",
+   "hex": "#ed4845",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2307
+  },
+  {
+   "name": "鱼鳃红",
+   "pinyin": "yusaihong",
+   "hex": "#ed3b2f",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2134
+  },
+  {
+   "name": "樱桃红",
+   "pinyin": "yingtaohong",
+   "hex": "#ed3321",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2048
+  },
+  {
+   "name": "淡蕊香红",
+   "pinyin": "danruixianghong",
+   "hex": "#ee4866",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2377
+  },
+  {
+   "name": "石竹红",
+   "pinyin": "shizhuhong",
+   "hex": "#ee4863",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2371
+  },
+  {
+   "name": "草茉莉红",
+   "pinyin": "caomolihong",
+   "hex": "#ef475d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2365
+  },
+  {
+   "name": "茶花红",
+   "pinyin": "chahuahong",
+   "hex": "#ee3f4d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2227
+  },
+  {
+   "name": "枸枢红",
+   "pinyin": "goushuhong",
+   "hex": "#ed3333",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2061
+  },
+  {
+   "name": "秋海棠红",
+   "pinyin": "qiuhaitanghong",
+   "hex": "#ec2b24",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.1969
+  },
+  {
+   "name": "丽春红",
+   "pinyin": "lichunhong",
+   "hex": "#eb261a",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.1912
+  },
+  {
+   "name": "夕阳红",
+   "pinyin": "xiyanghong",
+   "hex": "#de2a18",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1725
+  },
+  {
+   "name": "鹤顶红",
+   "pinyin": "hedinghong",
+   "hex": "#d42517",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1538
+  },
+  {
+   "name": "鹅血石红",
+   "pinyin": "exueshihong",
+   "hex": "#ab372f",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.116
+  },
+  {
+   "name": "覆盆子红",
+   "pinyin": "fupenzihong",
+   "hex": "#ac1f18",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.0982
+  },
+  {
+   "name": "貂紫",
+   "pinyin": "diaozi",
+   "hex": "#5d3131",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0475
+  },
+  {
+   "name": "暗玉紫",
+   "pinyin": "anyuzi",
+   "hex": "#5c2223",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0354
+  },
+  {
+   "name": "栗紫",
+   "pinyin": "lizi",
+   "hex": "#5a191b",
+   "family": "紫",
+   "season": "秋",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0295
+  },
+  {
+   "name": "葡萄酱紫",
+   "pinyin": "putaojiangzi",
+   "hex": "#5a1216",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0266
+  },
+  {
+   "name": "牡丹粉红",
+   "pinyin": "mudanfenhong",
+   "hex": "#eea2a4",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.467
+  },
+  {
+   "name": "山茶红",
+   "pinyin": "shanchahong",
+   "hex": "#ed556a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2554
+  },
+  {
+   "name": "海棠红",
+   "pinyin": "haitanghong",
+   "hex": "#f03752",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2187
+  },
+  {
+   "name": "玉红",
+   "pinyin": "yuhong",
+   "hex": "#c04851",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1644
+  },
+  {
+   "name": "高粱红",
+   "pinyin": "gaolianghong",
+   "hex": "#c02c38",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1329
+  },
+  {
+   "name": "满江红",
+   "pinyin": "manjianghong",
+   "hex": "#a7535a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1514
+  },
+  {
+   "name": "枣红",
+   "pinyin": "zaohong",
+   "hex": "#7c1823",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "深",
+   "luminance": 0.0506
+  },
+  {
+   "name": "葡萄紫",
+   "pinyin": "putaozi",
+   "hex": "#4c1f24",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0264
+  },
+  {
+   "name": "酱紫",
+   "pinyin": "jiangzi",
+   "hex": "#4d1018",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0201
+  },
+  {
+   "name": "淡曙红",
+   "pinyin": "danshuhong",
+   "hex": "#ee2746",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2007
+  },
+  {
+   "name": "唐菖蒲红",
+   "pinyin": "tangchangpuhong",
+   "hex": "#de1c31",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1658
+  },
+  {
+   "name": "鹅冠红",
+   "pinyin": "eguanhong",
+   "hex": "#d11a2d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1448
+  },
+  {
+   "name": "莓红",
+   "pinyin": "meihong",
+   "hex": "#c45a65",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.1999
+  },
+  {
+   "name": "枫叶红",
+   "pinyin": "fengyehong",
+   "hex": "#c21f30",
+   "family": "红",
+   "season": "秋",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1266
+  },
+  {
+   "name": "苋菜红",
+   "pinyin": "xiancaihong",
+   "hex": "#a61b29",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.0905
+  },
+  {
+   "name": "烟红",
+   "pinyin": "yanhong",
+   "hex": "#894e54",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1141
+  },
+  {
+   "name": "暗紫苑红",
+   "pinyin": "anziyuanhong",
+   "hex": "#82202b",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "深",
+   "luminance": 0.0595
+  },
+  {
+   "name": "殷红",
+   "pinyin": "yanhong",
+   "hex": "#82111f",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "深",
+   "luminance": 0.0525
+  },
+  {
+   "name": "猪肝紫",
+   "pinyin": "zhuganzi",
+   "hex": "#541e24",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0294
+  },
+  {
+   "name": "金鱼紫",
+   "pinyin": "jinyuzi",
+   "hex": "#500a16",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0198
+  },
+  {
+   "name": "草珠红",
+   "pinyin": "caozhuhong",
+   "hex": "#f8ebe6",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "极浅",
+   "luminance": 0.8509
+  },
+  {
+   "name": "淡绛红",
+   "pinyin": "danjianghong",
+   "hex": "#ec7696",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3299
+  },
+  {
+   "name": "品红",
+   "pinyin": "pinhong",
+   "hex": "#ef3473",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2204
+  },
+  {
+   "name": "凤仙花红",
+   "pinyin": "fengxianhuahong",
+   "hex": "#ea7293",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3163
+  },
+  {
+   "name": "粉团花红",
+   "pinyin": "fentuanhuahong",
+   "hex": "#ec9bad",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4429
+  },
+  {
+   "name": "夹竹桃红",
+   "pinyin": "jiazhutaohong",
+   "hex": "#eb507e",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2491
+  },
+  {
+   "name": "榲桲红",
+   "pinyin": "wenpohong",
+   "hex": "#ed2f6a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2108
+  },
+  {
+   "name": "姜红",
+   "pinyin": "jianghong",
+   "hex": "#eeb8c3",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.564
+  },
+  {
+   "name": "莲瓣红",
+   "pinyin": "lianbanhong",
+   "hex": "#ea517f",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2491
+  },
+  {
+   "name": "水红",
+   "pinyin": "shuihong",
+   "hex": "#f1c4cd",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6259
+  },
+  {
+   "name": "报春红",
+   "pinyin": "baochunhong",
+   "hex": "#ec8aa4",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.3869
+  },
+  {
+   "name": "月季红",
+   "pinyin": "yuejihong",
+   "hex": "#ce5777",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2127
+  },
+  {
+   "name": "豇豆红",
+   "pinyin": "jiangdouhong",
+   "hex": "#ed9db2",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4533
+  },
+  {
+   "name": "霞光红",
+   "pinyin": "xiaguanghong",
+   "hex": "#ef82a0",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3685
+  },
+  {
+   "name": "松叶牡丹红",
+   "pinyin": "songyemudanhong",
+   "hex": "#eb3c70",
+   "family": "红",
+   "season": "冬",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2206
+  },
+  {
+   "name": "喜蛋红",
+   "pinyin": "xidanhong",
+   "hex": "#ec2c64",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2055
+  },
+  {
+   "name": "鼠鼻红",
+   "pinyin": "shubihong",
+   "hex": "#e3b4b8",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.5243
+  },
+  {
+   "name": "尖晶玉红",
+   "pinyin": "jianjingyuhong",
+   "hex": "#cc163a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1372
+  },
+  {
+   "name": "山黎豆红",
+   "pinyin": "shanlidouhong",
+   "hex": "#c27c88",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2766
+  },
+  {
+   "name": "锦葵红",
+   "pinyin": "jinkuihong",
+   "hex": "#bf3553",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1425
+  },
+  {
+   "name": "鼠背灰",
+   "pinyin": "shubeihui",
+   "hex": "#73575c",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1123
+  },
+  {
+   "name": "甘蔗紫",
+   "pinyin": "ganzhezi",
+   "hex": "#621624",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.033
+  },
+  {
+   "name": "石竹紫",
+   "pinyin": "shizhuzi",
+   "hex": "#63071c",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0289
+  },
+  {
+   "name": "苍蝇灰",
+   "pinyin": "cangyinghui",
+   "hex": "#36282b",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0248
+  },
+  {
+   "name": "卵石紫",
+   "pinyin": "luanshizi",
+   "hex": "#30161c",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0129
+  },
+  {
+   "name": "李紫",
+   "pinyin": "lizi",
+   "hex": "#2b1216",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.01
+  },
+  {
+   "name": "茄皮紫",
+   "pinyin": "qiepizi",
+   "hex": "#2d0c13",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0087
+  },
+  {
+   "name": "吊钟花红",
+   "pinyin": "diaozhonghuahong",
+   "hex": "#ce5e8a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2296
+  },
+  {
+   "name": "兔眼红",
+   "pinyin": "tuyanhong",
+   "hex": "#ec4e8a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2512
+  },
+  {
+   "name": "紫荆红",
+   "pinyin": "zijinghong",
+   "hex": "#ee2c79",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2136
+  },
+  {
+   "name": "菜头紫",
+   "pinyin": "caitouzi",
+   "hex": "#951c48",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0769
+  },
+  {
+   "name": "鹞冠紫",
+   "pinyin": "yaoguanzi",
+   "hex": "#621d34",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0372
+  },
+  {
+   "name": "葡萄酒红",
+   "pinyin": "putaojiuhong",
+   "hex": "#62102e",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "深",
+   "luminance": 0.0316
+  },
+  {
+   "name": "磨石紫",
+   "pinyin": "moshizi",
+   "hex": "#382129",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0209
+  },
+  {
+   "name": "檀紫",
+   "pinyin": "tanzi",
+   "hex": "#381924",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0166
+  },
+  {
+   "name": "火鹅紫",
+   "pinyin": "huoezi",
+   "hex": "#33141e",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.013
+  },
+  {
+   "name": "墨紫",
+   "pinyin": "mozi",
+   "hex": "#310f1b",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0107
+  },
+  {
+   "name": "晶红",
+   "pinyin": "jinghong",
+   "hex": "#eea6b7",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4887
+  },
+  {
+   "name": "扁豆花红",
+   "pinyin": "biandouhuahong",
+   "hex": "#ef498b",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2498
+  },
+  {
+   "name": "白芨红",
+   "pinyin": "baijihong",
+   "hex": "#de7897",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.312
+  },
+  {
+   "name": "嫩菱红",
+   "pinyin": "nenlinghong",
+   "hex": "#de3f7c",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2054
+  },
+  {
+   "name": "菠根红",
+   "pinyin": "bogenhong",
+   "hex": "#d13c74",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1805
+  },
+  {
+   "name": "酢酱草红",
+   "pinyin": "cujiangcaohong",
+   "hex": "#c5708b",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2532
+  },
+  {
+   "name": "洋葱紫",
+   "pinyin": "yangcongzi",
+   "hex": "#a8456b",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1364
+  },
+  {
+   "name": "海象紫",
+   "pinyin": "haixiangzi",
+   "hex": "#4b1e2f",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0263
+  },
+  {
+   "name": "绀紫",
+   "pinyin": "ganzi",
+   "hex": "#461629",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0204
+  },
+  {
+   "name": "古铜紫",
+   "pinyin": "gutongzi",
+   "hex": "#440e25",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0168
+  },
+  {
+   "name": "石蕊红",
+   "pinyin": "shiruihong",
+   "hex": "#f0c9cf",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.648
+  },
+  {
+   "name": "芍药耕红",
+   "pinyin": "shaoyaogenghong",
+   "hex": "#eba0b3",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中浅",
+   "luminance": 0.4606
+  },
+  {
+   "name": "藏花红",
+   "pinyin": "canghuahong",
+   "hex": "#ec2d7a",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2111
+  },
+  {
+   "name": "初荷红",
+   "pinyin": "chuhehong",
+   "hex": "#e16c96",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2893
+  },
+  {
+   "name": "马鞭草紫",
+   "pinyin": "mabiancaozi",
+   "hex": "#ede3e7",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7871
+  },
+  {
+   "name": "丁香淡紫",
+   "pinyin": "dingxiangdanzi",
+   "hex": "#e9d7df",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "浅",
+   "luminance": 0.7125
+  },
+  {
+   "name": "丹紫红",
+   "pinyin": "danzihong",
+   "hex": "#d2568c",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.2225
+  },
+  {
+   "name": "玫瑰红",
+   "pinyin": "meiguihong",
+   "hex": "#d2357d",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中深",
+   "luminance": 0.1773
+  },
+  {
+   "name": "淡牵牛紫",
+   "pinyin": "danqianniuzi",
+   "hex": "#d1c2d3",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中浅",
+   "luminance": 0.5684
+  },
+  {
+   "name": "凤信紫",
+   "pinyin": "fengxinzi",
+   "hex": "#c8adc4",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中浅",
+   "luminance": 0.4615
+  },
+  {
+   "name": "萝兰紫",
+   "pinyin": "luolanzi",
+   "hex": "#c08eaf",
+   "family": "紫",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.3365
+  },
+  {
+   "name": "玫瑰紫",
+   "pinyin": "meiguizi",
+   "hex": "#ba2f7b",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.139
+  },
+  {
+   "name": "藤萝紫",
+   "pinyin": "tengluozi",
+   "hex": "#8076a3",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2019
+  },
+  {
+   "name": "槿紫",
+   "pinyin": "jinzi",
+   "hex": "#806d9e",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.18
+  },
+  {
+   "name": "蕈紫",
+   "pinyin": "xunzi",
+   "hex": "#815c94",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1446
+  },
+  {
+   "name": "桔梗紫",
+   "pinyin": "jiegengzi",
+   "hex": "#813c85",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0959
+  },
+  {
+   "name": "魏紫",
+   "pinyin": "weizi",
+   "hex": "#7e1671",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.062
+  },
+  {
+   "name": "芝兰紫",
+   "pinyin": "zhilanzi",
+   "hex": "#e9ccd3",
+   "family": "紫",
+   "season": "春",
+   "wuxing": "水",
+   "tone": "浅",
+   "luminance": 0.6521
+  },
+  {
+   "name": "菱锰红",
+   "pinyin": "lingmenghong",
+   "hex": "#d276a3",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.293
+  },
+  {
+   "name": "龙须红",
+   "pinyin": "longxuhong",
+   "hex": "#cc5595",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.215
+  },
+  {
+   "name": "蓟粉红",
+   "pinyin": "jifenhong",
+   "hex": "#e6d2d5",
+   "family": "红",
+   "season": "春",
+   "wuxing": "火",
+   "tone": "浅",
+   "luminance": 0.6772
+  },
+  {
+   "name": "电气石红",
+   "pinyin": "dianqishihong",
+   "hex": "#c35691",
+   "family": "红",
+   "season": "夏",
+   "wuxing": "火",
+   "tone": "中",
+   "luminance": 0.203
+  },
+  {
+   "name": "樱草紫",
+   "pinyin": "yingcaozi",
+   "hex": "#c06f98",
+   "family": "紫",
+   "season": "春",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2484
+  },
+  {
+   "name": "芦穗灰",
+   "pinyin": "lusuihui",
+   "hex": "#bdaead",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4411
+  },
+  {
+   "name": "隐红灰",
+   "pinyin": "yinhonghui",
+   "hex": "#b598a1",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.3485
+  },
+  {
+   "name": "苋菜紫",
+   "pinyin": "xiancaizi",
+   "hex": "#9b1e64",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0882
+  },
+  {
+   "name": "芦灰",
+   "pinyin": "luhui",
+   "hex": "#856d72",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1714
+  },
+  {
+   "name": "暮云灰",
+   "pinyin": "muyunhui",
+   "hex": "#4f383e",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0484
+  },
+  {
+   "name": "斑鸠灰",
+   "pinyin": "banjiuhui",
+   "hex": "#482936",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0323
+  },
+  {
+   "name": "淡藤萝紫",
+   "pinyin": "dantengluozi",
+   "hex": "#f2e7e5",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8169
+  },
+  {
+   "name": "淡青紫",
+   "pinyin": "danqingzi",
+   "hex": "#e0c8d1",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "浅",
+   "luminance": 0.6176
+  },
+  {
+   "name": "青蛤壳紫",
+   "pinyin": "qinghakezi",
+   "hex": "#bc84a8",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.3002
+  },
+  {
+   "name": "豆蔻紫",
+   "pinyin": "doukouzi",
+   "hex": "#ad6598",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2046
+  },
+  {
+   "name": "扁豆紫",
+   "pinyin": "biandouzi",
+   "hex": "#a35c8f",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1742
+  },
+  {
+   "name": "芥花紫",
+   "pinyin": "jiehuazi",
+   "hex": "#983680",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1087
+  },
+  {
+   "name": "青莲",
+   "pinyin": "qinglian",
+   "hex": "#8b2671",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0807
+  },
+  {
+   "name": "芓紫",
+   "pinyin": "zizi",
+   "hex": "#894276",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1052
+  },
+  {
+   "name": "葛巾紫",
+   "pinyin": "gejinzi",
+   "hex": "#7e2065",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0641
+  },
+  {
+   "name": "牵牛紫",
+   "pinyin": "qianniuzi",
+   "hex": "#681752",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0417
+  },
+  {
+   "name": "紫灰",
+   "pinyin": "zihui",
+   "hex": "#5d3f51",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0648
+  },
+  {
+   "name": "龙睛鱼紫",
+   "pinyin": "longjingyuzi",
+   "hex": "#4e2a40",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0365
+  },
+  {
+   "name": "荸荠紫",
+   "pinyin": "biqizi",
+   "hex": "#411c35",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0221
+  },
+  {
+   "name": "古鼎灰",
+   "pinyin": "gudinghui",
+   "hex": "#36292f",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0258
+  },
+  {
+   "name": "乌梅紫",
+   "pinyin": "wumeizi",
+   "hex": "#1e131d",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0083
+  },
+  {
+   "name": "深牵牛紫",
+   "pinyin": "shenqianniuzi",
+   "hex": "#1c0d1a",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0061
+  },
+  {
+   "name": "银白",
+   "pinyin": "yinbai",
+   "hex": "#f1f0ed",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.8714
+  },
+  {
+   "name": "芡食白",
+   "pinyin": "qianshibai",
+   "hex": "#e2e1e4",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7562
+  },
+  {
+   "name": "远山紫",
+   "pinyin": "yuanshanzi",
+   "hex": "#ccccd6",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "浅",
+   "luminance": 0.6088
+  },
+  {
+   "name": "淡蓝紫",
+   "pinyin": "danlanzi",
+   "hex": "#a7a8bd",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中浅",
+   "luminance": 0.3989
+  },
+  {
+   "name": "山梗紫",
+   "pinyin": "shangengzi",
+   "hex": "#61649f",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1416
+  },
+  {
+   "name": "螺甸紫",
+   "pinyin": "luodianzi",
+   "hex": "#74759b",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.188
+  },
+  {
+   "name": "玛瑙灰",
+   "pinyin": "manaohui",
+   "hex": "#cfccc9",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.6067
+  },
+  {
+   "name": "野菊紫",
+   "pinyin": "yejuzi",
+   "hex": "#525288",
+   "family": "紫",
+   "season": "秋",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0961
+  },
+  {
+   "name": "满天星紫",
+   "pinyin": "mantianxingzi",
+   "hex": "#2e317c",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0423
+  },
+  {
+   "name": "锌灰",
+   "pinyin": "xinhui",
+   "hex": "#7a7374",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1766
+  },
+  {
+   "name": "野葡萄紫",
+   "pinyin": "yeputaozi",
+   "hex": "#302f4b",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0317
+  },
+  {
+   "name": "剑锋紫",
+   "pinyin": "jianfengzi",
+   "hex": "#3e3841",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0423
+  },
+  {
+   "name": "龙葵紫",
+   "pinyin": "longkuizi",
+   "hex": "#322f3b",
+   "family": "紫",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0303
+  },
+  {
+   "name": "暗龙胆紫",
+   "pinyin": "anlongdanzi",
+   "hex": "#22202e",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0157
+  },
+  {
+   "name": "晶石紫",
+   "pinyin": "jingshizi",
+   "hex": "#1f2040",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0169
+  },
+  {
+   "name": "暗蓝紫",
+   "pinyin": "anlanzi",
+   "hex": "#131124",
+   "family": "紫",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0067
+  },
+  {
+   "name": "景泰蓝",
+   "pinyin": "jingtailan",
+   "hex": "#2775b6",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1653
+  },
+  {
+   "name": "尼罗蓝",
+   "pinyin": "niluolan",
+   "hex": "#2474b5",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.162
+  },
+  {
+   "name": "远天蓝",
+   "pinyin": "yuantianlan",
+   "hex": "#d0dfe6",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.719
+  },
+  {
+   "name": "星蓝",
+   "pinyin": "xinglan",
+   "hex": "#93b5cf",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4376
+  },
+  {
+   "name": "羽扇豆蓝",
+   "pinyin": "yushandoulan",
+   "hex": "#619ac3",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2959
+  },
+  {
+   "name": "花青",
+   "pinyin": "huaqing",
+   "hex": "#2376b7",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1673
+  },
+  {
+   "name": "睛蓝",
+   "pinyin": "jinglan",
+   "hex": "#5698c3",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2838
+  },
+  {
+   "name": "虹蓝",
+   "pinyin": "honglan",
+   "hex": "#2177b8",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1698
+  },
+  {
+   "name": "湖水蓝",
+   "pinyin": "hushuilan",
+   "hex": "#b0d5df",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6215
+  },
+  {
+   "name": "秋波蓝",
+   "pinyin": "qiubolan",
+   "hex": "#8abcd1",
+   "family": "蓝",
+   "season": "秋",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4597
+  },
+  {
+   "name": "涧石蓝",
+   "pinyin": "jianshilan",
+   "hex": "#66a9c9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3542
+  },
+  {
+   "name": "潮蓝",
+   "pinyin": "chaolan",
+   "hex": "#2983bb",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2029
+  },
+  {
+   "name": "群青",
+   "pinyin": "qunqing",
+   "hex": "#1772b4",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1551
+  },
+  {
+   "name": "霁青",
+   "pinyin": "jiqing",
+   "hex": "#63bbd0",
+   "family": "青",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4275
+  },
+  {
+   "name": "碧青",
+   "pinyin": "biqing",
+   "hex": "#5cb3cc",
+   "family": "青",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.3888
+  },
+  {
+   "name": "宝石蓝",
+   "pinyin": "baoshilan",
+   "hex": "#2486b9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2093
+  },
+  {
+   "name": "天蓝",
+   "pinyin": "tianlan",
+   "hex": "#1677b3",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1662
+  },
+  {
+   "name": "柏林蓝",
+   "pinyin": "bolinlan",
+   "hex": "#126bae",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.137
+  },
+  {
+   "name": "海青",
+   "pinyin": "haiqing",
+   "hex": "#22a2c3",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3012
+  },
+  {
+   "name": "钴蓝",
+   "pinyin": "gulan",
+   "hex": "#1a94bc",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2503
+  },
+  {
+   "name": "鸢尾蓝",
+   "pinyin": "yuanweilan",
+   "hex": "#158bb8",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2209
+  },
+  {
+   "name": "牵牛花蓝",
+   "pinyin": "qianniuhualan",
+   "hex": "#1177b0",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1645
+  },
+  {
+   "name": "飞燕草蓝",
+   "pinyin": "feiyancaolan",
+   "hex": "#0f59a4",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0993
+  },
+  {
+   "name": "品蓝",
+   "pinyin": "pinlan",
+   "hex": "#2b73af",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1587
+  },
+  {
+   "name": "银鱼白",
+   "pinyin": "yinyubai",
+   "hex": "#cdd1d3",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.6328
+  },
+  {
+   "name": "安安蓝",
+   "pinyin": "ananlan",
+   "hex": "#3170a7",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1503
+  },
+  {
+   "name": "鱼尾灰",
+   "pinyin": "yuweihui",
+   "hex": "#5e616d",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1203
+  },
+  {
+   "name": "鲸鱼灰",
+   "pinyin": "jingyuhui",
+   "hex": "#475164",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0814
+  },
+  {
+   "name": "海参灰",
+   "pinyin": "haishenhui",
+   "hex": "#fffefa",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9905
+  },
+  {
+   "name": "沙鱼灰",
+   "pinyin": "shayuhui",
+   "hex": "#35333c",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0345
+  },
+  {
+   "name": "钢蓝",
+   "pinyin": "ganglan",
+   "hex": "#0f1423",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0072
+  },
+  {
+   "name": "云水蓝",
+   "pinyin": "yunshuilan",
+   "hex": "#baccd9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5863
+  },
+  {
+   "name": "晴山蓝",
+   "pinyin": "qingshanlan",
+   "hex": "#8fb2c9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.419
+  },
+  {
+   "name": "靛青",
+   "pinyin": "dianqing",
+   "hex": "#1661ab",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1166
+  },
+  {
+   "name": "大理石灰",
+   "pinyin": "dalishihui",
+   "hex": "#c4cbcf",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.5895
+  },
+  {
+   "name": "海涛蓝",
+   "pinyin": "haitaolan",
+   "hex": "#15559a",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.0899
+  },
+  {
+   "name": "蝶翅蓝",
+   "pinyin": "diechilan",
+   "hex": "#4e7ca1",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.1861
+  },
+  {
+   "name": "海军蓝",
+   "pinyin": "haijunlan",
+   "hex": "#346c9c",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1386
+  },
+  {
+   "name": "水牛灰",
+   "pinyin": "shuiniuhui",
+   "hex": "#2f2f35",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0289
+  },
+  {
+   "name": "牛角灰",
+   "pinyin": "niujiaohui",
+   "hex": "#2d2e36",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0278
+  },
+  {
+   "name": "燕颔蓝",
+   "pinyin": "yanhanlan",
+   "hex": "#131824",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0092
+  },
+  {
+   "name": "云峰白",
+   "pinyin": "yunfengbai",
+   "hex": "#d8e3e7",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7531
+  },
+  {
+   "name": "井天蓝",
+   "pinyin": "jingtianlan",
+   "hex": "#c3d7df",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6553
+  },
+  {
+   "name": "云山蓝",
+   "pinyin": "yunshanlan",
+   "hex": "#2f90b9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2405
+  },
+  {
+   "name": "釉蓝",
+   "pinyin": "youlan",
+   "hex": "#1781b5",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.1922
+  },
+  {
+   "name": "鸥蓝",
+   "pinyin": "oulan",
+   "hex": "#c7d2d4",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.6299
+  },
+  {
+   "name": "搪磁蓝",
+   "pinyin": "tangcilan",
+   "hex": "#11659a",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1176
+  },
+  {
+   "name": "月影白",
+   "pinyin": "yueyingbai",
+   "hex": "#c0c4c3",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.5463
+  },
+  {
+   "name": "星灰",
+   "pinyin": "xinghui",
+   "hex": "#b2bbbe",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4872
+  },
+  {
+   "name": "淡蓝灰",
+   "pinyin": "danlanhui",
+   "hex": "#5e7987",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.178
+  },
+  {
+   "name": "鷃蓝",
+   "pinyin": "yanlan",
+   "hex": "#144a74",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0631
+  },
+  {
+   "name": "嫩灰",
+   "pinyin": "nenhui",
+   "hex": "#74787a",
+   "family": "灰",
+   "season": "春",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.1855
+  },
+  {
+   "name": "战舰灰",
+   "pinyin": "zhanjianhui",
+   "hex": "#495c69",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1009
+  },
+  {
+   "name": "瓦罐灰",
+   "pinyin": "waguanhui",
+   "hex": "#47484c",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.065
+  },
+  {
+   "name": "青灰",
+   "pinyin": "qinghui",
+   "hex": "#2b333e",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0323
+  },
+  {
+   "name": "鸽蓝",
+   "pinyin": "gelan",
+   "hex": "#1c2938",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0212
+  },
+  {
+   "name": "钢青",
+   "pinyin": "gangqing",
+   "hex": "#142334",
+   "family": "青",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.016
+  },
+  {
+   "name": "暗蓝",
+   "pinyin": "anlan",
+   "hex": "#101f30",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.013
+  },
+  {
+   "name": "月白",
+   "pinyin": "yuebai",
+   "hex": "#eef7f2",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9111
+  },
+  {
+   "name": "海天蓝",
+   "pinyin": "haitianlan",
+   "hex": "#c6e6e8",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.7443
+  },
+  {
+   "name": "清水蓝",
+   "pinyin": "qingshuilan",
+   "hex": "#93d5dc",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5896
+  },
+  {
+   "name": "瀑布蓝",
+   "pinyin": "pubulan",
+   "hex": "#51c4d3",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4593
+  },
+  {
+   "name": "蔚蓝",
+   "pinyin": "weilan",
+   "hex": "#29b7cb",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.3865
+  },
+  {
+   "name": "孔雀蓝",
+   "pinyin": "kongquelan",
+   "hex": "#0eb0c9",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3536
+  },
+  {
+   "name": "甸子蓝",
+   "pinyin": "dianzilan",
+   "hex": "#10aec2",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3428
+  },
+  {
+   "name": "石绿",
+   "pinyin": "shilv",
+   "hex": "#57c3c2",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4495
+  },
+  {
+   "name": "竹篁绿",
+   "pinyin": "zhuhuanglv",
+   "hex": "#b9dec9",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6677
+  },
+  {
+   "name": "粉绿",
+   "pinyin": "fenlv",
+   "hex": "#83cbac",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5052
+  },
+  {
+   "name": "美蝶绿",
+   "pinyin": "meidielv",
+   "hex": "#12aa9c",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3128
+  },
+  {
+   "name": "毛绿",
+   "pinyin": "maolv",
+   "hex": "#66c18c",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4286
+  },
+  {
+   "name": "蔻梢绿",
+   "pinyin": "koushaolv",
+   "hex": "#5dbe8a",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4099
+  },
+  {
+   "name": "麦苗绿",
+   "pinyin": "maimiaolv",
+   "hex": "#55bb8a",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.3931
+  },
+  {
+   "name": "蛙绿",
+   "pinyin": "walv",
+   "hex": "#45b787",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3688
+  },
+  {
+   "name": "铜绿",
+   "pinyin": "tonglv",
+   "hex": "#2bae85",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3248
+  },
+  {
+   "name": "竹绿",
+   "pinyin": "zhulv",
+   "hex": "#1ba784",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2954
+  },
+  {
+   "name": "蓝绿",
+   "pinyin": "lanlv",
+   "hex": "#12a182",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2723
+  },
+  {
+   "name": "穹灰",
+   "pinyin": "qionghui",
+   "hex": "#c4d7d6",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.6519
+  },
+  {
+   "name": "翠蓝",
+   "pinyin": "cuilan",
+   "hex": "#1e9eb3",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2798
+  },
+  {
+   "name": "胆矾蓝",
+   "pinyin": "danfanlan",
+   "hex": "#0f95b0",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2473
+  },
+  {
+   "name": "樫鸟蓝",
+   "pinyin": "jianniaolan",
+   "hex": "#1491a8",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2323
+  },
+  {
+   "name": "闪蓝",
+   "pinyin": "shanlan",
+   "hex": "#7cabb1",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3659
+  },
+  {
+   "name": "冰山蓝",
+   "pinyin": "bingshanlan",
+   "hex": "#a4aca7",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4019
+  },
+  {
+   "name": "虾壳青",
+   "pinyin": "xiakeqing",
+   "hex": "#869d9d",
+   "family": "青",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3162
+  },
+  {
+   "name": "晚波蓝",
+   "pinyin": "wanbolan",
+   "hex": "#648e93",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2416
+  },
+  {
+   "name": "蜻蜓蓝",
+   "pinyin": "qingtinglan",
+   "hex": "#3b818c",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.1852
+  },
+  {
+   "name": "玉鈫蓝",
+   "pinyin": "yuqinlan",
+   "hex": "#126e82",
+   "family": "蓝",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1289
+  },
+  {
+   "name": "垩灰",
+   "pinyin": "ehui",
+   "hex": "#737c7b",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.1949
+  },
+  {
+   "name": "夏云灰",
+   "pinyin": "xiayunhui",
+   "hex": "#617172",
+   "family": "灰",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1557
+  },
+  {
+   "name": "苍蓝",
+   "pinyin": "canglan",
+   "hex": "#134857",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0546
+  },
+  {
+   "name": "黄昏灰",
+   "pinyin": "huanghunhui",
+   "hex": "#474b4c",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0689
+  },
+  {
+   "name": "灰蓝",
+   "pinyin": "huilan",
+   "hex": "#21373d",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0339
+  },
+  {
+   "name": "深灰蓝",
+   "pinyin": "shenhuilan",
+   "hex": "#132c33",
+   "family": "蓝",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0218
+  },
+  {
+   "name": "玉簪绿",
+   "pinyin": "yuzanlv",
+   "hex": "#a4cab6",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5351
+  },
+  {
+   "name": "青矾绿",
+   "pinyin": "qingfanlv",
+   "hex": "#2c9678",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.237
+  },
+  {
+   "name": "草原远绿",
+   "pinyin": "caoyuanyuanlv",
+   "hex": "#9abeaf",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4679
+  },
+  {
+   "name": "梧枝绿",
+   "pinyin": "wuzhilv",
+   "hex": "#69a794",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3278
+  },
+  {
+   "name": "浪花绿",
+   "pinyin": "langhualv",
+   "hex": "#92b3a5",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4107
+  },
+  {
+   "name": "海王绿",
+   "pinyin": "haiwanglv",
+   "hex": "#248067",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1679
+  },
+  {
+   "name": "亚丁绿",
+   "pinyin": "yadinglv",
+   "hex": "#428675",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.1949
+  },
+  {
+   "name": "镍灰",
+   "pinyin": "niehui",
+   "hex": "#9fa39a",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.359
+  },
+  {
+   "name": "明灰",
+   "pinyin": "minghui",
+   "hex": "#8a988e",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.2981
+  },
+  {
+   "name": "淡绿灰",
+   "pinyin": "danlvhui",
+   "hex": "#70887d",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2253
+  },
+  {
+   "name": "飞泉绿",
+   "pinyin": "feiquanlv",
+   "hex": "#497568",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1514
+  },
+  {
+   "name": "狼烟灰",
+   "pinyin": "langyanhui",
+   "hex": "#5d655f",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中深",
+   "luminance": 0.1246
+  },
+  {
+   "name": "绿灰",
+   "pinyin": "lvhui",
+   "hex": "#314a43",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0596
+  },
+  {
+   "name": "苍绿",
+   "pinyin": "canglv",
+   "hex": "#223e36",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0405
+  },
+  {
+   "name": "深海绿",
+   "pinyin": "shenhailv",
+   "hex": "#1a3b32",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0358
+  },
+  {
+   "name": "长石灰",
+   "pinyin": "changshihui",
+   "hex": "#363433",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0348
+  },
+  {
+   "name": "苷蓝绿",
+   "pinyin": "ganlanlv",
+   "hex": "#1f2623",
+   "family": "黑",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.018
+  },
+  {
+   "name": "莽丛绿",
+   "pinyin": "mangconglv",
+   "hex": "#141e1b",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0116
+  },
+  {
+   "name": "淡翠绿",
+   "pinyin": "dancuilv",
+   "hex": "#c6dfc8",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6895
+  },
+  {
+   "name": "明绿",
+   "pinyin": "minglv",
+   "hex": "#9eccab",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.534
+  },
+  {
+   "name": "田园绿",
+   "pinyin": "tianyuanlv",
+   "hex": "#68b88e",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.3918
+  },
+  {
+   "name": "翠绿",
+   "pinyin": "cuilv",
+   "hex": "#20a162",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2668
+  },
+  {
+   "name": "淡绿",
+   "pinyin": "danlv",
+   "hex": "#61ac85",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3374
+  },
+  {
+   "name": "葱绿",
+   "pinyin": "conglv",
+   "hex": "#40a070",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.274
+  },
+  {
+   "name": "孔雀绿",
+   "pinyin": "kongquelv",
+   "hex": "#229453",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2214
+  },
+  {
+   "name": "艾绿",
+   "pinyin": "ailv",
+   "hex": "#cad3c3",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6309
+  },
+  {
+   "name": "蟾绿",
+   "pinyin": "chanlv",
+   "hex": "#3c9566",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2341
+  },
+  {
+   "name": "宫殿绿",
+   "pinyin": "gongdianlv",
+   "hex": "#20894d",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.1873
+  },
+  {
+   "name": "松霜绿",
+   "pinyin": "songshuanglv",
+   "hex": "#83a78d",
+   "family": "绿",
+   "season": "冬",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3439
+  },
+  {
+   "name": "蛋白石绿",
+   "pinyin": "danbaishilv",
+   "hex": "#579572",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2474
+  },
+  {
+   "name": "薄荷绿",
+   "pinyin": "bohelv",
+   "hex": "#207f4c",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1601
+  },
+  {
+   "name": "瓦松绿",
+   "pinyin": "wasonglv",
+   "hex": "#6e8b74",
+   "family": "绿",
+   "season": "冬",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.2304
+  },
+  {
+   "name": "荷叶绿",
+   "pinyin": "heyelv",
+   "hex": "#1a6840",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1049
+  },
+  {
+   "name": "田螺绿",
+   "pinyin": "tianluolv",
+   "hex": "#5e665b",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.1264
+  },
+  {
+   "name": "白屈菜绿",
+   "pinyin": "baiqucailv",
+   "hex": "#485b4d",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "木",
+   "tone": "中深",
+   "luminance": 0.094
+  },
+  {
+   "name": "河豚灰",
+   "pinyin": "hetunhui",
+   "hex": "#393733",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0384
+  },
+  {
+   "name": "蒽油绿",
+   "pinyin": "enyoulv",
+   "hex": "#373834",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0389
+  },
+  {
+   "name": "槲寄生绿",
+   "pinyin": "hujishenglv",
+   "hex": "#2b312c",
+   "family": "黑",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0289
+  },
+  {
+   "name": "云杉绿",
+   "pinyin": "yunshanlv",
+   "hex": "#15231b",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "极深",
+   "luminance": 0.0144
+  },
+  {
+   "name": "嫩菊绿",
+   "pinyin": "nenjulv",
+   "hex": "#f0f5e5",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "极浅",
+   "luminance": 0.8949
+  },
+  {
+   "name": "艾背绿",
+   "pinyin": "aibeilv",
+   "hex": "#dfecd5",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.8048
+  },
+  {
+   "name": "嘉陵水绿",
+   "pinyin": "jialingshuilv",
+   "hex": "#add5a2",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5908
+  },
+  {
+   "name": "玉髓绿",
+   "pinyin": "yusuilv",
+   "hex": "#41b349",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3385
+  },
+  {
+   "name": "鲜绿",
+   "pinyin": "xianlv",
+   "hex": "#43b244",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3345
+  },
+  {
+   "name": "宝石绿",
+   "pinyin": "baoshilv",
+   "hex": "#41ae3c",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3172
+  },
+  {
+   "name": "海沫绿",
+   "pinyin": "haimolyu",
+   "hex": "#e2e7bf",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.7708
+  },
+  {
+   "name": "姚黄",
+   "pinyin": "yaohuang",
+   "hex": "#d0deaa",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6855
+  },
+  {
+   "name": "橄榄石绿",
+   "pinyin": "ganlanshilv",
+   "hex": "#b2cf87",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5584
+  },
+  {
+   "name": "水绿",
+   "pinyin": "shuilv",
+   "hex": "#8cc269",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4518
+  },
+  {
+   "name": "芦苇绿",
+   "pinyin": "luweilv",
+   "hex": "#b7d07a",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5658
+  },
+  {
+   "name": "槐花黄绿",
+   "pinyin": "huaihuahuanglv",
+   "hex": "#d2d97a",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "浅",
+   "luminance": 0.6473
+  },
+  {
+   "name": "苹果绿",
+   "pinyin": "pingguolv",
+   "hex": "#bacf65",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.56
+  },
+  {
+   "name": "芽绿",
+   "pinyin": "yalv",
+   "hex": "#96c24e",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.4562
+  },
+  {
+   "name": "蝶黄",
+   "pinyin": "diehuang",
+   "hex": "#e2d849",
+   "family": "黄",
+   "season": "秋",
+   "wuxing": "土",
+   "tone": "浅",
+   "luminance": 0.6576
+  },
+  {
+   "name": "橄榄黄绿",
+   "pinyin": "ganlanhuanglv",
+   "hex": "#bec936",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中浅",
+   "luminance": 0.5299
+  },
+  {
+   "name": "鹦鹉绿",
+   "pinyin": "yingwulv",
+   "hex": "#5bae23",
+   "family": "绿",
+   "season": "春",
+   "wuxing": "木",
+   "tone": "中",
+   "luminance": 0.3262
+  },
+  {
+   "name": "油绿",
+   "pinyin": "youlv",
+   "hex": "#253d24",
+   "family": "绿",
+   "season": "夏",
+   "wuxing": "水",
+   "tone": "深",
+   "luminance": 0.0386
+  },
+  {
+   "name": "象牙白",
+   "pinyin": "xiangyabai",
+   "hex": "#fffef8",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9892
+  },
+  {
+   "name": "汉白玉",
+   "pinyin": "hanbaiyu",
+   "hex": "#f8f4ed",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9077
+  },
+  {
+   "name": "雪白",
+   "pinyin": "xuebai",
+   "hex": "#fffef9",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9898
+  },
+  {
+   "name": "鱼肚白",
+   "pinyin": "yudubai",
+   "hex": "#f7f4ed",
+   "family": "白",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "极浅",
+   "luminance": 0.9059
+  },
+  {
+   "name": "珍珠灰",
+   "pinyin": "zhenzhuhui",
+   "hex": "#e4dfd7",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.7418
+  },
+  {
+   "name": "浅灰",
+   "pinyin": "qianhui",
+   "hex": "#dad4cb",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "浅",
+   "luminance": 0.663
+  },
+  {
+   "name": "铅灰",
+   "pinyin": "qianhui",
+   "hex": "#bbb5ac",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中浅",
+   "luminance": 0.4659
+  },
+  {
+   "name": "中灰",
+   "pinyin": "zhonghui",
+   "hex": "#a49c93",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "金",
+   "tone": "中",
+   "luminance": 0.3378
+  },
+  {
+   "name": "瓦灰",
+   "pinyin": "wahui",
+   "hex": "#867e76",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.213
+  },
+  {
+   "name": "夜灰",
+   "pinyin": "yehui",
+   "hex": "#847c74",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.2058
+  },
+  {
+   "name": "雁灰",
+   "pinyin": "yanhui",
+   "hex": "#80766e",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.1867
+  },
+  {
+   "name": "深灰",
+   "pinyin": "shenhui",
+   "hex": "#81776e",
+   "family": "灰",
+   "season": "冬",
+   "wuxing": "水",
+   "tone": "中",
+   "luminance": 0.1899
+  }
+ ]
+}

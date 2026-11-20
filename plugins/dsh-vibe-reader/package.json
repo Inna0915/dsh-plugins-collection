@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "闲庭：在 DSH Desktop 右侧栏，趁 Agent 运行的间隙读、背完整的古诗文",
   "type": "module",
-  "engines": { "dsh": ">=0.2.2-rc.1" },
+  "engines": {
+    "dsh": ">=0.2.2-rc.1"
+  },
   "scripts": {
     "test": "node --test",
     "fingerprint": "node scripts/fingerprint.mjs"
@@ -15,7 +17,14 @@
     "./package.json": "./package.json"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "dependencies": {
+    "opencc-js": "^1.4.2"
   }
 }

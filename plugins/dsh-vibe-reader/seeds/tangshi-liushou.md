@@ -7,6 +7,7 @@ kind: poem
 source: chinese-poetry/全唐诗/唐诗三百首.json
 edition: 唐诗三百首（chinese-poetry 繁体本转简；只选与通行本一致的篇目）
 verified: corpus
+color: 梧枝绿
 fingerprint: sha256:28af99c40bbb96dfea5dc987e204d35aaa81cd729a77b1894d348661b552085a
 tags: [唐诗, 五言, 唐诗三百首]
 ---

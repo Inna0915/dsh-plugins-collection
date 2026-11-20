@@ -236,7 +236,12 @@ export function parseVolume(source, fileName = '') {
 /** Summary row for the library list (no section bodies). */
 export function summarize(volume) {
   const { sections, ...rest } = volume
-  return { ...rest, sectionCount: sections.length, sectionIds: sections.map((section) => section.id) }
+  return {
+    ...rest,
+    sectionCount: sections.length,
+    sectionIds: sections.map((section) => section.id),
+    sectionList: sections.map((section) => ({ id: section.id, title: section.title, author: section.meta.author || '' }))
+  }
 }
 
 /**

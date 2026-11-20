@@ -203,3 +203,110 @@ test('apply: registers the tab, needs the verified services, survives a missing 
   assert.equal(tab.title(), '闲庭')
   for (const dispose of disposers) if (typeof dispose === 'function') dispose()
 })
+
+test('renderPlan keeps a glossed word, its gloss and the following punctuation together', () => {
+  const pieces = t.textPieces('七月既望，苏子与客', [], [{ start: 2, end: 4, note: { word: '既望' } }])
+  const plan = t.renderPlan(pieces)
+  assert.deepEqual(Array.from(plan, (item) => [item.text, item.glosses.length, item.tail?.text ?? null]), [
+    ['七月', 0, null],
+    ['既望', 1, '，'],
+    ['苏子与客', 0, null]
+  ])
+  const end = t.renderPlan(t.textPieces('属予作文以记之。', [], [{ start: 0, end: 1, note: { word: '属' } }]))
+  assert.deepEqual(Array.from(end, (item) => [item.text, item.tail?.text ?? null]), [['属', null], ['予作文以记之。', null]])
+})
+
+test('app store reload keeps volumes whose file revision did not change', async () => {
+  let revision = 'r1'
+  let volumeFetches = 0
+  const request = async (path, body) => {
+    if (path.endsWith('library')) return { volumes: [{ id: 'v', revision }], cards: [], roots: [], state: { ui: {}, volumes: {}, cards: {}, resurface: {}, settings: {} } }
+    if (path.endsWith('volume')) { volumeFetches++; return { volume: { id: body.id, revision, sections: [] } } }
+    throw new Error(path)
+  }
+  const app = t.createAppStore({ request })
+  await app.load()
+  await app.ensureVolume('v')
+  await app.load()
+  assert.equal(app.getSnapshot().volumes.v.status, 'ready', 'unchanged file stays cached')
+  await app.ensureVolume('v')
+  assert.equal(volumeFetches, 1)
+  revision = 'r2'
+  await app.load()
+  assert.equal(app.getSnapshot().volumes.v, undefined, 'edited file is fetched again')
+  let loads = 0
+  const counting = t.createAppStore({ request: async (path, body) => { if (path.endsWith('library')) loads++; return request(path, body) } })
+  await counting.load()
+  counting.refreshIfStale()
+  assert.equal(loads, 1, 'no reload storm when several panes become visible together')
+})
+
+test('toNumeral writes traditional uppercase numerals for section order', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 10].map(t.toNumeral), ['壹', '貳', '參', '肆', '伍', '陸', '拾'])
+  assert.deepEqual([11, 19, 20, 25, 47, 99].map(t.toNumeral), ['拾壹', '拾玖', '貳拾', '貳拾伍', '肆拾柒', '玖拾玖'])
+  assert.deepEqual([100, 105, 110, 123].map(t.toNumeral), ['壹佰', '壹佰零伍', '壹佰壹拾', '壹佰貳拾參'])
+  assert.equal(t.toNumeral(0), '0')
+})
+
+test('shelfItems: recent first (newest first), then library order; search title, author, tags', () => {
+  const rows = [
+    { id: 'a', title: '岳阳楼记', author: '范仲淹', dynasty: '宋', tags: ['楼记'], sectionIds: ['s1', 's2', 's3'], sectionCount: 3, errors: [] },
+    { id: 'b', title: '前赤壁赋', author: '苏轼', dynasty: '宋', tags: [], sectionIds: ['s1', 's2'], sectionCount: 2, errors: [] },
+    { id: 'c', title: '唐诗六首', author: '多家', dynasty: '唐', tags: ['唐诗'], sectionIds: ['s1'], sectionCount: 1, errors: [] },
+    { file: 'broken.md', errors: ['x'] }
+  ]
+  const state = { volumes: { a: { lastSection: 's2', readAt: '2026-11-20T01:00:00Z' }, b: { lastSection: 's1', readAt: '2026-11-20T02:00:00Z' } } }
+  const { recent, unread } = t.shelfItems(rows, state)
+  assert.deepEqual(Array.from(recent, (item) => [item.row.id, item.position, item.total]), [['b', 1, 2], ['a', 2, 3]])
+  assert.deepEqual(Array.from(unread, (item) => item.row.id), ['c'], 'rows without an id are left out')
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '苏').recent, (item) => item.row.id), ['b'])
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '唐诗').unread, (item) => item.row.id), ['c'])
+  const moved = t.optimistic({ ui: {}, volumes: {}, cards: {}, resurface: {}, settings: {} }, { op: 'progress', volumeId: 'c', sectionId: 's1' })
+  assert.ok(moved.volumes.c.readAt, 'opening a volume moves it to 最近读过 at once')
+})
+
+test('shelfItems finds poems inside volumes, by title or poem author, and filters', () => {
+  const rows = [
+    { id: 'tang', title: '唐诗六首', author: '多家', dynasty: '唐', kind: 'poem', tags: [], sectionIds: ['s1', 's2', 's3'], sectionCount: 3, errors: [],
+      sectionList: [{ id: 's1', title: '登鹳雀楼', author: '唐 · 王之涣' }, { id: 's2', title: '春晓', author: '唐 · 孟浩然' }, { id: 's3', title: '春望', author: '唐 · 杜甫' }] },
+    { id: 'yue', title: '岳阳楼记', author: '范仲淹', dynasty: '宋', kind: 'prose', tags: [], sectionIds: ['s1'], sectionCount: 1, errors: [], sectionList: [{ id: 's1', title: '作记缘由', author: '' }] }
+  ]
+  const state = { volumes: { yue: { lastSection: 's1', readAt: '2026-11-20T01:00:00Z' } }, cards: { 'tang#s3': { level: 5 } } }
+  const byTitle = t.shelfItems(rows, state, '春望')
+  assert.deepEqual(Array.from(byTitle.unread, (item) => item.row.id), ['tang'])
+  assert.equal(byTitle.unread[0].own, false)
+  assert.deepEqual(Array.from(byTitle.unread[0].sections, (section) => [section.id, section.position]), [['s3', 3]])
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '杜甫').unread[0].sections, (section) => section.title), ['春望'])
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '春').unread[0].sections, (section) => section.title), ['春晓', '春望'])
+  assert.equal(t.shelfItems(rows, state, '唐诗').unread[0].sections.length, 0, 'a volume-level match lists no sections')
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '', 'reciting').unread, (item) => item.row.id), ['tang'])
+  assert.deepEqual(Array.from(t.shelfItems(rows, state, '', 'prose').recent, (item) => item.row.id), ['yue'])
+  assert.equal(t.shelfItems(rows, state, '', 'unread').recent.length, 0)
+})
+
+test('apply registers a header button that opens the reader, or collapses it when showing', async () => {
+  const registered = {}
+  const calls = []
+  let active = { id: 't1', kind: 'other' }
+  let expanded = true
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  let withReact
+  const fakeReact = { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }) }
+  runInNewContext(source, { window: { __ModuleLoader__: { load({ factory }) { withReact = factory((name) => (name === 'react' ? fakeReact : undefined)) } } }, Date, Math, structuredClone, setTimeout, clearTimeout, console })
+  withReact.apply({
+    effect: (action) => action(),
+    uiSession: undefined, sessions: undefined, uiWorkspace: undefined,
+    sidebarRight: { active: () => active, isExpanded: () => expanded, hide: (id) => calls.push(['hide', id]), openTab: (kind) => calls.push(['open', kind]), mounted: { getSnapshot: () => undefined, subscribe: () => () => {} } },
+    sidebarRightTabs: { register: () => () => {} },
+    slots: { inject: (slot, register) => register(), register: (meta, component) => { registered[meta.name] = { meta, component }; return () => {} } }
+  })
+  const header = registered['conversation.session.header.utilities']
+  assert.equal(header.meta.id, 'vibe-reader')
+  const button = header.component({})
+  button.props.onClick()
+  active = { id: 't2', kind: 'vibe-reader' }
+  button.props.onClick()
+  expanded = false
+  button.props.onClick()
+  assert.deepEqual(calls, [['open', 'vibe-reader'], ['hide', 't2'], ['open', 'vibe-reader']])
+})
