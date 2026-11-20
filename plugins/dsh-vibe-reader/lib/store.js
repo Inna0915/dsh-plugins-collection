@@ -28,7 +28,7 @@ export function defaultState() {
     volumes: {},
     cards: {},
     resurface: {},
-    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false, translationOpen: true, notesOpen: true }
+    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false, translationOpen: true, notesOpen: true, fontScale: 1 }
   }
 }
 
@@ -62,6 +62,9 @@ function settingsPatch(patch, lenient = false) {
     if (key === 'readAfterSeconds') {
       if (Number.isInteger(value) && value >= 3 && value <= 600) out[key] = value
       else if (!lenient) throw new OpError('可读阈值应为 3～600 秒的整数')
+    } else if (key === 'fontScale') {
+      if (typeof value === 'number' && Number.isFinite(value) && value >= 0.8 && value <= 2) out[key] = Math.round(value * 100) / 100
+      else if (!lenient) throw new OpError('字号比例应在 0.8～2 之间')
     } else if (['followSessions', 'showGloss', 'vertical', 'translationOpen', 'notesOpen'].includes(key)) {
       if (typeof value === 'boolean') out[key] = value
       else if (!lenient) throw new OpError(`设置 ${key} 应为开或关`)

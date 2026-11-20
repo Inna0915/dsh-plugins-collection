@@ -549,7 +549,7 @@ window.__ModuleLoader__.load({
     // ---------------------------------------------------------------- view helpers
 
     const styles = `
-.vr{--vr-cinnabar:color-mix(in srgb,#c3272b 82%,currentColor);--vr-line:color-mix(in srgb,currentColor 14%,transparent);--vr-soft:color-mix(in srgb,currentColor 6%,transparent);display:flex;flex-direction:column;height:100%;box-sizing:border-box;font-size:13px;overflow:hidden}
+.vr{--vr-cinnabar:color-mix(in srgb,#c3272b 82%,currentColor);--vr-line:color-mix(in srgb,currentColor 14%,transparent);--vr-soft:color-mix(in srgb,currentColor 6%,transparent);display:flex;flex-direction:column;height:100%;box-sizing:border-box;font-size:calc(13px*var(--vr-scale,1));overflow:hidden}
 .vr *{box-sizing:border-box}
 .vr button,.vr select,.vr input{font:inherit;color:inherit}
 .vr button{border:1px solid var(--vr-line);background:transparent;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.5}
@@ -561,22 +561,22 @@ window.__ModuleLoader__.load({
 .vr-grow{flex:1;min-width:0}
 .vr-seg{display:inline-flex;border:1px solid var(--vr-line);border-radius:7px;overflow:hidden}
 .vr-seg button{border:0;border-radius:0;padding:3px 10px}
-.vr-chip{border-radius:999px!important;padding:2px 10px!important;font-size:12px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.vr-chip{border-radius:999px!important;padding:2px 10px!important;font-size:calc(12px*var(--vr-scale,1));white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .vr-tone-needs-you{background:color-mix(in srgb,#c3272b 26%,transparent)!important}
 .vr-tone-done{background:color-mix(in srgb,#e9c46a 32%,transparent)!important}
 .vr-tone-reading-window{background:color-mix(in srgb,#5a9e7c 26%,transparent)!important}
 .vr-tone-idle,.vr-tone-waiting{opacity:.75}
 .vr-pop{display:grid;gap:6px;padding:8px;border:1px solid var(--vr-line);border-radius:8px;background:var(--vr-soft)}
-.vr-pop h4{margin:2px 0 0;font-size:12px;opacity:.75}
+.vr-pop h4{margin:2px 0 0;font-size:calc(12px*var(--vr-scale,1));opacity:.75}
 .vr-pop ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
 .vr-session{display:flex!important;gap:8px;width:100%;text-align:left;align-items:baseline}
 .vr-session span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vr-session span:last-child{flex:none;opacity:.7;font-size:11.5px}
+.vr-session span:last-child{flex:none;opacity:.7;font-size:calc(11.5px*var(--vr-scale,1))}
 .vr-body{flex:1;overflow:auto;padding:12px 14px 18px;display:grid;gap:12px;align-content:start}
 .vr-muted{opacity:.65}
-.vr-small{font-size:11.5px}
+.vr-small{font-size:calc(11.5px*var(--vr-scale,1))}
 .vr-notice{display:flex;gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px;background:color-mix(in srgb,#e9c46a 22%,transparent)}
-.vr-text{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:15.5px;line-height:1.95;letter-spacing:.02em}
+.vr-text{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:calc(15.5px*var(--vr-scale,1));line-height:1.95;letter-spacing:.02em}
 .vr-text p{margin:0 0 .6em}
 .vr-quote{color:var(--vr-accent,color-mix(in srgb,#b8862b 85%,currentColor))}
 .vr-para{margin:0 0 .7em}
@@ -586,55 +586,55 @@ window.__ModuleLoader__.load({
 .vr-under{text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 55%,transparent);text-underline-offset:5px}
 .vr-tap{cursor:pointer;text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 70%,transparent);text-underline-offset:5px;border-radius:2px}
 .vr-tap.vr-open{background:color-mix(in srgb,var(--vr-cinnabar) 10%,transparent)}
-.vr-notes-row{display:flex;flex-wrap:wrap;gap:1px 12px;margin:1px 0 8px;font-size:11.5px;line-height:1.55;letter-spacing:0;opacity:.85}
+.vr-notes-row{display:flex;flex-wrap:wrap;gap:1px 12px;margin:1px 0 8px;font-size:calc(11.5px*var(--vr-scale,1));line-height:1.55;letter-spacing:0;opacity:.85}
 .vr-bn b{color:var(--vr-cinnabar);font-weight:600;margin-right:2px}
 .vr-noted{text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 70%,transparent);text-underline-offset:4px}
 .vr-keep{white-space:nowrap}
-.vr-gloss{white-space:normal;display:inline-flex;flex-direction:column;vertical-align:middle;font-size:9.5px;line-height:1.15;color:var(--vr-cinnabar);margin:0 2px;letter-spacing:0;font-family:inherit;cursor:pointer;max-width:12em}
-.vr-gloss.vr-open{display:inline;font-size:11px;vertical-align:baseline}
-.vr-title{margin:0;font-size:17px;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
-.vr-guide{margin:0;padding:4px 8px;border-left:2px solid var(--vr-line);opacity:.8;font-size:12.5px}
+.vr-gloss{white-space:normal;display:inline-flex;flex-direction:column;vertical-align:middle;font-size:calc(9.5px*var(--vr-scale,1));line-height:1.15;color:var(--vr-cinnabar);margin:0 2px;letter-spacing:0;font-family:inherit;cursor:pointer;max-width:12em}
+.vr-gloss.vr-open{display:inline;font-size:calc(11px*var(--vr-scale,1));vertical-align:baseline}
+.vr-title{margin:0;font-size:calc(17px*var(--vr-scale,1));font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
+.vr-guide{margin:0;padding:4px 8px;border-left:2px solid var(--vr-line);opacity:.8;font-size:calc(12.5px*var(--vr-scale,1))}
 .vr-body:focus{outline:none}
 .vr-volhead{display:flex!important;align-items:center;gap:8px;width:100%;border:0!important;padding:2px 0!important;text-align:left;background:transparent!important}
 .vr-spine{flex:none;width:4px;align-self:stretch;min-height:20px;border-radius:2px;background:var(--vr-accent,color-mix(in srgb,currentColor 22%,transparent))}
-.vr-voltitle{flex:none;max-width:60%;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:17px;font-weight:600;color:var(--vr-accent,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vr-volmeta{flex:1;min-width:0;font-size:12px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vr-volswitch{flex:none;font-size:11.5px;opacity:.6;border:1px solid var(--vr-line);border-radius:999px;padding:1px 9px}
+.vr-voltitle{flex:none;max-width:60%;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:calc(17px*var(--vr-scale,1));font-weight:600;color:var(--vr-accent,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-volmeta{flex:1;min-width:0;font-size:calc(12px*var(--vr-scale,1));opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-volswitch{flex:none;font-size:calc(11.5px*var(--vr-scale,1));opacity:.6;border:1px solid var(--vr-line);border-radius:999px;padding:1px 9px}
 .vr-volhead:hover .vr-volswitch,.vr-volhead[aria-expanded=true] .vr-volswitch{opacity:1}
 .vr-shelf{display:grid;gap:2px}
-.vr-shelf-label{font-size:11.5px;opacity:.55;margin:10px 0 2px 2px}
+.vr-shelf-label{font-size:calc(11.5px*var(--vr-scale,1));opacity:.55;margin:10px 0 2px 2px}
 .vr-shelf-row{display:flex!important;align-items:stretch;gap:10px;width:100%;text-align:left;border:0!important;padding:7px 8px!important}
 .vr-shelf-row[aria-current=true]{background:var(--vr-soft)}
 .vr-shelf-main{flex:1;min-width:0;display:grid;gap:1px}
-.vr-shelf-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-shelf-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:calc(14.5px*var(--vr-scale,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vr-shelf-row[aria-current=true] .vr-shelf-title{font-weight:600}
-.vr-shelf-meta{font-size:11.5px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vr-shelf-side{flex:none;display:grid;justify-items:end;align-content:center;gap:1px;font-size:11.5px;opacity:.75;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
-.vr-shelf-side em{font-style:normal;color:var(--vr-cinnabar);font-size:11px}
+.vr-shelf-meta{font-size:calc(11.5px*var(--vr-scale,1));opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-shelf-side{flex:none;display:grid;justify-items:end;align-content:center;gap:1px;font-size:calc(11.5px*var(--vr-scale,1));opacity:.75;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
+.vr-shelf-side em{font-style:normal;color:var(--vr-cinnabar);font-size:calc(11px*var(--vr-scale,1))}
 .vr-search{width:100%;border:1px solid var(--vr-line);border-radius:6px;background:transparent;padding:5px 8px;margin-bottom:2px}
 .vr-cells{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:2px 1px 4px}
-.vr-cells button{flex:none;min-width:26px;height:26px;padding:0 5px;border-radius:5px;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:13px;line-height:1}
+.vr-cells button{flex:none;min-width:calc(26px*var(--vr-scale,1));height:calc(26px*var(--vr-scale,1));padding:0 5px;border-radius:5px;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:calc(13px*var(--vr-scale,1));line-height:1}
 .vr-cells button[aria-current=true]{border:1.5px solid var(--vr-accent,currentColor)!important;color:var(--vr-accent,inherit);font-weight:700}
 .vr-cells button{position:relative}
 .vr-cells button[data-level]::after{content:"";position:absolute;left:4px;bottom:2px;height:2px;width:calc((100% - 8px) * var(--lv));border-radius:1px;background:color-mix(in srgb,var(--vr-accent,#5a9e7c) 80%,transparent)}
 .vr-filters{gap:4px}
-.vr-filters button{border-radius:999px!important;padding:1px 10px!important;font-size:12px}
-.vr-tags button{font-size:11.5px;padding:0 9px!important;opacity:.85}
+.vr-filters button{border-radius:999px!important;padding:1px 10px!important;font-size:calc(12px*var(--vr-scale,1))}
+.vr-tags button{font-size:calc(11.5px*var(--vr-scale,1));padding:0 9px!important;opacity:.85}
 .vr-tags button[aria-pressed=true]{opacity:1}
-.vr-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;line-height:1.6;border:1px solid var(--vr-line);opacity:.9}
+.vr-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:calc(10.5px*var(--vr-scale,1));line-height:1.6;border:1px solid var(--vr-line);opacity:.9}
 .vr-shelf-group{display:grid}
-.vr-shelf-hits{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 22px;font-size:12px}
+.vr-shelf-hits{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 22px;font-size:calc(12px*var(--vr-scale,1))}
 .vr-shelf-hits button{padding:1px 8px!important;border-radius:999px!important;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
 .vr-head-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
 .vr-head-btn:hover{background:color-mix(in srgb,currentColor 8%,transparent)}
-.vr-dim{opacity:.45;cursor:pointer;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:13px;border:0!important;text-align:left;padding:2px 0!important;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr-dim{opacity:.45;cursor:pointer;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;font-size:calc(13px*var(--vr-scale,1));border:0!important;text-align:left;padding:2px 0!important;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vr-dim:hover{opacity:.75;background:transparent!important}
-.vr-trans{margin:0;padding:8px 10px;border-radius:6px;background:var(--vr-soft);font-size:13px;line-height:1.75}
-.vr-notes{font-size:12.5px}
+.vr-trans{margin:0;padding:8px 10px;border-radius:6px;background:var(--vr-soft);font-size:calc(13px*var(--vr-scale,1));line-height:1.75}
+.vr-notes{font-size:calc(12.5px*var(--vr-scale,1))}
 .vr-notes ul{margin:6px 0 0;padding-left:16px;display:grid;gap:3px}
 .vr-notes b{color:var(--vr-cinnabar);font-weight:600}
 .vr-card{display:grid;gap:10px;justify-items:center;text-align:center;padding:18px 12px;border:1px solid var(--vr-line);border-radius:10px}
-.vr-vertical{writing-mode:vertical-rl;text-orientation:upright;max-height:300px;margin:0 auto;text-align:start}
+.vr-vertical{writing-mode:vertical-rl;text-orientation:upright;max-height:calc(300px*var(--vr-scale,1));margin:0 auto;text-align:start}
 .vr-hidden{cursor:pointer;user-select:none;color:color-mix(in srgb,currentColor 38%,transparent);border-radius:2px}
 .vr-hidden.vr-shown{color:inherit;background:color-mix(in srgb,#5a9e7c 18%,transparent)}
 .vr-fold{display:block;width:100%;text-align:left;padding:8px!important;margin-bottom:6px;opacity:.7}
@@ -642,7 +642,7 @@ window.__ModuleLoader__.load({
 .vr-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between}
 .vr-rate button{min-width:52px}
 .vr-error{color:var(--vr-cinnabar)}
-.vr-refresh{font-size:14px;line-height:1.3}
+.vr-refresh{font-size:calc(14px*var(--vr-scale,1));line-height:1.3}
 .vr-spinning{animation:vr-spin .8s linear infinite}
 @keyframes vr-spin{to{transform:rotate(360deg)}}
 .vr-added{flex-wrap:wrap;align-items:center}
@@ -651,6 +651,22 @@ window.__ModuleLoader__.load({
 .vr-accent .vr-guide{border-left-color:var(--vr-accent)}
 .vr-card.vr-accent{border-top:3px solid var(--vr-accent)}
 
+
+.vr-sheet{display:grid;gap:10px;margin-top:4px;padding:10px 2px 4px;border-top:1px solid var(--vr-line)}
+.vr-sheet h4{margin:0;font-size:calc(12px*var(--vr-scale,1));font-weight:600;opacity:.6}
+.vr-sheet ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.vr-sheet-row{display:grid;grid-template-columns:4em minmax(0,1fr);gap:10px;align-items:center}
+.vr-sheet-label{font-size:calc(12px*var(--vr-scale,1));opacity:.6}
+.vr-sheet-hint{font-size:calc(11.5px*var(--vr-scale,1));opacity:.6;line-height:1.5}
+.vr-switch{position:relative;flex:none;width:2.4em;height:1.4em;padding:0!important;border:0!important;border-radius:999px!important;background:color-mix(in srgb,currentColor 20%,transparent)!important;transition:background .15s}
+.vr-switch::after{content:"";position:absolute;top:.2em;left:.2em;width:1em;height:1em;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.vr-switch[aria-checked=true]{background:#5a9e7c!important}
+.vr-switch[aria-checked=true]::after{left:1.2em}
+.vr-stepper{display:inline-flex;flex:none;align-items:center;border:1px solid var(--vr-line);border-radius:7px;overflow:hidden}
+.vr-stepper button{border:0!important;border-radius:0!important;padding:1px 10px!important}
+.vr-stepper span{min-width:3.6em;text-align:center;font-variant-numeric:tabular-nums}
+.vr-path{font-size:calc(11px*var(--vr-scale,1));opacity:.5;user-select:text;word-break:break-all}
+.vr-session-list button{border-color:transparent!important;background:var(--vr-soft)}
 `
 
     function durationText(ms) {
@@ -1072,27 +1088,52 @@ window.__ModuleLoader__.load({
         ...group('已完成，待查看', view.done, (item) => [item.finishedAt !== undefined ? durationText(now - item.finishedAt) + '前' : '', item.lastMs !== undefined ? '用时 ' + durationText(item.lastMs) : ''].filter(Boolean).join(' · ') || '未读'),
         ...group('运行中', view.running, (item) => item.since !== undefined ? '已运行 ' + durationText(now - item.since) : '')
       ]
-      return h('div', { className: 'vr-pop' }, ...(rows.length ? rows : [h('span', { key: 'none', className: 'vr-muted vr-small' }, '没有运行中、需要你或刚完成的会话。')]),
+      return h('div', { className: 'vr-sheet vr-session-list' }, ...(rows.length ? rows : [h('span', { key: 'none', className: 'vr-muted vr-small' }, '没有运行中、需要你或刚完成的会话。')]),
         h('span', { className: 'vr-small vr-muted' }, '点一条跳到那个会话；正在读时，阅读器会跟过去。'))
+    }
+
+    const FONT_SCALES = [[0.9, '小'], [1, '标准'], [1.15, '大'], [1.3, '更大'], [1.5, '特大']]
+    const READ_AFTER_STEPS = [3, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600]
+
+    /** Next value on a fixed ladder of steps, from wherever the current value sits. */
+    function stepValue(steps, current, direction) {
+      if (direction > 0) return steps.find((value) => value > current) ?? steps[steps.length - 1]
+      return [...steps].reverse().find((value) => value < current) ?? steps[0]
+    }
+
+    function SheetRow({ label, children }) {
+      return h('div', { className: 'vr-sheet-row' }, h('span', { className: 'vr-sheet-label' }, label), h('div', { className: 'vr-row' }, ...[].concat(children)))
     }
 
     function SettingsPanel({ app, snapshot }) {
       const { state, library } = snapshot
-      const [seconds, setSeconds] = useState(String(state.settings.readAfterSeconds))
-      function commitSeconds() {
-        const value = Number(seconds)
-        if (Number.isInteger(value) && value >= 3 && value <= 600 && value !== state.settings.readAfterSeconds) app.send({ op: 'settings', patch: { readAfterSeconds: value } })
-        else setSeconds(String(state.settings.readAfterSeconds))
-      }
-      const toggle = (key, label) => h('label', { className: 'vr-row' },
-        h('input', { type: 'checkbox', checked: state.settings[key], onChange: (event) => app.send({ op: 'settings', patch: { [key]: event.target.checked } }) }), label)
-      return h('div', { className: 'vr-pop' },
-        toggle('followSessions', '正在读时切换会话，阅读器跟过去'),
-        h('label', { className: 'vr-row' }, 'Agent 运行超过',
-          h('input', { type: 'number', min: 3, max: 600, value: seconds, style: { width: '64px' }, onChange: (event) => setSeconds(event.target.value), onBlur: commitSeconds, onKeyDown: (event) => { if (event.key === 'Enter') commitSeconds() } }),
-          '秒，提示「可以读一则」'),
-        h('div', { className: 'vr-small vr-muted' }, ...library.roots.map((root) => h('div', { key: root.dir }, (root.origin === 'builtin' ? '内置书卷：' : '我的书库：') + root.dir + (root.exists ? '（' + root.files + ' 个文件）' : '（目录不存在，建好后放入 .md 书卷即可）')))),
-        h('div', { className: 'vr-row' }, h('button', { type: 'button', onClick: () => app.load() }, '重新读取书库')))
+      const settings = state.settings
+      const set = (patch) => app.send({ op: 'settings', patch })
+      const scale = settings.fontScale || 1
+      const seconds = settings.readAfterSeconds
+      const builtin = library.volumes.filter((row) => row.origin === 'builtin').length
+      const mine = library.volumes.filter((row) => row.origin === 'library').length
+      const mineRoot = library.roots.find((root) => root.origin === 'library')
+      return h('div', { className: 'vr-sheet', role: 'group', 'aria-label': '设置' },
+        h(SheetRow, { label: '字号' },
+          h('div', { className: 'vr-seg', role: 'group', 'aria-label': '字号' }, ...FONT_SCALES.map(([value, label]) => h('button', {
+            key: value, type: 'button', 'aria-pressed': Math.abs(scale - value) < 0.01, title: Math.round(value * 100) + '%', onClick: () => set({ fontScale: value })
+          }, label)))),
+        h(SheetRow, { label: '跟随' }, [
+          h('button', { key: 's', type: 'button', role: 'switch', className: 'vr-switch', 'aria-checked': settings.followSessions, 'aria-label': '切换会话时带上阅读器', onClick: () => set({ followSessions: !settings.followSessions }) }),
+          h('span', { key: 'h', className: 'vr-sheet-hint' }, '正在读时切换会话，阅读器跟过去')
+        ]),
+        h(SheetRow, { label: '提醒' }, [
+          h('div', { key: 's', className: 'vr-stepper' },
+            h('button', { type: 'button', 'aria-label': '减少', disabled: seconds <= READ_AFTER_STEPS[0], onClick: () => set({ readAfterSeconds: stepValue(READ_AFTER_STEPS, seconds, -1) }) }, '−'),
+            h('span', null, seconds + ' 秒'),
+            h('button', { type: 'button', 'aria-label': '增加', disabled: seconds >= READ_AFTER_STEPS[READ_AFTER_STEPS.length - 1], onClick: () => set({ readAfterSeconds: stepValue(READ_AFTER_STEPS, seconds, 1) }) }, '+')),
+          h('span', { key: 'h', className: 'vr-sheet-hint' }, 'Agent 运行超过这么久，提示「可以读一则」')
+        ]),
+        h(SheetRow, { label: '书库' },
+          h('div', { style: { display: 'grid', gap: '2px', minWidth: 0 } },
+            h('span', null, '内置 ' + builtin + ' 卷 · 我的书库 ' + mine + ' 卷'),
+            mineRoot ? h('span', { className: 'vr-path', title: mineRoot.dir }, mineRoot.exists ? mineRoot.dir : mineRoot.dir + '（尚未创建）') : null)))
     }
 
     // ---------------------------------------------------------------- plugin
@@ -1178,7 +1219,7 @@ window.__ModuleLoader__.load({
         const current = snapshot.state?.ui?.view || 'encounter'
         const togglePanel = (name) => setPanel(panel === name ? null : name)
 
-        return h('section', { className: 'vr', 'aria-label': '闲庭' },
+        return h('section', { className: 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
           h('style', null, styles),
           h('div', { className: 'vr-head' },
             h('div', { className: 'vr-row' },
@@ -1251,7 +1292,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace'],
       apply,
-      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, stepValue, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })

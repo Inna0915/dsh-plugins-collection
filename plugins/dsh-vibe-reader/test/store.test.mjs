@@ -122,3 +122,10 @@ test('settings: translation and note list default open and can be turned off', (
   assert.equal(next.settings.notesOpen, false)
   assert.equal(normalizeState({ settings: {} }).settings.translationOpen, true, 'older state files get the new defaults')
 })
+
+test('settings: fontScale defaults to 1 and accepts 0.8–2 only', () => {
+  assert.equal(defaultState().settings.fontScale, 1)
+  assert.equal(applyOp(defaultState(), { op: 'settings', patch: { fontScale: 1.15 } }, now).settings.fontScale, 1.15)
+  assert.throws(() => applyOp(defaultState(), { op: 'settings', patch: { fontScale: 3 } }, now), /字号/)
+  assert.throws(() => applyOp(defaultState(), { op: 'settings', patch: { fontScale: '大' } }, now), /字号/)
+})

@@ -417,3 +417,13 @@ test('shelf tags: 学段 first, then tags on two or more volumes; tag filter com
   assert.deepEqual(Array.from(t.shelfItems(rows, {}, '', 'poem', '高中').unread, (item) => item.row.id), ['d'])
   assert.deepEqual(Array.from(t.shelfItems(rows, {}, '静', 'all', '小学').unread, (item) => item.row.id), ['a'])
 })
+
+test('stepValue walks a ladder from any current value', () => {
+  const steps = [3, 5, 10, 15, 20, 30]
+  assert.equal(t.stepValue(steps, 10, 1), 15)
+  assert.equal(t.stepValue(steps, 10, -1), 5)
+  assert.equal(t.stepValue(steps, 12, 1), 15, 'off-ladder values snap to the next step')
+  assert.equal(t.stepValue(steps, 12, -1), 10)
+  assert.equal(t.stepValue(steps, 30, 1), 30)
+  assert.equal(t.stepValue(steps, 3, -1), 3)
+})
