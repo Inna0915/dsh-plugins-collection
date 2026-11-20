@@ -14,7 +14,7 @@
 | DSH | 可选接入宿主 `sessionQuery` / `sessions` 服务，读取所有模型的主会话；通过真实 `turn/start`、`turn/end` 判断状态，排除委派子会话；外部 Host / CLI 会话读取原始持久化日志，避免历史恢复补出的中断事件误判运行状态 |
 | Kimi | 读取 `.kimi-code` 的索引、状态和主智能体 wire；兼容旧 `.kimi/sessions` 并排除迁移重复、归档和子会话；按实际事件判断正常完成或中断 |
 | Claude | 读取 `.claude/projects` 主会话 JSONL 和 `.claude/sessions` 客户端状态；排除 subagents 与内部请求内容；最终回复 `end_turn` 作为完成事实，缺少明确结束且无活跃客户端状态时标为待确认；不添加 Hook、不启动 Claude |
-| Antigravity | 读取 `~/.gemini/antigravity` 的 `conversation_summaries.db` 和各会话 SQLite；排除子代理与归档会话。客户端记录为执行中、且 `daemon/hub_*.json` 登记的 agy 进程仍存活时显示运行中；进程已不在时标为待确认。空闲且最后一步为已完成的回复时作为完成，被取消或停在其他步骤时记为中断。预览与最终回复取自 agy 的文字索引，只含提问与文字回复；模型、思考强度和 Token 存在私有 protobuf 中，显示“未记录”。不调用 hub 接口、不使用其 CSRF 令牌、不写入 agy 数据目录 |
+| Antigravity | 读取 `~/.gemini/antigravity` 的 `conversation_summaries.db` 和各会话 SQLite；排除子代理与归档会话。客户端记录为执行中、且 `daemon/hub_*.json` 登记的 agy 进程仍存活时显示运行中；进程已不在时标为待确认。空闲且最后一步为已完成的回复时作为完成，被取消或停在其他步骤时记为中断。预览与最终回复取自 agy 的文字索引，只含提问与文字回复；模型和思考强度取自该会话最新一次运行的 `executor_metadata`：只按 agy 1.5.x 的固定字段路径（10 → 1 → 28）读出 `gemini-4-neon-xhigh` 这样的配置名，末尾的 minimal / low / medium / high / xhigh / max 作为思考强度，其余部分作为模型名；路径或格式对不上就留空，不做猜测。本地没有会话库的旧会话同样留空。Token 仍在私有 protobuf 中，显示“未记录”。不调用 hub 接口、不使用其 CSRF 令牌、不写入 agy 数据目录 |
 
 环境变量 `KIMI_CODE_HOME` / `KIMI_HOME` / `CLAUDE_CONFIG_DIR` 可用于已有的自定义目录；本次实现不写入或修改这些变量。DSH 内使用 Kimi 模型的会话只归入 DSH，独立 Kimi 客户端的会话归入 Kimi。
 

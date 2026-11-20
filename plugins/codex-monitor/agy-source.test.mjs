@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createAgySource, agyTime, workspacePath, chunkEvents, STEP } from './agy-source.js'
+import { createAgySource, agyTime, workspacePath, chunkEvents, STEP, agyModel, protoField } from './agy-source.js'
 import { createSessionSource } from './multi-session-source.js'
 import { createMonitor } from './monitor.js'
 import { createCompletionNotifications, completionToast } from './notifications.js'
@@ -16,6 +16,15 @@ const CANCELLED = 'ceb6667b-ed88-4f21-a1fa-854dfe8b0c42'
 const CHILD = 'aa6717c7-361e-468a-8f2d-2a7db971b49a'
 const ARCHIVED = '723c149d-5111-4a07-a90b-844905dc33bc'
 const CLI = '8022c4d9-5572-4339-8eb5-1808089465c9'
+
+// Minimal protobuf encoder for executor_metadata fixtures (agy publishes no schema).
+const varint = (n) => { const out = []; while (n > 127) { out.push((n & 127) | 128); n = Math.floor(n / 128) } out.push(n); return out }
+const pbBytes = (number, payload) => { const bytes = typeof payload === 'string' ? [...Buffer.from(payload)] : payload; return [...varint(number * 8 + 2), ...varint(bytes.length), ...bytes] }
+const pbInt = (number, value) => [...varint(number * 8), ...varint(value)]
+// Same shape as agy 1.5.x: field 10 → 1 holds the cascade config; a flash sub-model string sits before field 28 as a decoy.
+const executorBlob = (name) => Uint8Array.from([...pbInt(1, 4), ...pbBytes(2, 'run'), ...pbInt(3, 221),
+  ...pbBytes(10, [...pbBytes(1, [...pbInt(1, 1535), ...pbInt(6, 262144), ...pbBytes(13, pbBytes(25, pbBytes(32, 'gemini-3.8-flash-low'))), ...pbBytes(28, name)])]),
+  ...pbBytes(11, 'tail')])
 
 // Mirrors the agy 1.5.x layout: summary index, FTS content shadow table, per-conversation trajectories, hub registrations.
 async function fixture(t) {
@@ -50,14 +59,20 @@ async function fixture(t) {
   fts.run(IDLE, 0, 0, 4, 0, 0, Buffer.from(offsets(user, [0, 3])), Buffer.from(offsets(agent, [1, 2, 4])), user, agent)
   fts.run(ARCHIVED, -1, 0, 0, 2, 1, '', '', '', '')
   summary.close()
-  const trajectory = (id, steps) => {
+  const trajectory = (id, steps, executors) => {
     const db = new DatabaseSync(join(home, 'conversations', `${id}.db`))
     db.exec('create table steps (idx integer primary key, step_type integer not null default 0, status integer not null default 0, error_details blob)')
     const add = db.prepare('insert into steps (idx, step_type, status) values (?, ?, ?)')
     steps.forEach(([type, status], index) => add.run(index, type, status))
+    if (executors) {
+      db.exec('create table executor_metadata (idx integer primary key, data blob)')
+      const run = db.prepare('insert into executor_metadata (idx, data) values (?, ?)')
+      executors.forEach((blob, index) => run.run(index, blob))
+    }
     db.close()
   }
-  trajectory(MAIN, [[STEP.userInput, 3], [STEP.response, 3], [132, 3], [132, 3], [132, STEP.running]])
+  // The latest run decides: the user switched from gemini-3.7-flash to gemini-4-neon at xhigh.
+  trajectory(MAIN, [[STEP.userInput, 3], [STEP.response, 3], [132, 3], [132, 3], [132, STEP.running]], [executorBlob('gemini-3.7-flash-high'), executorBlob('gemini-4-neon-xhigh')])
   trajectory(IDLE, [[STEP.userInput, 3], [STEP.response, 3], [132, 3], [STEP.userInput, 3], [STEP.response, 3]])
   trajectory(CANCELLED, [[STEP.userInput, 3], [STEP.response, 3], [132, STEP.cancelled]])
   await writeFile(join(home, 'daemon', 'hub_64389.json'), JSON.stringify({ pid: 4242, httpPort: 64389, csrfToken: 'never-read-by-tests' }))
@@ -175,4 +190,29 @@ test('agy 接入看板：ID 校验、来源路由、完成通知标注 Antigravi
   assert.deepEqual(sent.map((payload) => payload.title), ['Antigravity 轮次已完成'])
   assert.equal(JSON.parse(await readFile(join(directory, 'history.json'), 'utf8')).sessions.length, 1)
   assert.match(completionToast(rows.find((row) => row.nativeSessionId === IDLE)).body, /Antigravity · Hub/)
+})
+
+test('agy 模型与思考强度：只认 executor_metadata 的 10 → 1 → 28，其他布局一律不取', () => {
+  assert.deepEqual(agyModel(executorBlob('gemini-4-neon-xhigh')), { model: 'gemini-4-neon', reasoningEffort: 'xhigh' })
+  assert.deepEqual(agyModel(executorBlob('claude-opus-5-5-high')), { model: 'claude-opus-5-5', reasoningEffort: 'high' })
+  assert.deepEqual(agyModel(executorBlob('gemini-3.5-flash-lite')), { model: 'gemini-3.5-flash-lite', reasoningEffort: '' }, 'lite is part of the name, not a thinking level')
+  assert.equal(agyModel(executorBlob('不是模型名')), null)
+  assert.equal(agyModel(Uint8Array.from(pbBytes(10, pbBytes(2, pbBytes(28, 'gemini-4-neon-xhigh'))))), null, 'a different path is not guessed at')
+  assert.equal(agyModel(executorBlob('gemini-4-neon-xhigh').subarray(0, 40)), null, 'truncated blob')
+  assert.equal(agyModel(Uint8Array.from([0xff, 0xff, 0xff])), null)
+  assert.equal(agyModel(null), null)
+  assert.equal(protoField(Uint8Array.from([...pbInt(1, 2 ** 40), ...pbBytes(3, 'ok')]), 3).length, 2, 'large varints are skipped correctly')
+})
+
+test('agy 会话带出最新一次运行的模型；没有 executor_metadata 的会话留空且不算读取失败', async (t) => {
+  const home = await fixture(t)
+  const source = createAgySource({ agyHome: home, isAlive: () => true })
+  const sessions = await source.queryAll()
+  const main = sessions.find((session) => session.nativeSessionId === MAIN)
+  assert.equal(main.model, 'gemini-4-neon')
+  assert.equal(main.reasoningEffort, 'xhigh')
+  const idle = sessions.find((session) => session.nativeSessionId === IDLE)
+  assert.equal(idle.model, '')
+  assert.equal(idle.reasoningEffort, '')
+  assert.equal(source.health().status, 'ok')
 })

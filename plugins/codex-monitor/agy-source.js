@@ -18,6 +18,57 @@ const CLI_SOURCE = 'CORTEX_TRAJECTORY_SOURCE_CLI'
 export const STEP = Object.freeze({ userInput: 14, response: 15, running: 2, done: 3, cancelled: 6 })
 const MAX_REPLY = 24000
 const OPEN = { readOnly: true, timeout: 1000 }
+// Each run writes its config to executor_metadata as a protobuf with no published schema.
+// agy 1.5.x keeps the model config name (`gemini-4-neon-xhigh`: model plus thinking level)
+// at field 10 → 1 → 28. Only that exact path is read; anything else yields no model.
+const MODEL_CONFIG_PATH = [10, 1, 28]
+const MODEL_NAME = /^[a-z0-9][a-z0-9._-]{1,79}$/i
+const EFFORT_SUFFIX = /^(.+)-(minimal|low|medium|high|xhigh|max)$/
+
+/** First length-delimited field `number` of a protobuf message, or null (also for malformed input). */
+export function protoField(bytes, number) {
+  let index = 0
+  const varint = () => {
+    let value = 0
+    for (let shift = 0; shift < 64 && index < bytes.length; shift += 7) {
+      const byte = bytes[index++]
+      value += (byte & 0x7f) * 2 ** shift
+      if (byte < 0x80) return value
+    }
+    throw new RangeError('truncated varint')
+  }
+  try {
+    while (index < bytes.length) {
+      const key = varint()
+      const wire = key % 8
+      if (wire === 0) varint()
+      else if (wire === 1) index += 8
+      else if (wire === 5) index += 4
+      else if (wire === 2) {
+        const length = varint() // read before using index: varint() advances it
+        const end = index + length
+        if (end > bytes.length) return null
+        if (Math.floor(key / 8) === number) return bytes.subarray(index, end)
+        index = end
+      } else return null
+    }
+  } catch { return null }
+  return null
+}
+
+/** Model and thinking level from one executor_metadata blob, or null when the layout is not the known one. */
+export function agyModel(blob) {
+  if (!(blob instanceof Uint8Array)) return null
+  let value = blob
+  for (const number of MODEL_CONFIG_PATH) {
+    value = protoField(value, number)
+    if (!value) return null
+  }
+  const name = Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('utf8')
+  if (!MODEL_NAME.test(name)) return null
+  const match = EFFORT_SUFFIX.exec(name)
+  return match ? { model: match[1], reasoningEffort: match[2] } : { model: name, reasoningEffort: '' }
+}
 
 /** agy stores `2026-11-14 05:53:25.4819020+00:00`; Date needs `T` and at most milliseconds. */
 export function agyTime(value) {
@@ -71,7 +122,7 @@ export function agySession(row, detail, hubAlive, completedAt = null) {
     sessionId: `agy:${id}`, nativeSessionId: id, provider: 'agy',
     source: row.source === CLI_SOURCE ? 'agy-cli' : 'agy-hub',
     title: text(row.title) || text(row.preview) || '未命名 Antigravity 会话', cwd: workspacePath(row.workspace_uris),
-    modelProvider: '', model: '', reasoningEffort: '', tokensUsed: null,
+    modelProvider: '', model: detail?.model || '', reasoningEffort: detail?.reasoningEffort || '', tokensUsed: null,
     questionCount: detail?.questions || null, contextUsedTokens: null, contextWindowTokens: null, contextObservedAt: null,
     createdAt: null, updatedAt, observedAt, status, lifecycleEvent, statusReason,
     statusUncertain: status === 'unknown', turnStartedAt,
@@ -137,6 +188,12 @@ export function createAgySource(options = {}) {
     catch { return new Set() }
   }
 
+  // Best effort: older agy builds have no executor_metadata, and a model is never worth failing the session over.
+  function readModel(db) {
+    try { return agyModel(db.prepare('select data from executor_metadata order by idx desc limit 1').get()?.data) || {} }
+    catch { return {} }
+  }
+
   function readDetail(row) {
     const key = `${row.last_modified_time}|${row.step_count}|${row.status}`
     const cached = details.get(row.conversation_id)
@@ -148,7 +205,7 @@ export function createAgySource(options = {}) {
       try {
         const last = db.prepare('select step_type, status from steps order by idx desc limit 1').get()
         const { questions } = db.prepare(`select count(*) questions from steps where step_type = ${STEP.userInput}`).get()
-        value = { lastType: last?.step_type ?? null, lastStatus: last?.status ?? null, questions: Number(questions) || 0 }
+        value = { lastType: last?.step_type ?? null, lastStatus: last?.status ?? null, questions: Number(questions) || 0, ...readModel(db) }
       } finally { db.close() }
     }
     details.set(row.conversation_id, { key, value })
@@ -237,7 +294,7 @@ export function createAgySource(options = {}) {
       const reply = result.events.findLast((event) => event.role === 'assistant' && event.seq > lastUser)?.text || ''
       const characters = Array.from(reply)
       const durationMs = Date.parse(session.observedAt) - Date.parse(session.turnStartedAt)
-      return { model: '', reasoningEffort: '', durationMs: Number.isFinite(durationMs) && durationMs >= 0 ? durationMs : null,
+      return { model: session.model || '', reasoningEffort: session.reasoningEffort || '', durationMs: Number.isFinite(durationMs) && durationMs >= 0 ? durationMs : null,
         turnTokens: null, finalReply: characters.slice(0, MAX_REPLY).join(''), replyTruncated: characters.length > MAX_REPLY }
     }
   }

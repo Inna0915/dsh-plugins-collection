@@ -988,6 +988,9 @@ window.__ModuleLoader__.load({
     exports.apply = apply;
     exports.inject = inject;
     exports.reviewSelectedSessions = reviewSelectedSessions;
+    // Shared read-only with other plugins: dsh-vibe-reader lists running sessions with the same logos.
+    exports.AGENT_LOGOS = AGENT_LOGOS;
+    exports.PROVIDERS = PROVIDERS;
     return module.exports;
   }
 });
