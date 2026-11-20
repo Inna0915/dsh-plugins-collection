@@ -7,6 +7,7 @@ window.__ModuleLoader__.load({
     const kind = 'vibe-reader'
     const tabId = 'dsh-vibe-reader/reader'
     const MAIN_ID = 'dsh-vibe-reader'
+    const MAIN_WIDE_MIN = 1150 // px: below this the main area uses the sidebar arrangement
     const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state', markVerified: 'api/vibe-reader/mark-verified' }
     const MAX_LEVEL = 5
     const MAIN_DONE_HOLD_MS = 60000
@@ -780,10 +781,20 @@ window.__ModuleLoader__.load({
 .vr-agent-meta{font-size:calc(11px*var(--vr-scale,1));opacity:.6}
 .vr-agent-time{font-size:calc(11.5px*var(--vr-scale,1));opacity:.65;font-variant-numeric:tabular-nums}
 .vr:fullscreen{background:var(--dsw-alias-bg-base,Canvas);color:var(--dsw-alias-label-primary,CanvasText)}
-.vr-main{--vr-column:calc(880px*var(--vr-scale,1))}
-.vr-main .vr-head,.vr-main .vr-body{padding-left:max(16px,calc((100% - var(--vr-column))/2));padding-right:max(16px,calc((100% - var(--vr-column))/2))}
-.vr-main .vr-head{padding-top:14px}
-.vr-main .vr-body{padding-top:20px;padding-bottom:48px}
+.vr-main{--vr-column:calc(760px*var(--vr-scale,1));--vr-rail:calc(320px*var(--vr-scale,1));--vr-gap:40px;--vr-gutter:max(24px,calc((100% - var(--vr-column))/2))}
+.vr-wide{--vr-gutter:max(24px,calc((100% - var(--vr-column) - var(--vr-gap) - var(--vr-rail))/2))}
+.vr-main .vr-head{padding:14px var(--vr-gutter) 10px}
+.vr-main:not(.vr-wide)>.vr-body{padding:20px var(--vr-gutter) 48px}
+.vr-main-wrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) var(--vr-rail);column-gap:var(--vr-gap);padding:0 var(--vr-gutter)}
+.vr-main-wrap>.vr-body{min-height:0;overflow:auto;padding:24px 6px 56px 0}
+.vr-rail{display:flex;flex-direction:column;gap:18px;min-height:0;padding:20px 0 14px 20px;border-left:1px solid var(--vr-line)}
+.vr-rail>*{flex:none}
+.vr-rail .vr-sheet{margin-top:0;padding-top:0;border-top:0}
+.vr-rail-shelf{flex:1 1 auto!important;min-height:0;display:flex;flex-direction:column}
+.vr-rail .vr-shelf{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.vr-rail .vr-shelf-list{flex:1;min-height:0;overflow:auto;margin-right:-8px;padding-right:8px}
+.vr-rail .vr-agents{max-height:38%;overflow:auto;padding-top:12px;border-top:1px solid var(--vr-line)}
+.vr-shelf-list{display:grid;gap:2px;align-content:start}
 .vr-main-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:calc(16px*var(--vr-scale,1));font-weight:600;letter-spacing:.25em;margin-right:8px}
 `
 
@@ -975,7 +986,7 @@ window.__ModuleLoader__.load({
         error ? h('span', { className: 'vr-error' }, error) : null)
     }
 
-    function Shelf({ rows, state, currentId, onPick, onClose }) {
+    function Shelf({ rows, state, currentId, onPick, onClose, autoFocus = true }) {
       const [query, setQuery] = useState('')
       const [filter, setFilter] = useState('all')
       const [tag, setTag] = useState('')
@@ -1013,7 +1024,7 @@ window.__ModuleLoader__.load({
       }
       return h('div', { className: 'vr-shelf', onKeyDown: (event) => { if (event.key === 'Escape') onClose() } },
         h('input', {
-          className: 'vr-search', type: 'search', placeholder: '搜书名、作者、篇名、标签，回车打开', autoFocus: true, value: query,
+          className: 'vr-search', type: 'search', placeholder: '搜书名、作者、篇名、标签，回车打开', autoFocus, value: query,
           onChange: (event) => setQuery(event.target.value),
           onKeyDown: (event) => { if (event.key === 'Enter') enter() }
         }),
@@ -1021,21 +1032,29 @@ window.__ModuleLoader__.load({
           ...SHELF_FILTERS.map(([value, label]) => h('button', { key: value, type: 'button', 'aria-pressed': filter === value, onClick: () => setFilter(value) }, label))) : null,
         many && tags.length ? h('div', { className: 'vr-row vr-filters vr-tags', role: 'group', 'aria-label': '标签' },
           ...tags.map((value) => h('button', { key: value, type: 'button', 'aria-pressed': tag === value, title: tag === value ? '取消标签筛选' : '只看「' + value + '」', onClick: () => setTag(tag === value ? '' : value) }, value))) : null,
-        recent.length ? h('div', { className: 'vr-shelf-label' }, '最近读过') : null,
-        ...recent.map(row),
-        unread.length ? h('div', { className: 'vr-shelf-label' }, recent.length ? '未读' : '全部书卷') : null,
-        ...unread.map(row),
-        !recent.length && !unread.length ? h('p', { className: 'vr-muted vr-small' }, query || filter !== 'all' ? '没有匹配的书卷。语料里的篇目可以在任一会话里用刻书匠入藏。' : '书库里还没有书卷。在任一会话里用刻书匠（vibe-reader-engraver）入藏。') : null)
+        h('div', { className: 'vr-shelf-list' },
+          recent.length ? h('div', { className: 'vr-shelf-label' }, '最近读过') : null,
+          ...recent.map(row),
+          unread.length ? h('div', { className: 'vr-shelf-label' }, recent.length ? '未读' : '全部书卷') : null,
+          ...unread.map(row),
+          !recent.length && !unread.length ? h('p', { className: 'vr-muted vr-small' }, query || filter !== 'all' ? '没有匹配的书卷。语料里的篇目可以在任一会话里用刻书匠入藏。' : '书库里还没有书卷。在任一会话里用刻书匠（vibe-reader-engraver）入藏。') : null))
     }
 
-    function StudyView({ app, snapshot }) {
+    /** 「唐 · 白居易」vs「唐·白居易」: spacing and the middle dot do not make a different author. */
+    function sameAuthor(a, b) {
+      const key = (text) => String(text || '').replace(/[\s·・]/g, '')
+      return Boolean(key(b)) && key(a) === key(b)
+    }
+
+    function StudyView({ app, snapshot, shelfInRail = false }) {
       const { library, state } = snapshot
       const rows = library.volumes
       const volumeId = state.ui.volume && rows.some((row) => row.id === state.ui.volume) ? state.ui.volume : rows.find((row) => !row.errors.length)?.id
       const entry = volumeId ? snapshot.volumes[volumeId] : undefined
       const [reciting, setReciting] = useState(false)
       // First visit (no volume chosen yet): start on the shelf.
-      const [shelfOpen, setShelfOpen] = useState(!state.ui.volume || !volumeId)
+      const [shelfOpenState, setShelfOpen] = useState(!state.ui.volume || !volumeId)
+      const shelfOpen = shelfInRail ? false : shelfOpenState
       const cellsRef = useRef(null)
       useEffect(() => { if (volumeId && !entry) app.ensureVolume(volumeId) }, [volumeId, entry])
 
@@ -1072,11 +1091,19 @@ window.__ModuleLoader__.load({
         if (event.key === 'ArrowLeft') go(index - 1)
         else if (event.key === 'ArrowRight') go(index + 1)
       }
-      const head = h('button', { type: 'button', className: 'vr-volhead', 'aria-expanded': shelfOpen, title: '切换书卷', onClick: () => setShelfOpen(!shelfOpen) },
-        h('span', { className: 'vr-spine' }),
-        h('span', { className: 'vr-voltitle' }, (state.ui.volume && currentRow?.title) || '选一卷'),
-        h('span', { className: 'vr-volmeta' }, state.ui.volume ? [currentRow?.dynasty, currentRow?.author].filter(Boolean).join(' · ') : ''),
-        h('span', { className: 'vr-volswitch' }, shelfOpen ? '收起' : '书架'))
+      const headParts = [
+        h('span', { key: 'spine', className: 'vr-spine' }),
+        h('span', { key: 'title', className: 'vr-voltitle' }, (state.ui.volume && currentRow?.title) || '选一卷'),
+        h('span', { key: 'meta', className: 'vr-volmeta' }, state.ui.volume ? [currentRow?.dynasty, currentRow?.author].filter(Boolean).join(' · ') : '')
+      ]
+      const head = shelfInRail
+        ? h('div', { className: 'vr-volhead' }, ...headParts)
+        : h('button', { type: 'button', className: 'vr-volhead', 'aria-expanded': shelfOpen, title: '切换书卷', onClick: () => setShelfOpen(!shelfOpen) },
+          ...headParts, h('span', { className: 'vr-volswitch' }, shelfOpen ? '收起' : '书架'))
+      // No volume chosen yet (or the chosen one is gone): point at the rail instead of silently opening the first.
+      if (shelfInRail && !(state.ui.volume && rows.some((row) => row.id === state.ui.volume))) {
+        return h('div', { className: 'vr-body' }, h('p', { className: 'vr-muted' }, rows.length ? '从右侧书架选一卷。' : '书库里还没有书卷。在任一会话里用刻书匠（vibe-reader-engraver）入藏。'))
+      }
       if (shelfOpen || !volumeId) {
         return h('div', { className: 'vr-body' + (accent ? ' vr-accent' : ''), style: accent ? { '--vr-accent': accent } : undefined },
           head,
@@ -1101,7 +1128,8 @@ window.__ModuleLoader__.load({
             }))),
           index > 0 ? h('button', { key: 'prev', type: 'button', className: 'vr-dim', onClick: () => go(index - 1) }, '↑ ' + sections[index - 1].title + '　' + sections[index - 1].paragraphs[0].text.replace(/\n/g, ' ')) : null,
           h('h3', { key: 'title', className: 'vr-title' }, section.title,
-            section.meta.author ? h('span', { className: 'vr-small vr-muted' }, '　' + section.meta.author) : null),
+            section.meta.author && sameAuthor(section.meta.author, [currentRow?.dynasty, currentRow?.author].filter(Boolean).join(' · ')) === false
+              ? h('span', { className: 'vr-small vr-muted' }, '　' + section.meta.author) : null),
           section.meta.guide ? h('p', { key: 'guide', className: 'vr-guide' }, section.meta.guide) : null,
           reciting
             ? h(Recite, {
@@ -1359,6 +1387,15 @@ window.__ModuleLoader__.load({
         const tab = { visible }
         const root = useRef(null)
         const [fullscreen, setFullscreen] = useState(false)
+        // Wide main area: shelf and panels in a right rail. Narrower: same arrangement as the sidebar tab.
+        const [wide, setWide] = useState(true)
+        useEffect(() => {
+          if (!main || typeof ResizeObserver === 'undefined' || !root.current) return
+          const observer = new ResizeObserver(([entry]) => setWide(entry.contentRect.width >= MAIN_WIDE_MIN))
+          observer.observe(root.current)
+          return () => observer.disconnect()
+        }, [main])
+        const rail = main && wide
         useEffect(() => {
           if (!main || typeof document === 'undefined') return
           const sync = () => setFullscreen(Boolean(root.current) && document.fullscreenElement === root.current)
@@ -1405,8 +1442,26 @@ window.__ModuleLoader__.load({
         // With the 会话看板 installed, status means its running sessions (every agent); otherwise DSH's own.
         const view = feed.status === 'missing' ? boardView(tracked, list, now) : agentBoardView(feed)
         const current = snapshot.state?.ui?.view || 'encounter'
+        const panels = [
+          settingsOpen && snapshot.state ? h(SettingsPanel, { key: 'settings', app, snapshot }) : null,
+          sessionsOpen ? (view.board ? h(AgentPanel, { key: 'sessions', view, feed, now, openBoard }) : h(StatusPanel, { key: 'sessions', view, now, openSession })) : null
+        ].filter(Boolean)
+        const body = snapshot.status === 'error'
+          ? h('div', { className: 'vr-body' }, h('p', { className: 'vr-error' }, snapshot.error), h('button', { type: 'button', onClick: () => app.load() }, '重试'))
+          : !snapshot.library || !snapshot.state
+            ? h('div', { className: 'vr-body' }, h('p', { className: 'vr-muted' }, '取书中…'))
+            : current === 'study'
+              ? h(StudyView, { app, snapshot, shelfInRail: rail })
+              : h(EncounterView, { app, snapshot })
+        function pickFromRail(row, sectionId) {
+          app.progress(row.id, sectionId || snapshot.state.volumes[row.id]?.lastSection || row.sectionIds?.[0] || 's1')
+          if (current !== 'study') app.send({ op: 'view', view: 'study' })
+        }
+        const railShelf = rail && snapshot.library && snapshot.state
+          ? h('div', { key: 'shelf', className: 'vr-rail-shelf' }, h(Shelf, { rows: snapshot.library.volumes, state: snapshot.state, currentId: current === 'study' ? snapshot.state.ui.volume : null, onPick: pickFromRail, onClose: () => {}, autoFocus: false }))
+          : null
 
-        return h('section', { ref: root, className: main ? 'vr vr-main' : 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
+        return h('section', { ref: root, className: main ? (rail ? 'vr vr-main vr-wide' : 'vr vr-main') : 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
           h('style', null, styles),
           h('div', { className: 'vr-head' },
             h('div', { className: 'vr-row' },
@@ -1431,16 +1486,14 @@ window.__ModuleLoader__.load({
               }, '《' + item.title + '》')),
               h('span', { className: 'vr-grow' }),
               h('button', { type: 'button', onClick: () => app.dismissAdded() }, '知道了')) : null,
-            settingsOpen && snapshot.state ? h(SettingsPanel, { app, snapshot }) : null,
-            sessionsOpen ? (view.board ? h(AgentPanel, { view, feed, now, openBoard }) : h(StatusPanel, { view, now, openSession })) : null,
+            rail ? null : panels,
             snapshot.notice ? h('div', { className: 'vr-notice vr-small' }, h('span', { className: 'vr-grow' }, snapshot.notice), h('button', { type: 'button', onClick: app.dismissNotice }, '知道了')) : null),
-          snapshot.status === 'error'
-            ? h('div', { className: 'vr-body' }, h('p', { className: 'vr-error' }, snapshot.error), h('button', { type: 'button', onClick: () => app.load() }, '重试'))
-            : !snapshot.library || !snapshot.state
-              ? h('div', { className: 'vr-body' }, h('p', { className: 'vr-muted' }, '取书中…'))
-              : current === 'study'
-                ? h(StudyView, { app, snapshot })
-                : h(EncounterView, { app, snapshot }))
+          rail
+            ? h('div', { className: 'vr-main-wrap' }, body, h('aside', { className: 'vr-rail', 'aria-label': '书架、会话与设置' },
+              settingsOpen && snapshot.state ? h(SettingsPanel, { key: 'settings', app, snapshot }) : null,
+              railShelf,
+              sessionsOpen ? (view.board ? h(AgentPanel, { key: 'sessions', view, feed, now, openBoard }) : h(StatusPanel, { key: 'sessions', view, now, openSession })) : null))
+            : body)
       }
 
       /** Open 闲庭 in the on-screen session; when it is already the visible tab, collapse the column instead. */
@@ -1503,7 +1556,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace', 'layout'],
       apply,
-      __test: { track, boardView, agentBoardView, createBoardFeed, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, AgentPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, agentBoardView, createBoardFeed, createTracker, sameAuthor, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, AgentPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })

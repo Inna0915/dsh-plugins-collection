@@ -554,3 +554,47 @@ test('left sidebar entry opens 闲庭 in the main area; collapsed rail shows onl
   wide.props.onClick()
   assert.deepEqual(panels, ['dsh-vibe-reader'])
 })
+
+test('section author is shown only when it differs from the volume author', () => {
+  assert.equal(t.sameAuthor('唐 · 白居易', '唐 · 白居易'), true)
+  assert.equal(t.sameAuthor('唐·白居易', '唐 · 白居易'), true, 'spacing around the dot does not matter')
+  assert.equal(t.sameAuthor('唐 · 杜甫', '唐 · 李白'), false, '组诗 keep each poem author')
+  assert.equal(t.sameAuthor('唐 · 杜甫', ''), false, 'a volume without an author never hides it')
+})
+
+test('wide main area: the shelf lives in the rail (no autofocus, own scroll box); study points there until a volume is chosen', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  let withReact
+  const fakeReact = {
+    createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
+    useState: (value) => [value, () => {}], useRef: () => ({ current: null }), useEffect: () => {}, useMemo: (fn) => fn()
+  }
+  runInNewContext(source, { window: { __ModuleLoader__: { load({ factory }) { withReact = factory((name) => (name === 'react' ? fakeReact : undefined)) } } }, Date, Math, structuredClone, setTimeout, clearTimeout, console })
+  const expand = (node) => {
+    if (Array.isArray(node)) return node.flatMap(expand)
+    if (node === null || node === undefined || node === false) return []
+    if (typeof node !== 'object') return [node]
+    if (typeof node.type === 'function') return expand(node.type(node.props))
+    return [{ ...node, props: { ...node.props, children: expand(node.props.children) } }]
+  }
+  const text = (nodes) => nodes.map((node) => typeof node === 'object' ? text(node.props.children) : String(node)).join('')
+  const find = (nodes, predicate) => nodes.flatMap((node) => typeof node !== 'object' ? [] : [...(predicate(node) ? [node] : []), ...find(node.props.children, predicate)])
+  const { Shelf, StudyView } = withReact.__test.views
+  const rows = [
+    { id: 'pipa', title: '琵琶行', dynasty: '唐', author: '白居易', kind: 'poem', tags: ['高中'], errors: [], sectionCount: 6, sectionIds: ['s1'], sectionList: [] },
+    { id: 'qzw', title: '千字文', dynasty: '南朝梁', author: '周兴嗣', kind: 'poem', tags: ['蒙学'], errors: [], sectionCount: 16, sectionIds: ['s1'], sectionList: [] }
+  ]
+  const state = { ui: { view: 'study', volume: null }, volumes: {}, cards: {}, resurface: {}, settings: {} }
+  const shelf = expand({ type: Shelf, props: { rows, state, currentId: null, onPick: () => {}, onClose: () => {}, autoFocus: false } })
+  assert.equal(find(shelf, (node) => node.type === 'input')[0].props.autoFocus, false, 'the rail search does not steal focus from the text')
+  const list = find(shelf, (node) => node.props.className === 'vr-shelf-list')
+  assert.equal(list.length, 1)
+  assert.match(text(list), /琵琶行.*千字文/)
+  const snapshot = { library: { volumes: rows }, state, volumes: {} }
+  const prompt = expand({ type: StudyView, props: { app: { ensureVolume() {}, progress() {} }, snapshot, shelfInRail: true } })
+  assert.match(text(prompt), /从右侧书架选一卷/)
+  assert.equal(find(prompt, (node) => node.props.className === 'vr-volswitch').length, 0, 'no 书架 toggle beside the title')
+  const inline = expand({ type: StudyView, props: { app: { ensureVolume() {}, progress() {} }, snapshot } })
+  assert.equal(find(inline, (node) => node.props.className === 'vr-shelf').length, 1, 'sidebar tab: first visit still opens the inline shelf')
+})
+
