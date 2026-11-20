@@ -9,7 +9,7 @@ edition: 古文观止（chinese-poetry 繁体本转简，抽出夹注）
 verified: corpus
 color: 淡蓝灰
 fingerprint: sha256:bdf9bc0c1f95af9a6b8004b65bccd9ae555e525265cec215db9a0e347c414b20
-tags: [赋, 赤壁, 变与不变, 古文观止]
+tags: [高中, 赋, 赤壁, 变与不变, 古文观止]
 ---
 
 ## 泛舟赤壁 {#s1}

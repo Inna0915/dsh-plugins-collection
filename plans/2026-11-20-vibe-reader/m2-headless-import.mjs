@@ -4,9 +4,10 @@
 // Isolation (same as spike/run-headless-selftest.mjs): a throwaway DSH_HOME with a copy of
 // the headless profile config only; the gateway key is read from ~/.dsh/.env into the
 // child's environment in memory and never written. Nothing lands in the real library.
-// Usage: node m2-headless-import.mjs [--scenario paste|search] [--keep]
+// Usage: node m2-headless-import.mjs [--scenario paste|search|short] [--keep]
 //   paste  (default) the prompt carries the full original text
 //   search the prompt only names the work; the agent must find it in the corpus
+//   short  the prompt is just 「导入《醉翁亭记》」: the skill must be picked from its description
 import { spawn, execFileSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmdirSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
@@ -41,10 +42,20 @@ ${ORIGINAL}
     prompt: '用刻书匠把刘禹锡的《陋室铭》入藏闲庭，书卷 id 用 loushi-ming。\n',
     // The agent's copy must equal what the corpus yields for this work.
     expected: async (home) => (await createCorpus({ cacheDir: join(home, 'vibe-reader', 'cache', 'corpus') }).draft({ refs: ['guwenguanzhi:116'], id: 'loushi-ming' })).original
+  },
+  // The shortest everyday phrasing: no skill name, no 入藏, no id.
+  short: {
+    id: null,
+    prompt: '导入《醉翁亭记》\n',
+    expected: async (home) => {
+      const corpus = createCorpus({ cacheDir: join(home, 'vibe-reader', 'cache', 'corpus') })
+      const [hit] = (await corpus.search({ query: '醉翁亭记' })).hits
+      return (await corpus.draft({ refs: [hit.ref], id: 'x' })).original
+    }
   }
 }
 const run = SCENARIOS[scenario]
-if (!run) throw new Error('scenario 只能是 paste 或 search')
+if (!run) throw new Error('scenario 只能是 paste、search 或 short')
 const PROMPT = run.prompt
 
 const runId = 'vr-m2-' + new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)
@@ -104,9 +115,10 @@ try {
   const libraryDir = join(fakeHome, 'vibe-reader', 'library')
   const files = existsSync(libraryDir) ? readdirSync(libraryDir) : []
   let volume = null
-  if (files.includes(run.id + '.md')) {
-    const markdown = readFileSync(join(libraryDir, run.id + '.md'), 'utf8')
-    writeFileSync(join(runDir, run.id + '.md'), markdown)
+  const target = run.id ? run.id + '.md' : files.find((name) => name.endsWith('.md'))
+  if (target && files.includes(target)) {
+    const markdown = readFileSync(join(libraryDir, target), 'utf8')
+    writeFileSync(join(runDir, target), markdown)
     const expected = await run.expected(fakeHome)
     const parsed = parseVolume(markdown)
     volume = {

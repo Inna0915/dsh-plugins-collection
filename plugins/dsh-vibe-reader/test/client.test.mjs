@@ -404,3 +404,16 @@ test('a click during a library reload is not undone by the reload', async () => 
   assert.equal(app.getSnapshot().state.ui.volume, 'b')
   assert.equal(libraryCalls, 2)
 })
+
+test('shelf tags: 学段 first, then tags on two or more volumes; tag filter combines with kind filter', () => {
+  const rows = [
+    { id: 'a', title: '静夜思', kind: 'poem', tags: ['小学', '古诗词'], sectionIds: ['s1'], sectionCount: 1, errors: [] },
+    { id: 'b', title: '咏鹅', kind: 'poem', tags: ['小学', '古诗词'], sectionIds: ['s1'], sectionCount: 1, errors: [] },
+    { id: 'c', title: '师说', kind: 'prose', tags: ['高中', '古文'], sectionIds: ['s1'], sectionCount: 1, errors: [] },
+    { id: 'd', title: '琵琶行', kind: 'poem', tags: ['高中', '唐诗三百首'], sectionIds: ['s1'], sectionCount: 1, errors: [] }
+  ]
+  assert.deepEqual(Array.from(t.shelfTags(rows)), ['小学', '高中', '古诗词'], '古文 and 唐诗三百首 appear once only')
+  assert.deepEqual(Array.from(t.shelfItems(rows, {}, '', 'all', '高中').unread, (item) => item.row.id), ['c', 'd'])
+  assert.deepEqual(Array.from(t.shelfItems(rows, {}, '', 'poem', '高中').unread, (item) => item.row.id), ['d'])
+  assert.deepEqual(Array.from(t.shelfItems(rows, {}, '静', 'all', '小学').unread, (item) => item.row.id), ['a'])
+})

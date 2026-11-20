@@ -9,7 +9,7 @@ import { FAMILIES, listColors, SEASONS } from './palette.js'
 import { importVolume } from './importer.js'
 
 export const TOOL_NAME = 'vibe_reader'
-export const toolDescription = '闲庭书库（古诗文阅读插件）。search 搜语料找文章；draft 取语料生成书卷草稿；clean 清洗粘贴的原文；import 逐字校验原文后入藏；colors 查传统色；list、read、verify 管理书卷。入藏前先读 skill vibe-reader-engraver。'
+export const toolDescription = '闲庭书库：把古诗词、古文、整本书导入（入库、收录）闲庭阅读插件。search 搜语料；draft 生成草稿；clean 清洗粘贴原文；import 逐字校验后写入；colors 查传统色；list、read、verify 管理书卷。先读 skill vibe-reader-engraver。'
 
 export const toolParameters = {
   type: 'object',
@@ -31,7 +31,8 @@ export const toolParameters = {
     original: { type: 'string', description: 'import：用户给的原文或 clean 的输出，用来逐字校验' },
     source: { type: 'string', enum: ['paste', 'corpus', 'ai'], description: 'import：paste 用户粘贴（默认）、corpus 开源语料、ai 无原文的 AI 摘编' },
     verified: { type: 'boolean', description: 'import：仅当用户明确说原文已核对时传 true' },
-    overwrite: { type: 'boolean', description: 'import：替换书库里同 id 的书卷' }
+    overwrite: { type: 'boolean', description: 'import：替换书库里同 id 的书卷' },
+    keepOriginal: { type: 'boolean', description: 'import：给书库里已有的书卷补注释、译文时传 true，原文以书库里那一卷为准，不用传 original' }
   },
   required: ['action'],
   additionalProperties: false

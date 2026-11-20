@@ -210,3 +210,18 @@ test('tool: search, draft, colors go through the corpus; corpus errors come back
   assert.ok(colors.colors.length > 5 && colors.colors.every((color) => color.family === '蓝'))
   assert.ok(colors.families.includes('绿'))
 }))
+
+test('import keepOriginal: annotate an existing volume; its original, source and verified stay; text edits are refused', () => withLibrary(async ({ libraryDir, run }) => {
+  assert.equal((await run({ markdown: DRAFT, original: ORIGINAL, source: 'corpus' })).verified, 'corpus')
+  const annotated = DRAFT.replace('- 【穷】尽', '- 【穷】尽，使达到极点\n- 【千里目】看到千里之外的目力')
+  const ok = await run({ markdown: annotated, keepOriginal: true })
+  assert.equal(ok.ok, true)
+  assert.equal(ok.verified, 'corpus', 'corpus status survives')
+  assert.equal(ok.notes, 2)
+  const written = parseVolume(await readFile(join(libraryDir, 'deng-guanquelou.md'), 'utf8'))
+  assert.equal(written.integrity, 'ok')
+  const tampered = await run({ markdown: annotated.replace('黄河入海流', '黄河入海留'), keepOriginal: true })
+  assert.equal(tampered.stage, 'original')
+  const nothing = await run({ markdown: DRAFT.replace('deng-guanquelou', 'never-imported'), keepOriginal: true })
+  assert.equal(nothing.stage, 'input')
+}))

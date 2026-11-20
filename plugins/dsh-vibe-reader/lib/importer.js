@@ -49,9 +49,24 @@ function sourceLabel(source, given) {
  * @param {object} input - { markdown, original, source, verified, overwrite }
  * @param {object} deps - { libraryDir, scan } where scan() returns the library snapshot.
  */
-export async function importVolume(input, { libraryDir, scan }) {
-  const source = SOURCES.includes(input?.source) ? input.source : 'paste'
+export async function importVolume(rawInput, { libraryDir, scan }) {
+  let input = rawInput
   if (typeof input?.markdown !== 'string' || !input.markdown.trim()) return { ok: false, stage: 'input', problems: ['缺少书卷 Markdown'] }
+  // 给已有书卷补注释：原文取自书库里那一卷，来源与核对状态照旧，Agent 只能改注释、译文、分节。
+  if (input.keepOriginal === true) {
+    const id = parseVolume(input.markdown).id
+    const existing = id ? (await scan()).volumes.get(id) : undefined
+    if (!existing || existing.errors.length) return { ok: false, stage: 'input', problems: [`keepOriginal 需要书库里已有 id 为 ${id || '（空）'} 的书卷`] }
+    input = {
+      ...input,
+      original: existing.sections.flatMap((section) => section.paragraphs.map((paragraph) => paragraph.text)).join('\n\n'),
+      source: existing.verified === 'corpus' ? 'corpus' : existing.source === 'ai' ? 'ai' : 'paste',
+      verified: existing.verified === true,
+      sourceName: existing.source,
+      overwrite: true
+    }
+  }
+  const source = SOURCES.includes(input?.source) ? input.source : 'paste'
   if (input.markdown.length > 1024 * 1024) return { ok: false, stage: 'input', problems: ['书卷超过 1 MB'] }
 
   const draft = parseVolume(input.markdown)
@@ -83,7 +98,7 @@ export async function importVolume(input, { libraryDir, scan }) {
   const markdown = setFrontmatter(input.markdown, {
     fingerprint: draft.actualFingerprint,
     verified,
-    source: sourceLabel(source, draft.source)
+    source: sourceLabel(source, input.sourceName || draft.source)
   })
   const volume = parseVolume(markdown)
   if (volume.errors.length || volume.integrity !== 'ok') {

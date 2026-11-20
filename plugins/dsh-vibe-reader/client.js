@@ -319,6 +319,16 @@ window.__ModuleLoader__.load({
     }
 
     const SHELF_FILTERS = [['all', '全部'], ['poem', '诗词'], ['prose', '文章'], ['reciting', '背诵中'], ['unread', '未读']]
+    const LEVEL_TAGS = ['小学', '初中', '高中', '蒙学']
+
+    /** Tags worth a filter chip: 学段 first, then any tag on at least two volumes, most used first. */
+    function shelfTags(rows, limit = 10) {
+      const counts = new Map()
+      for (const row of rows) for (const tag of new Set(row.tags || [])) counts.set(tag, (counts.get(tag) || 0) + 1)
+      const levels = LEVEL_TAGS.filter((tag) => counts.has(tag))
+      const others = [...counts].filter(([tag, count]) => count >= 2 && !LEVEL_TAGS.includes(tag)).sort((a, b) => b[1] - a[1]).map(([tag]) => tag)
+      return [...levels, ...others].slice(0, limit)
+    }
 
     /**
      * Shelf rows: recently read first (newest first), then the rest in library
@@ -326,7 +336,7 @@ window.__ModuleLoader__.load({
      * section's title and poem author — those hits are listed so a click opens
      * that section directly.
      */
-    function shelfItems(rows, state, query = '', filter = 'all') {
+    function shelfItems(rows, state, query = '', filter = 'all', tag = '') {
       const q = String(query).trim()
       const items = rows.filter((row) => row.id).map((row, order) => {
         const progress = state?.volumes?.[row.id]
@@ -341,7 +351,7 @@ window.__ModuleLoader__.load({
         (filter === 'prose' && item.row.kind !== 'poem') ||
         (filter === 'reciting' && item.reciting) ||
         (filter === 'unread' && !item.readAt)
-      ))
+      ) && (!tag || (item.row.tags || []).includes(tag)))
       return {
         recent: items.filter((item) => item.readAt).sort((a, b) => b.readAt.localeCompare(a.readAt)),
         unread: items.filter((item) => !item.readAt).sort((a, b) => a.order - b.order)
@@ -609,6 +619,9 @@ window.__ModuleLoader__.load({
 .vr-cells button[data-level]::after{content:"";position:absolute;left:4px;bottom:2px;height:2px;width:calc((100% - 8px) * var(--lv));border-radius:1px;background:color-mix(in srgb,var(--vr-accent,#5a9e7c) 80%,transparent)}
 .vr-filters{gap:4px}
 .vr-filters button{border-radius:999px!important;padding:1px 10px!important;font-size:12px}
+.vr-tags button{font-size:11.5px;padding:0 9px!important;opacity:.85}
+.vr-tags button[aria-pressed=true]{opacity:1}
+.vr-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:10.5px;line-height:1.6;border:1px solid var(--vr-line);opacity:.9}
 .vr-shelf-group{display:grid}
 .vr-shelf-hits{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 6px 22px;font-size:12px}
 .vr-shelf-hits button{padding:1px 8px!important;border-radius:999px!important;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif}
@@ -823,7 +836,9 @@ window.__ModuleLoader__.load({
     function Shelf({ rows, state, currentId, onPick, onClose }) {
       const [query, setQuery] = useState('')
       const [filter, setFilter] = useState('all')
-      const { recent, unread } = shelfItems(rows, state, query, filter)
+      const [tag, setTag] = useState('')
+      const { recent, unread } = shelfItems(rows, state, query, filter, tag)
+      const tags = shelfTags(rows)
       const first = [...recent, ...unread].find((item) => !item.row.errors.length)
       const many = rows.filter((row) => row.id).length > 6
       const row = (item) => {
@@ -837,7 +852,8 @@ window.__ModuleLoader__.load({
         h('span', { className: 'vr-spine', style: item.row.colorHex ? { background: item.row.colorHex } : undefined }),
         h('span', { className: 'vr-shelf-main' },
           h('span', { className: 'vr-shelf-title' }, item.row.title || item.row.file),
-          h('span', { className: 'vr-shelf-meta' }, [item.row.dynasty, item.row.author].filter(Boolean).join(' · ') || ' ')),
+          h('span', { className: 'vr-shelf-meta' }, [item.row.dynasty, item.row.author].filter(Boolean).join(' · ') || ' ',
+            ...(item.row.tags || []).filter((value) => LEVEL_TAGS.includes(value)).map((value) => h('span', { key: value, className: 'vr-tag' }, value)))),
         h('span', { className: 'vr-shelf-side' },
           h('span', null, item.position ? '读到 ' + toNumeral(item.position) + '／' + toNumeral(item.total) : toNumeral(item.total) + ' 节'),
           badge ? h('em', null, badge) : null))
@@ -861,6 +877,8 @@ window.__ModuleLoader__.load({
         }),
         many ? h('div', { className: 'vr-row vr-filters', role: 'group', 'aria-label': '筛选' },
           ...SHELF_FILTERS.map(([value, label]) => h('button', { key: value, type: 'button', 'aria-pressed': filter === value, onClick: () => setFilter(value) }, label))) : null,
+        many && tags.length ? h('div', { className: 'vr-row vr-filters vr-tags', role: 'group', 'aria-label': '标签' },
+          ...tags.map((value) => h('button', { key: value, type: 'button', 'aria-pressed': tag === value, title: tag === value ? '取消标签筛选' : '只看「' + value + '」', onClick: () => setTag(tag === value ? '' : value) }, value))) : null,
         recent.length ? h('div', { className: 'vr-shelf-label' }, '最近读过') : null,
         ...recent.map(row),
         unread.length ? h('div', { className: 'vr-shelf-label' }, recent.length ? '未读' : '全部书卷') : null,
@@ -1233,7 +1251,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace'],
       apply,
-      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })
