@@ -17,7 +17,7 @@ export const toolParameters = {
     action: { type: 'string', enum: ['search', 'draft', 'clean', 'import', 'colors', 'list', 'read', 'verify'] },
     query: { type: 'string', description: 'search：标题、词牌或名句（4 字以上会搜全文）' },
     author: { type: 'string', description: 'search：作者，用来缩小范围' },
-    collections: { type: 'array', items: { type: 'string', enum: [...Object.keys(COLLECTIONS), 'ctext'] }, description: 'search：只搜这些集子（默认常用集子）' },
+    collections: { type: 'array', items: { type: 'string', enum: [...Object.keys(COLLECTIONS), 'ctext'] }, description: 'search：只搜这些集子（默认常用集子；quansongshi 全宋诗 104 MB 只在点名时搜）' },
     deep: { type: 'boolean', description: 'search：加搜全唐诗、全宋词、元曲（首次下载约 36 MB）' },
     ctext: { type: 'boolean', description: 'search：加搜 ctext 书目（先秦两汉典籍；取正文需 API key）' },
     refs: { type: 'array', items: { type: 'string' }, description: 'draft：search 返回的 ref，多首诗可合成一卷' },

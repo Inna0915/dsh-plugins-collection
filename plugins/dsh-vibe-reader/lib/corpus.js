@@ -141,7 +141,9 @@ export const COLLECTIONS = {
   mengxueProse: { label: '蒙学（骈文）', tier: 'core', traditional: true, kind: 'prose', files: ['蒙学/shenglvqimeng.json', '蒙学/youxueqionglin.json'], items: mengxueProse },
   quantangshi: { label: '全唐诗', tier: 'deep', traditional: true, kind: 'poem', files: range('全唐诗/poet.tang.', 0, 57000, 1000), items: poem('唐') },
   quansongci: { label: '全宋词', tier: 'deep', traditional: false, kind: 'poem', files: range('宋词/ci.song.', 0, 21000, 1000, ['宋词/ci.song.2019y.json']), items: poem('宋', 'rhythmic') },
-  yuanqu: { label: '元曲', tier: 'deep', traditional: false, kind: 'poem', files: ['元曲/yuanqu.json'], items: poem('元') }
+  yuanqu: { label: '元曲', tier: 'deep', traditional: false, kind: 'poem', files: ['元曲/yuanqu.json'], items: poem('元') },
+  // 全宋诗约 25 万首、104 MB：只在 collections 里点名时才下载和搜索，不随 deep 加载进内存。
+  quansongshi: { label: '全宋诗', tier: 'huge', traditional: true, kind: 'poem', files: range('全唐诗/poet.song.', 0, 254000, 1000), items: poem('宋') }
 }
 
 export const dots = (text) => String(text || '').replace(/[・•‧∙·]/g, '·').replace(/\s+/g, '')
@@ -253,7 +255,7 @@ export function createCorpus({ cacheDir, fetchImpl = fetch, ctextKey = '', log =
     if (!q && !wantedAuthor) throw new CorpusError('请提供标题、名句或作者')
     const names = Array.isArray(collections) && collections.length
       ? collections.filter((name) => name !== 'ctext')
-      : Object.keys(COLLECTIONS).filter((name) => COLLECTIONS[name].tier === 'core' || deep)
+      : Object.keys(COLLECTIONS).filter((name) => COLLECTIONS[name].tier === 'core' || (deep && COLLECTIONS[name].tier === 'deep'))
     for (const name of names) if (!COLLECTIONS[name]) throw new CorpusError(`未知集子 ${name}`)
     const qBare = bare(q)
     const scored = []
