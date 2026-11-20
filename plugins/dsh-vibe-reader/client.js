@@ -6,6 +6,7 @@ window.__ModuleLoader__.load({
     try { primitives = require('@deepseek-ai/dsh-client-ui-primitives') || null } catch { primitives = null }
     const kind = 'vibe-reader'
     const tabId = 'dsh-vibe-reader/reader'
+    const MAIN_ID = 'dsh-vibe-reader'
     const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state', markVerified: 'api/vibe-reader/mark-verified' }
     const MAX_LEVEL = 5
     const MAIN_DONE_HOLD_MS = 60000
@@ -17,6 +18,13 @@ window.__ModuleLoader__.load({
     const levelHints = ['全文', '每 5 字隐 1 字', '每 3 字隐 1 字', '只留每句首字', '只留标点和分段', '全部隐藏']
     const pendingLabels = { approval: '审批', 'plan-review': '计划确认', question: '提问' }
     const verifiedLabels = { true: '人工核对', corpus: '已对照语料', false: '未核对' }
+    // 会话看板 = plugin codex-monitor: its sessions route, main panel id and client module id.
+    const BOARD = { sessions: '/codex-monitor/sessions', panel: 'codex-monitor', module: 'codex-monitor' }
+    const BOARD_POLL_MS = 5000
+    const BOARD_MISSING_RETRY_MS = 60000
+    const BOARD_TIMEOUT_MS = 15000
+    const AGENTS = { codex: 'Codex', dsh: 'DSH', kimi: 'Kimi', claude: 'Claude', agy: 'Antigravity' }
+    const AGENT_CLIENTS = { app: '桌面应用', codex_app: '桌面应用', 'kimi-desktop': '桌面应用', vscode: 'VS Code', 'kimi-vscode': 'VS Code', 'claude-vscode': 'VS Code', cli: 'CLI', 'kimi-cli': 'CLI', 'claude-cli': 'CLI', 'agy-cli': 'CLI', exec: 'Exec', 'agy-hub': 'agy Hub' }
 
     // ---------------------------------------------------------------- pure: Agent status (verified in the spike)
 
@@ -53,7 +61,7 @@ window.__ModuleLoader__.load({
     }
 
     /** Board-wide view over every top-level session (spec §4.6). */
-    function boardView(tracked, list, now, readAfterMs) {
+    function boardView(tracked, list, now) {
       const needsYou = []
       const done = []
       const running = []
@@ -68,12 +76,110 @@ window.__ModuleLoader__.load({
       }
       running.sort((a, b) => (a.since ?? now) - (b.since ?? now))
       done.sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0))
-      const longestMs = running.length ? now - (running[0].since ?? now) : 0
-      const tone = needsYou.length ? 'needs-you'
-        : done.length ? 'done'
-          : running.length ? (longestMs >= readAfterMs ? 'reading-window' : 'waiting')
-            : 'idle'
-      return { tone, needsYou, done, running, longestMs }
+      const tone = needsYou.length ? 'needs-you' : done.length ? 'done' : running.length ? 'waiting' : 'idle'
+      return { tone, needsYou, done, running }
+    }
+
+    // ---------------------------------------------------------------- pure: 会话看板 running sessions (any agent)
+
+    function agentOf(session) {
+      if (session.provider) return String(session.provider)
+      const prefix = String(session.sessionId || '').split(':')[0]
+      return prefix === 'kimi-cli' ? 'kimi' : AGENTS[prefix] ? prefix : 'codex'
+    }
+
+    /** When the current turn started: the board's turnStartedAt, else the running status's observedAt. */
+    function turnStartOf(session) {
+      const at = Date.parse(session.turnStartedAt || session.observedAt || '')
+      return Number.isFinite(at) ? at : undefined
+    }
+
+    function agentMetaOf(session) {
+      const folder = String(session.cwd || '').split(/[\\/]/).filter(Boolean).pop()
+      const model = [session.model, session.reasoningEffort].filter(Boolean).join(' ')
+      return [AGENTS[agentOf(session)] || agentOf(session), AGENT_CLIENTS[String(session.source || '').toLowerCase()], folder, model].filter(Boolean).join(' · ')
+    }
+
+    /** The 会话看板's running sessions, in the shape StatusChip reads from boardView. */
+    function agentBoardView(feed) {
+      const running = (feed?.payload?.sessions || []).filter((session) => session?.status === 'running').map((session) => ({
+        id: String(session.sessionId),
+        title: session.title || '未命名会话',
+        agent: agentOf(session),
+        meta: agentMetaOf(session),
+        cwd: session.cwd || '',
+        since: turnStartOf(session)
+      }))
+      running.sort((a, b) => (a.since ?? Infinity) - (b.since ?? Infinity))
+      return { tone: running.length ? 'waiting' : 'idle', needsYou: [], done: [], running, board: true }
+    }
+
+    async function defaultBoardRequest() {
+      const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(BOARD_TIMEOUT_MS) : undefined
+      const response = await fetch(BOARD.sessions, { cache: 'no-store', headers: { accept: 'application/json' }, signal })
+      const data = await response.json().catch(() => null)
+      if (!data || !Array.isArray(data.sessions)) {
+        // 404, or the app shell answering an unknown path: the board is not installed here.
+        if (response.ok || response.status === 404) return null
+        throw new Error('会话看板暂不可用（HTTP ' + response.status + '）')
+      }
+      if (!response.ok) throw new Error(data.health?.lastError || data.error || '会话看板暂不可用')
+      return data
+    }
+
+    /**
+     * Poll the 会话看板 while any pane shows the reader. `request` resolves the
+     * snapshot, or null when the board is not installed (then the reader falls
+     * back to DSH's own sessions and checks again only once a minute).
+     */
+    function createBoardFeed({ request = defaultBoardRequest, clock = Date.now, every = (task, ms) => setInterval(task, ms), stop = (timer) => clearInterval(timer), isHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden' } = {}) {
+      const listeners = new Set()
+      let value = { status: 'idle', payload: null, error: '', at: 0 }
+      let holders = 0
+      let timer = null
+      let loading = false
+      function set(next) {
+        value = next
+        for (const listener of listeners) listener()
+      }
+      async function poll() {
+        if (loading || isHidden()) return
+        if (value.status === 'missing' && clock() - value.at < BOARD_MISSING_RETRY_MS) return
+        loading = true
+        try {
+          const payload = await request()
+          set({ status: payload ? 'ok' : 'missing', payload: payload || null, error: '', at: clock() })
+        } catch (error) {
+          set({ status: 'error', payload: value.payload, error: error instanceof Error ? error.message : String(error), at: clock() })
+        } finally {
+          loading = false
+        }
+      }
+      return {
+        retain() {
+          holders++
+          if (holders === 1) {
+            poll()
+            timer = every(poll, BOARD_POLL_MS)
+          }
+          let released = false
+          return () => {
+            if (released) return
+            released = true
+            holders--
+            if (!holders) {
+              stop(timer)
+              timer = null
+            }
+          }
+        },
+        poll,
+        getSnapshot: () => value,
+        subscribe(listener) {
+          listeners.add(listener)
+          return () => listeners.delete(listener)
+        }
+      }
     }
 
     function createTracker(source, clock = Date.now) {
@@ -564,7 +670,6 @@ window.__ModuleLoader__.load({
 .vr-chip{border-radius:999px!important;padding:2px 10px!important;font-size:calc(12px*var(--vr-scale,1));white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .vr-tone-needs-you{background:color-mix(in srgb,#c3272b 26%,transparent)!important}
 .vr-tone-done{background:color-mix(in srgb,#e9c46a 32%,transparent)!important}
-.vr-tone-reading-window{background:color-mix(in srgb,#5a9e7c 26%,transparent)!important}
 .vr-tone-idle,.vr-tone-waiting{opacity:.75}
 .vr-pop{display:grid;gap:6px;padding:8px;border:1px solid var(--vr-line);border-radius:8px;background:var(--vr-soft)}
 .vr-pop h4{margin:2px 0 0;font-size:calc(12px*var(--vr-scale,1));opacity:.75}
@@ -662,12 +767,33 @@ window.__ModuleLoader__.load({
 .vr-switch::after{content:"";position:absolute;top:.2em;left:.2em;width:1em;height:1em;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
 .vr-switch[aria-checked=true]{background:#5a9e7c!important}
 .vr-switch[aria-checked=true]::after{left:1.2em}
-.vr-stepper{display:inline-flex;flex:none;align-items:center;border:1px solid var(--vr-line);border-radius:7px;overflow:hidden}
-.vr-stepper button{border:0!important;border-radius:0!important;padding:1px 10px!important}
-.vr-stepper span{min-width:3.6em;text-align:center;font-variant-numeric:tabular-nums}
 .vr-path{font-size:calc(11px*var(--vr-scale,1));opacity:.5;user-select:text;word-break:break-all}
-.vr-session-list button{border-color:transparent!important;background:var(--vr-soft)}
+.vr-session-list button{border-color:transparent!important;background:transparent}
+.vr-session-list .vr-link{background:transparent!important;padding:0 2px!important;font-size:calc(12px*var(--vr-scale,1));opacity:.7}
+.vr-session-list .vr-link:hover{opacity:1}
+.vr-agent{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;padding:5px 8px!important}
+.vr-agent-logo{display:grid;place-items:center;width:calc(22px*var(--vr-scale,1));height:calc(22px*var(--vr-scale,1));border-radius:6px;overflow:hidden;background:color-mix(in srgb,currentColor 8%,transparent);font-size:calc(11px*var(--vr-scale,1));font-weight:600}
+.vr-agent-logo.vr-has-logo{background:transparent}
+.vr-agent-logo img{width:100%;height:100%;object-fit:contain}
+.vr-agent-text{display:grid;min-width:0}
+.vr-agent-title,.vr-agent-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-agent-meta{font-size:calc(11px*var(--vr-scale,1));opacity:.6}
+.vr-agent-time{font-size:calc(11.5px*var(--vr-scale,1));opacity:.65;font-variant-numeric:tabular-nums}
+.vr:fullscreen{background:var(--dsw-alias-bg-base,Canvas);color:var(--dsw-alias-label-primary,CanvasText)}
+.vr-main{--vr-column:calc(880px*var(--vr-scale,1))}
+.vr-main .vr-head,.vr-main .vr-body{padding-left:max(16px,calc((100% - var(--vr-column))/2));padding-right:max(16px,calc((100% - var(--vr-column))/2))}
+.vr-main .vr-head{padding-top:14px}
+.vr-main .vr-body{padding-top:20px;padding-bottom:48px}
+.vr-main-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:calc(16px*var(--vr-scale,1));font-weight:600;letter-spacing:.25em;margin-right:8px}
 `
+
+    // The left sidebar entry lives outside the panel, so its style goes into the document once.
+    const ENTRY_CSS = '.vr-trigger{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-width:0;height:36px;flex:0 0 36px;padding:7px 10px;border:0;border-radius:var(--dsw-radius-md,8px);background:transparent;color:var(--dsw-alias-label-primary,#222);font:inherit;font-size:14px;line-height:22px;cursor:pointer;text-align:left}'
+      + '.vr-trigger:hover{background:var(--dsw-alias-interactive-bg-hover,#8882)}'
+      + '.vr-trigger svg{flex:none}'
+      + '.vr-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+      + '.vr-trigger.vr-rail{width:36px;align-self:center;justify-content:center;padding:0}'
+      + '.vr-trigger:focus-visible{outline:2px solid var(--dsw-focus-ring-color,#4d6bfe);outline-offset:-2px}'
 
     function durationText(ms) {
       const seconds = Math.max(0, Math.round(ms / 1000))
@@ -682,8 +808,8 @@ window.__ModuleLoader__.load({
       return parts.flatMap((part, index) => index ? [h('br', { key: 'br' + index }), part] : [part])
     }
 
-    function BookIcon() {
-      return h('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, 'aria-hidden': true },
+    function BookIcon({ size = 17 } = {}) {
+      return h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, 'aria-hidden': true },
         h('path', { d: 'M4 5.5C6.5 4 9.5 4 12 6c2.5-2 5.5-2 8-.5V19c-2.5-1.5-5.5-1.5-8 .5-2.5-2-5.5-2-8-.5V5.5Zm8 .5v13.5' }))
     }
 
@@ -1069,10 +1195,46 @@ window.__ModuleLoader__.load({
     function StatusChip({ view, open, onToggle }) {
       const text = view.tone === 'needs-you' ? view.needsYou.length + ' 个会话在等你'
         : view.tone === 'done' ? view.done.length + ' 个会话已完成'
-          : view.tone === 'reading-window' ? '可以读一则 · 运行中 ' + view.running.length
             : view.tone === 'waiting' ? '运行中 ' + view.running.length
               : '空闲'
-      return h('button', { type: 'button', className: 'vr-chip vr-tone-' + view.tone, 'aria-expanded': open, title: '全部会话的状态，点击展开', onClick: onToggle }, text)
+      return h('button', { type: 'button', className: 'vr-chip vr-tone-' + view.tone, 'aria-expanded': open, title: (view.board ? '会话看板里正在执行的会话' : '全部会话的状态') + (open ? '，点击收起' : '，点击展开'), onClick: onToggle }, text)
+    }
+
+    // The 会话看板 client module carries the official agent logos (embedded data URIs); reuse them when it is loaded.
+    let boardModule = null
+    let boardModuleTriedAt = -Infinity
+    function boardLogos() {
+      if (!boardModule && Date.now() - boardModuleTriedAt > 30000) {
+        boardModuleTriedAt = Date.now()
+        try { boardModule = require(BOARD.module) || null } catch { boardModule = null }
+      }
+      return boardModule?.AGENT_LOGOS || null
+    }
+
+    function AgentLogo({ agent }) {
+      const src = boardLogos()?.[agent]
+      return h('span', { className: 'vr-agent-logo vr-agent-' + agent + (src ? ' vr-has-logo' : ''), 'aria-hidden': true },
+        src ? h('img', { src, alt: '', draggable: false }) : (AGENTS[agent] || 'Agent').charAt(0))
+    }
+
+    /** Running sessions from the 会话看板: logo, task title, agent · client · project, running time. */
+    function AgentPanel({ view, feed, now, openBoard }) {
+      const loading = feed.status === 'idle'
+      return h('div', { className: 'vr-sheet vr-session-list vr-agents' },
+        h('div', { className: 'vr-row' },
+          h('h4', null, loading ? '会话看板' : '会话看板 · 运行中 ' + view.running.length),
+          h('span', { className: 'vr-grow' }),
+          h('button', { type: 'button', className: 'vr-link', title: '切到会话看板', onClick: openBoard }, '打开看板 ›')),
+        feed.status === 'error' ? h('span', { className: 'vr-small vr-muted', title: feed.error }, '暂时读不到会话看板，正在重试') : null,
+        loading ? h('span', { className: 'vr-small vr-muted' }, '正在读取…')
+          : !view.running.length && feed.status === 'ok' ? h('span', { className: 'vr-small vr-muted' }, '没有正在执行的会话。') : null,
+        view.running.length ? h('ul', null, ...view.running.map((item) => h('li', { key: item.id },
+          h('button', { type: 'button', className: 'vr-agent', title: item.title + (item.cwd ? '\n' + item.cwd : '') + '\n点击切到会话看板', onClick: openBoard },
+            h(AgentLogo, { agent: item.agent }),
+            h('span', { className: 'vr-agent-text' },
+              h('span', { className: 'vr-agent-title' }, item.title),
+              h('span', { className: 'vr-agent-meta' }, item.meta)),
+            h('span', { className: 'vr-agent-time' }, item.since !== undefined ? durationText(now - item.since) : ''))))) : null)
     }
 
     function StatusPanel({ view, now, openSession }) {
@@ -1093,13 +1255,6 @@ window.__ModuleLoader__.load({
     }
 
     const FONT_SCALES = [[0.9, '小'], [1, '标准'], [1.15, '大'], [1.3, '更大'], [1.5, '特大']]
-    const READ_AFTER_STEPS = [3, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600]
-
-    /** Next value on a fixed ladder of steps, from wherever the current value sits. */
-    function stepValue(steps, current, direction) {
-      if (direction > 0) return steps.find((value) => value > current) ?? steps[steps.length - 1]
-      return [...steps].reverse().find((value) => value < current) ?? steps[0]
-    }
 
     function SheetRow({ label, children }) {
       return h('div', { className: 'vr-sheet-row' }, h('span', { className: 'vr-sheet-label' }, label), h('div', { className: 'vr-row' }, ...[].concat(children)))
@@ -1110,7 +1265,6 @@ window.__ModuleLoader__.load({
       const settings = state.settings
       const set = (patch) => app.send({ op: 'settings', patch })
       const scale = settings.fontScale || 1
-      const seconds = settings.readAfterSeconds
       const builtin = library.volumes.filter((row) => row.origin === 'builtin').length
       const mine = library.volumes.filter((row) => row.origin === 'library').length
       const mineRoot = library.roots.find((root) => root.origin === 'library')
@@ -1122,13 +1276,6 @@ window.__ModuleLoader__.load({
         h(SheetRow, { label: '跟随' }, [
           h('button', { key: 's', type: 'button', role: 'switch', className: 'vr-switch', 'aria-checked': settings.followSessions, 'aria-label': '切换会话时带上阅读器', onClick: () => set({ followSessions: !settings.followSessions }) }),
           h('span', { key: 'h', className: 'vr-sheet-hint' }, '正在读时切换会话，阅读器跟过去')
-        ]),
-        h(SheetRow, { label: '提醒' }, [
-          h('div', { key: 's', className: 'vr-stepper' },
-            h('button', { type: 'button', 'aria-label': '减少', disabled: seconds <= READ_AFTER_STEPS[0], onClick: () => set({ readAfterSeconds: stepValue(READ_AFTER_STEPS, seconds, -1) }) }, '−'),
-            h('span', null, seconds + ' 秒'),
-            h('button', { type: 'button', 'aria-label': '增加', disabled: seconds >= READ_AFTER_STEPS[READ_AFTER_STEPS.length - 1], onClick: () => set({ readAfterSeconds: stepValue(READ_AFTER_STEPS, seconds, 1) }) }, '+')),
-          h('span', { key: 'h', className: 'vr-sheet-hint' }, 'Agent 运行超过这么久，提示「可以读一则」')
         ]),
         h(SheetRow, { label: '书库' },
           h('div', { style: { display: 'grid', gap: '2px', minWidth: 0 } },
@@ -1143,6 +1290,7 @@ window.__ModuleLoader__.load({
       const tracker = createTracker(ctx.uiSession?.sessionStatus)
       ctx.effect(() => tracker.start(), 'vibe-reader: session status')
       const listStore = ctx.sessions?.list ?? { getSnapshot: () => undefined, subscribe: () => () => {} }
+      const boardFeed = createBoardFeed()
 
       // sessionId -> true while visible there, or the time it was hidden (grace for hosts that unmount first).
       const visibleIn = new Map()
@@ -1188,19 +1336,59 @@ window.__ModuleLoader__.load({
         try { ctx.uiWorkspace?.openSession(id) } catch (error) { console.warn('[vibe-reader] openSession failed', error) }
       }
 
+      function openBoard() {
+        try { ctx.layout.selectPanel(BOARD.panel) } catch (error) { console.warn('[vibe-reader] open 会话看板 failed', error) }
+      }
+
+      function openMain() {
+        try { ctx.layout.selectPanel(MAIN_ID) } catch (error) { console.warn('[vibe-reader] open main panel failed', error) }
+      }
+
+      /** Right sidebar tab: one per session, visible while it is the shown tab. */
       function ReaderPane({ sessionId, useTabInfo }) {
         const { tab } = useTabInfo()
+        return h(ReaderView, { sessionId, visible: tab.visible })
+      }
+
+      /** Main area (left sidebar entry): mounted only while selected; wide centred column, can go fullscreen. */
+      function MainPane() {
+        return h(ReaderView, { visible: true, main: true })
+      }
+
+      function ReaderView({ sessionId, visible, main = false }) {
+        const tab = { visible }
+        const root = useRef(null)
+        const [fullscreen, setFullscreen] = useState(false)
+        useEffect(() => {
+          if (!main || typeof document === 'undefined') return
+          const sync = () => setFullscreen(Boolean(root.current) && document.fullscreenElement === root.current)
+          document.addEventListener('fullscreenchange', sync)
+          return () => document.removeEventListener('fullscreenchange', sync)
+        }, [main])
+        const canFullscreen = main && typeof document !== 'undefined' && document.fullscreenEnabled !== false
+        function toggleFullscreen() {
+          try {
+            const done = document.fullscreenElement ? document.exitFullscreen() : root.current?.requestFullscreen()
+            done?.catch?.((error) => console.warn('[vibe-reader] fullscreen failed', error))
+          } catch (error) {
+            console.warn('[vibe-reader] fullscreen failed', error)
+          }
+        }
         const snapshot = useSyncExternalStore(app.subscribe, app.getSnapshot)
         const tracked = useSyncExternalStore(tracker.subscribe, tracker.getSnapshot)
         const list = useSyncExternalStore(listStore.subscribe, listStore.getSnapshot)
+        const feed = useSyncExternalStore(boardFeed.subscribe, boardFeed.getSnapshot)
         const [now, setNow] = useState(Date.now())
-        const [panel, setPanel] = useState(null)
+        // The session list starts open and folds from the chip; settings open on their own from ⚙.
+        const [sessionsOpen, setSessionsOpen] = useState(true)
+        const [settingsOpen, setSettingsOpen] = useState(false)
 
         useEffect(() => {
           if (!tab.visible || !sessionId) return
           visibleIn.set(sessionId, true)
           return () => { visibleIn.set(sessionId, Date.now()) }
         }, [tab.visible, sessionId])
+        useEffect(() => tab.visible ? boardFeed.retain() : undefined, [tab.visible])
         useEffect(() => {
           if (!tab.visible) {
             app.flush()
@@ -1214,22 +1402,23 @@ window.__ModuleLoader__.load({
           return () => clearInterval(timer)
         }, [tab.visible])
 
-        const readAfterMs = (snapshot.state?.settings?.readAfterSeconds ?? 10) * 1000
-        const view = boardView(tracked, list, now, readAfterMs)
+        // With the 会话看板 installed, status means its running sessions (every agent); otherwise DSH's own.
+        const view = feed.status === 'missing' ? boardView(tracked, list, now) : agentBoardView(feed)
         const current = snapshot.state?.ui?.view || 'encounter'
-        const togglePanel = (name) => setPanel(panel === name ? null : name)
 
-        return h('section', { className: 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
+        return h('section', { ref: root, className: main ? 'vr vr-main' : 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
           h('style', null, styles),
           h('div', { className: 'vr-head' },
             h('div', { className: 'vr-row' },
+              main ? h('span', { className: 'vr-main-title' }, '闲庭') : null,
               h('div', { className: 'vr-seg', role: 'group', 'aria-label': '视图' },
                 h('button', { type: 'button', 'aria-pressed': current === 'encounter', disabled: !snapshot.state, onClick: () => app.send({ op: 'view', view: 'encounter' }) }, '偶遇'),
                 h('button', { type: 'button', 'aria-pressed': current === 'study', disabled: !snapshot.state, onClick: () => app.send({ op: 'view', view: 'study' }) }, '修业')),
               h('span', { className: 'vr-grow' }),
-              h(StatusChip, { view, open: panel === 'status', onToggle: () => togglePanel('status') }),
+              h(StatusChip, { view, open: sessionsOpen, onToggle: () => setSessionsOpen(!sessionsOpen) }),
               h('button', { type: 'button', className: 'vr-refresh' + (snapshot.refreshing ? ' vr-spinning' : ''), title: '重新读取书库', 'aria-label': '重新读取书库', disabled: !snapshot.library || snapshot.refreshing, onClick: () => app.load() }, '↻'),
-              h('button', { type: 'button', title: '设置', 'aria-expanded': panel === 'settings', disabled: !snapshot.state, onClick: () => togglePanel('settings') }, '⚙')),
+              canFullscreen ? h('button', { type: 'button', title: fullscreen ? '退出全屏（Esc）' : '全屏阅读', 'aria-label': fullscreen ? '退出全屏' : '全屏阅读', 'aria-pressed': fullscreen, onClick: toggleFullscreen }, '⛶') : null,
+              h('button', { type: 'button', title: '设置', 'aria-expanded': settingsOpen, disabled: !snapshot.state, onClick: () => setSettingsOpen(!settingsOpen) }, '⚙')),
             (snapshot.added || []).length ? h('div', { className: 'vr-notice vr-small vr-added' },
               h('span', null, '新入藏：'),
               ...snapshot.added.map((item) => h('button', {
@@ -1242,8 +1431,8 @@ window.__ModuleLoader__.load({
               }, '《' + item.title + '》')),
               h('span', { className: 'vr-grow' }),
               h('button', { type: 'button', onClick: () => app.dismissAdded() }, '知道了')) : null,
-            panel === 'status' ? h(StatusPanel, { view, now, openSession }) : null,
-            panel === 'settings' && snapshot.state ? h(SettingsPanel, { app, snapshot }) : null,
+            settingsOpen && snapshot.state ? h(SettingsPanel, { app, snapshot }) : null,
+            sessionsOpen ? (view.board ? h(AgentPanel, { view, feed, now, openBoard }) : h(StatusPanel, { view, now, openSession })) : null,
             snapshot.notice ? h('div', { className: 'vr-notice vr-small' }, h('span', { className: 'vr-grow' }, snapshot.notice), h('button', { type: 'button', onClick: app.dismissNotice }, '知道了')) : null),
           snapshot.status === 'error'
             ? h('div', { className: 'vr-body' }, h('p', { className: 'vr-error' }, snapshot.error), h('button', { type: 'button', onClick: () => app.load() }, '重试'))
@@ -1273,6 +1462,28 @@ window.__ModuleLoader__.load({
         return h('button', { type: 'button', className: 'vr-head-btn', 'aria-label': label, title: label, onClick: toggleReader }, h('style', null, styles), h(BookIcon))
       }
 
+      /** Left sidebar footer entry, next to 会话看板 / 任务看板: opens 闲庭 in the main area. */
+      function SidebarEntry(props) {
+        const wide = props.wide === true
+        return h('button', { type: 'button', className: wide ? 'vr-trigger' : 'vr-trigger vr-rail', title: wide ? undefined : '闲庭', 'aria-label': '打开闲庭', onClick: openMain },
+          h(BookIcon, { size: 16 }), wide ? h('span', null, '闲庭') : null)
+      }
+
+      ctx.effect(() => {
+        if (typeof document === 'undefined') return () => {}
+        const style = document.createElement('style')
+        style.dataset.plugin = 'dsh-vibe-reader/entry'
+        style.textContent = ENTRY_CSS
+        document.head.appendChild(style)
+        return () => style.remove()
+      }, 'vibe-reader: sidebar entry style')
+      ctx.effect(() => ctx.slots.inject('main', () =>
+        ctx.slots.register({ name: 'main', key: MAIN_ID, id: MAIN_ID, label: '闲庭' }, MainPane)
+      ), 'vibe-reader: main panel')
+      ctx.effect(() => ctx.slots.inject('sidebar.footer.action', () =>
+        ctx.slots.register({ name: 'sidebar.footer.action', id: 'vibe-reader', order: 40, label: '闲庭' }, SidebarEntry)
+      ), 'vibe-reader: sidebar entry')
+
       ctx.effect(() => ctx.slots.inject('conversation.session.header.utilities', () =>
         ctx.slots.register({ name: 'conversation.session.header.utilities', id: 'vibe-reader' }, HeaderButton)
       ), 'vibe-reader: header button')
@@ -1290,9 +1501,9 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace'],
+      inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace', 'layout'],
       apply,
-      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, stepValue, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, agentBoardView, createBoardFeed, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, AgentPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })

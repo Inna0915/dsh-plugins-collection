@@ -168,7 +168,7 @@ test('app store: autoPick picks once even when several panes ask', async () => {
 test('boardView and follower behave as verified in the spike', () => {
   let tracked = t.track(new Map(), new Map([['a', { running: false }], ['b', { running: false }]]), 0)
   tracked = t.track(tracked, new Map([['a', { running: true }], ['b', { running: true, pendingInteraction: { kind: 'approval' } }]]), 1000)
-  const view = t.boardView(tracked, { byId: { a: { displayTitle: '甲' }, b: { displayTitle: '乙' } } }, 20000, 10000)
+  const view = t.boardView(tracked, { byId: { a: { displayTitle: '甲' }, b: { displayTitle: '乙' } } }, 20000)
   assert.equal(view.tone, 'needs-you')
   assert.equal(view.running[0].title, '甲')
 
@@ -186,7 +186,7 @@ test('boardView and follower behave as verified in the spike', () => {
 })
 
 test('apply: registers the tab, needs the verified services, survives a missing sessionStatus', () => {
-  assert.deepEqual(Array.from(plugin.inject).sort(), ['sessions', 'sidebarRight', 'sidebarRightTabs', 'slots', 'uiSession', 'uiWorkspace'])
+  assert.deepEqual(Array.from(plugin.inject).sort(), ['layout', 'sessions', 'sidebarRight', 'sidebarRightTabs', 'slots', 'uiSession', 'uiWorkspace'])
   let tab
   const disposers = []
   assert.doesNotThrow(() => plugin.apply({
@@ -418,12 +418,139 @@ test('shelf tags: 学段 first, then tags on two or more volumes; tag filter com
   assert.deepEqual(Array.from(t.shelfItems(rows, {}, '静', 'all', '小学').unread, (item) => item.row.id), ['a'])
 })
 
-test('stepValue walks a ladder from any current value', () => {
-  const steps = [3, 5, 10, 15, 20, 30]
-  assert.equal(t.stepValue(steps, 10, 1), 15)
-  assert.equal(t.stepValue(steps, 10, -1), 5)
-  assert.equal(t.stepValue(steps, 12, 1), 15, 'off-ladder values snap to the next step')
-  assert.equal(t.stepValue(steps, 12, -1), 10)
-  assert.equal(t.stepValue(steps, 30, 1), 30)
-  assert.equal(t.stepValue(steps, 3, -1), 3)
+test('agentBoardView lists only running board sessions, longest first, with agent, client and project', () => {
+  const feed = { status: 'ok', payload: { sessions: [
+    { sessionId: 'claude:a', provider: 'claude', source: 'claude-vscode', status: 'running', title: '修复登录页', cwd: 'D:\\dev\\shop', turnStartedAt: '2026-11-20T09:58:00Z', observedAt: '2026-11-20T09:59:30Z' },
+    { sessionId: 'dsh:b', status: 'running', title: '', observedAt: '2026-11-20T09:50:00Z' },
+    { sessionId: '0193-uuid', status: 'turn_completed', title: '已结束', observedAt: '2026-11-20T09:00:00Z' },
+    { sessionId: 'kimi-cli:c', source: 'kimi-cli', status: 'running', title: '写周报' },
+    { sessionId: 'agy:d', provider: 'agy', source: 'agy-hub', status: 'running', title: '整理文档', cwd: 'D:\\dev\\fms269', model: 'gemini-4-neon', reasoningEffort: 'xhigh', observedAt: '2026-11-20T09:59:00Z' }
+  ] } }
+  const view = t.agentBoardView(feed)
+  assert.equal(view.running.find((item) => item.id === 'agy:d').meta, 'Antigravity · agy Hub · fms269 · gemini-4-neon xhigh', 'model and effort close the line when the board has them')
+  view.running.splice(view.running.findIndex((item) => item.id === 'agy:d'), 1)
+  assert.deepEqual(Array.from(view.running, (item) => item.id), ['dsh:b', 'claude:a', 'kimi-cli:c'])
+  assert.deepEqual(Array.from(view.running, (item) => item.agent), ['dsh', 'claude', 'kimi'])
+  assert.equal(view.running[0].title, '未命名会话')
+  assert.equal(view.running[1].since, Date.parse('2026-11-20T09:58:00Z'), 'turnStartedAt wins over observedAt')
+  assert.equal(view.running[1].meta, 'Claude · VS Code · shop')
+  assert.equal(view.running[2].meta, 'Kimi · CLI')
+  assert.equal(view.running[2].since, undefined)
+  assert.equal(view.tone, 'waiting', 'no 可以读一则: running is just running')
+  assert.equal(view.board, true)
+  assert.equal(t.agentBoardView({ status: 'idle', payload: null }).tone, 'idle')
+})
+
+test('board feed: one poller while retained, a missing board is rechecked once a minute, errors keep the last snapshot', async () => {
+  let clock = 0
+  const timers = []
+  const answers = [{ sessions: [{ sessionId: 'a', status: 'running' }] }, new Error('HTTP 503'), null, { sessions: [] }]
+  let calls = 0
+  const feed = t.createBoardFeed({
+    request: async () => {
+      calls++
+      const next = answers.shift()
+      if (next instanceof Error) throw next
+      return next
+    },
+    clock: () => clock,
+    every: (fn) => timers.push(fn),
+    stop: (id) => { timers[id - 1] = null },
+    isHidden: () => false
+  })
+  assert.equal(feed.getSnapshot().status, 'idle')
+  const release = feed.retain()
+  const releaseOther = feed.retain()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(feed.getSnapshot().status, 'ok')
+  assert.equal(timers.length, 1, 'one poller however many panes')
+  await feed.poll()
+  assert.equal(feed.getSnapshot().status, 'error')
+  assert.equal(feed.getSnapshot().payload.sessions.length, 1, 'the last good snapshot stays on screen')
+  await feed.poll()
+  assert.equal(feed.getSnapshot().status, 'missing')
+  clock = 30000
+  await feed.poll()
+  assert.equal(calls, 3, 'no request while a missing board is less than a minute old')
+  clock = 61000
+  await feed.poll()
+  assert.equal(feed.getSnapshot().status, 'ok')
+  release()
+  release()
+  assert.ok(timers[0], 'still retained by the other pane')
+  releaseOther()
+  assert.equal(timers[0], null)
+})
+
+test('AgentPanel: logo from the 会话看板 module, task title and running time; every click opens the board', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  let withReact
+  const fakeReact = { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }) }
+  const modules = { react: fakeReact, 'codex-monitor': { AGENT_LOGOS: { claude: 'data:image/svg+xml;base64,AAAA' } } }
+  runInNewContext(source, {
+    window: { __ModuleLoader__: { load({ factory }) { withReact = factory((name) => { if (name in modules) return modules[name]; throw new Error('missing ' + name) }) } } },
+    Date, Math, structuredClone, setTimeout, clearTimeout, console
+  })
+  const expand = (node) => {
+    if (Array.isArray(node)) return node.flatMap(expand)
+    if (node === null || node === undefined || node === false) return []
+    if (typeof node !== 'object') return [node]
+    if (typeof node.type === 'function') return expand(node.type(node.props))
+    return [{ ...node, props: { ...node.props, children: expand(node.props.children) } }]
+  }
+  const text = (nodes) => nodes.map((node) => typeof node === 'object' ? text(node.props.children) : String(node)).join('')
+  const find = (nodes, predicate) => nodes.flatMap((node) => typeof node !== 'object' ? [] : [...(predicate(node) ? [node] : []), ...find(node.props.children, predicate)])
+  const { AgentPanel } = withReact.__test.views
+  const now = Date.parse('2026-11-20T10:00:00Z')
+  const feed = { status: 'ok', payload: { sessions: [
+    { sessionId: 'claude:a', provider: 'claude', status: 'running', title: '修复登录页', turnStartedAt: '2026-11-20T09:58:00Z' },
+    { sessionId: 'agy:b', provider: 'agy', status: 'running', title: '整理文档' }
+  ] } }
+  const opened = []
+  const tree = expand({ type: AgentPanel, props: { view: withReact.__test.agentBoardView(feed), feed, now, openBoard: () => opened.push(1) } })
+  const out = text(tree)
+  assert.match(out, /会话看板 · 运行中 2/)
+  assert.match(out, /修复登录页Claude2 分 00 秒/)
+  assert.match(out, /A整理文档Antigravity/, 'a letter stands in when the board has no logo for the agent')
+  const images = find(tree, (node) => node.type === 'img')
+  assert.equal(images.length, 1)
+  assert.equal(images[0].props.src, 'data:image/svg+xml;base64,AAAA')
+  for (const button of find(tree, (node) => node.type === 'button')) button.props.onClick()
+  assert.equal(opened.length, 3, '打开看板 and both rows')
+  const empty = { status: 'ok', payload: { sessions: [] } }
+  assert.match(text(expand({ type: AgentPanel, props: { view: withReact.__test.agentBoardView(empty), feed: empty, now, openBoard: () => {} } })), /没有正在执行的会话/)
+  const failing = { status: 'error', payload: null, error: 'HTTP 503' }
+  assert.match(text(expand({ type: AgentPanel, props: { view: withReact.__test.agentBoardView(failing), feed: failing, now, openBoard: () => {} } })), /暂时读不到会话看板/)
+})
+
+test('left sidebar entry opens 闲庭 in the main area; collapsed rail shows only the icon', async () => {
+  const registered = {}
+  const panels = []
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  let withReact
+  const fakeReact = { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }), useRef: () => ({ current: null }), useState: (value) => [value, () => {}], useEffect: () => {} }
+  runInNewContext(source, { window: { __ModuleLoader__: { load({ factory }) { withReact = factory((name) => (name === 'react' ? fakeReact : undefined)) } } }, Date, Math, structuredClone, setTimeout, clearTimeout, console })
+  withReact.apply({
+    effect: (action) => action(),
+    uiSession: undefined, sessions: undefined, uiWorkspace: undefined,
+    layout: { selectPanel: (id) => panels.push(id) },
+    sidebarRight: { mounted: { getSnapshot: () => undefined, subscribe: () => () => {} } },
+    sidebarRightTabs: { register: () => () => {} },
+    slots: { inject: (slot, register) => register(), register: (meta, component) => { registered[meta.name] = { meta, component }; return () => {} } }
+  })
+  const main = registered.main
+  assert.equal(main.meta.key, 'dsh-vibe-reader')
+  assert.equal(main.meta.id, 'dsh-vibe-reader')
+  assert.equal(main.meta.label, '闲庭')
+  const entry = registered['sidebar.footer.action']
+  assert.equal(entry.meta.label, '闲庭')
+  const wide = entry.component({ wide: true })
+  assert.equal(wide.props.className, 'vr-trigger')
+  assert.equal(wide.props.children.at(-1).props.children[0], '闲庭')
+  const rail = entry.component({ wide: false })
+  assert.equal(rail.props.className, 'vr-trigger vr-rail')
+  assert.equal(rail.props.title, '闲庭')
+  assert.equal(rail.props.children.at(-1), null)
+  wide.props.onClick()
+  assert.deepEqual(panels, ['dsh-vibe-reader'])
 })
