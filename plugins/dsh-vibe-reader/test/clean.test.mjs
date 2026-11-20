@@ -55,3 +55,10 @@ test('acceptance: 唐诗三百首 poems clean to exactly the built-in seed text'
     assert.equal(paragraphs.map((paragraph) => paragraph.text).join('\n'), volume.sections[index].paragraphs[0].text, poem.title)
   }
 })
+
+test('variant characters that t2s leaves alone are reported, never changed', async () => {
+  const { paragraphs, report } = await cleanParagraphs(['金生麗水，玉出崐岡。', '茍不教，性乃遷。'], { traditional: true })
+  assert.deepEqual(paragraphs.map((paragraph) => paragraph.text), ['金生丽水，玉出崐冈。', '茍不教，性乃迁。'])
+  assert.deepEqual(report.variants, [{ char: '崐', common: '昆', count: 1 }, { char: '茍', common: '苟', count: 1 }])
+  assert.match(report.warnings.join(), /崐（通行作「昆」）.*茍（通行作「苟」）.*请问用户/)
+})

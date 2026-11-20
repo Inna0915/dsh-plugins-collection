@@ -95,7 +95,14 @@
 
 ### 4.4 修业
 
-- 夹注：按段落的注释表在正文中匹配字词，以朱砂色小字双行夹注显示，可整体显隐。
+- 注释三种显示，按钮循环切换，选择存在 `state.volumes[卷].glossMode`：
+  - 夹注：朱砂色小字双行插在词后，适合注释稀疏的文章；
+  - 句下：按行（诗）或按段（文）在下面列出本行注释；读音音节数与词的字数相同时用 `<ruby>` 标在字上方，否则写在释义里；
+  - 点词：正文干净，有注的词加下划线，点击才在行下显示。
+  - 默认：诗卷与注释密度高于每 12 字一条的书卷用句下，其余用夹注。千字文一类每联都有注时，夹注会让一半版面是注释（M2 实测入藏的千字文每 6 字一条注、释义平均 18 字），所以这样分。
+- 名句（`==…==`）用书卷色的字标出，不用底色。
+- 译文与「本节注释」默认展开（`settings.translationOpen`、`settings.notesOpen`，收起后记住）；句下模式只列正文里放不下的注释（如注在标题上的）。
+- 书库刷新：任一会话回合结束后 0.8 秒自动重读（入藏发生在 Agent 回合里）；面板可见时每 15 秒检查一次；顶栏 ↻ 手动刷新。新出现的书卷在顶部提示「新入藏」，点击直接打开。重读只重新拉取文件修订号变化的书卷。
 - 译文：每段可单独展开。
 - 竖排：只用于短诗卡片。侧栏很窄，长文竖排需要横向滚动，体验很差。
 - 进度：每次翻节都自动保存，不需要手动「记为续读」。
@@ -285,7 +292,7 @@ M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全�
 
 | 档 | 集子 | 备注 |
 |---|---|---|
-| 常用（默认搜） | 古文观止、唐诗三百首、宋词三百首、诗经、千家诗、论语、大学 · 中庸 · 孟子、楚辞、纳兰性德词 | chinese-poetry，首次使用下载，约 3 MB |
+| 常用（默认搜） | 古文观止、唐诗三百首、宋词三百首、诗经、千家诗、论语、大学 · 中庸 · 孟子、楚辞、纳兰性德词；蒙学（千字文、三字经两版、弟子规、增广贤文、朱子家训、百家姓，按诗处理、一联一行、按篇章分节）；蒙学骈文（声律启蒙按韵、幼学琼林按门类，按文章处理） | chinese-poetry，首次使用下载，约 4 MB。千字文语料无标点，按两句一联补「，」「。」；弟子规以空格分句，换成「，」；繁转简不处理的异体字（崐、茍、猨、桮、胷等）只报告不改 |
 | 深度（`deep: true`） | 全唐诗（58 文件）、全宋词（23 文件）、元曲 | 首次约 36 MB，实测下载加建索引约 2 分钟，之后约 3 秒；opencc 约 350 万字/秒，可在内存中做全文检索 |
 | ctext（`ctext: true`） | 先秦两汉典籍 | `searchtexts`、`gettextinfo` 不需要认证；`gettext` 需要 API key（订阅），配置 `ctextApiKey` 或环境变量 `CTEXT_API_KEY`。用 `remap=gb` 直接取简体。目录型条目返回章节列表供选择 |
 
@@ -333,7 +340,7 @@ M1 种子的对照结果：三卷每节字数与语料一致，169 组差异全�
 |---|---|
 | 前端 inject | `slots`、`sidebarRight`、`sidebarRightTabs`、`uiSession`、`sessions`、`uiWorkspace` |
 | 后端 inject | 全部可选，用 `ctx.inject([...], cb)` 挂接：`connection`（面板 HTTP）、`tools`、`skills`（M2）；M4 加 `llm`、`agentDefaultModel`。headless 等没有 HTTP 的环境里，工具和 skill 照常可用 |
-| HTTP | M1 已实现：`GET api/vibe-reader/library`（书卷列表、偶遇卡片、state、书库目录）、`POST api/vibe-reader/volume`（`{ id }` → 整卷）、`POST api/vibe-reader/state`（`{ op: view / progress / rate / level / seen / settings }`）。只用固定路径，不依赖查询参数（宿主路由对查询串的处理没有文档）。以后：`POST api/vibe-reader/notes`、`POST api/vibe-reader/ask` |
+| HTTP | `GET api/vibe-reader/library`（书卷列表、偶遇卡片、state、书库目录）、`POST api/vibe-reader/volume`（`{ id }` → 整卷）、`POST api/vibe-reader/state`（`{ op: view / progress / rate / level / seen / gloss / settings }`）、`POST api/vibe-reader/mark-verified`（`{ id }`：书库里未核对、指纹一致的书卷，只把 frontmatter 的 `verified` 改为 `true`）。只用固定路径，不依赖查询参数（宿主路由对查询串的处理没有文档）。以后：`POST api/vibe-reader/notes`、`POST api/vibe-reader/ask` |
 | 工具 | `vibe_reader` |
 | skill | `vibe-reader-engraver`（刻书匠） |
 

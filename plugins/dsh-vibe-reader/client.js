@@ -6,10 +6,11 @@ window.__ModuleLoader__.load({
     try { primitives = require('@deepseek-ai/dsh-client-ui-primitives') || null } catch { primitives = null }
     const kind = 'vibe-reader'
     const tabId = 'dsh-vibe-reader/reader'
-    const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state' }
+    const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state', markVerified: 'api/vibe-reader/mark-verified' }
     const MAX_LEVEL = 5
     const MAIN_DONE_HOLD_MS = 60000
     const PROGRESS_DELAY_MS = 500
+    const REFRESH_POLL_MS = 15000
     const HIDDEN_GRACE_MS = 1500
     const GLOSS_INLINE_MAX = 24
     const HAN = /\p{Script=Han}/u
@@ -96,6 +97,17 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** Call `onEnd` whenever any tracked session stops running (an Agent turn ended somewhere). */
+    function watchTurnEnds(tracker, onEnd) {
+      let running = new Set()
+      return tracker.subscribe(() => {
+        const now = new Set([...tracker.getSnapshot()].filter(([, entry]) => entry.running).map(([id]) => id))
+        const ended = [...running].some((id) => !now.has(id))
+        running = now
+        if (ended) onEnd()
+      })
+    }
+
     /** Carry the panel into the next session only when it was visible in the one being left (spec §4.1). */
     function createFollower({ mounted, isVisible, enabled, open, schedule }) {
       let previous = mounted.getSnapshot()
@@ -178,14 +190,65 @@ window.__ModuleLoader__.load({
         const start = points[index]
         const end = points[index + 1]
         if (start === end) continue
+        const gloss = glosses.find((item) => start >= item.start && end <= item.end)
         pieces.push({
           text: text.slice(start, end),
           quote: quotes.some((quote) => start >= quote.start && end <= quote.end),
-          noted: glosses.some((gloss) => start >= gloss.start && end <= gloss.end),
-          glossesAfter: glosses.filter((gloss) => gloss.end === end)
+          noted: Boolean(gloss),
+          gloss,
+          whole: Boolean(gloss) && gloss.start === start && gloss.end === end,
+          glossesAfter: glosses.filter((item) => item.end === end)
         })
       }
       return pieces
+    }
+
+    const GLOSS_MODES = ['inline', 'below', 'tap']
+    const GLOSS_LABELS = { inline: '夹注', below: '句下', tap: '点词' }
+
+    /**
+     * Default note layout for a volume: 句下 for poems and dense notes (more
+     * than one per 12 characters), 夹注 for sparse prose. A choice saved for
+     * the volume wins; the old showGloss=false setting maps to 点词.
+     */
+    function glossModeFor(volume, state) {
+      const saved = state?.volumes?.[volume.id]?.glossMode
+      if (GLOSS_MODES.includes(saved)) return saved
+      if (state?.settings?.showGloss === false) return 'tap'
+      if (volume.kind === 'poem') return 'below'
+      const notes = volume.sections.reduce((sum, section) => sum + section.notes.length, 0)
+      const chars = volume.sections.reduce((sum, section) => sum + section.paragraphs.reduce((n, paragraph) => n + Array.from(paragraph.text.replace(/[\p{P}\s]/gu, '')).length, 0), 0)
+      return chars && notes / chars > 1 / 12 ? 'below' : 'inline'
+    }
+
+    /** Split a paragraph into its lines with the quotes and glosses that start on each line, offsets made line-local. */
+    function lineUnits(paragraph, glosses) {
+      const units = []
+      let start = 0
+      for (const text of paragraph.text.split('\n')) {
+        const end = start + text.length
+        const local = (range) => ({ ...range, start: Math.max(range.start, start) - start, end: Math.min(range.end, end) - start })
+        units.push({
+          text,
+          quotes: paragraph.quotes.filter((quote) => quote.start < end && quote.end > start).map(local),
+          glosses: glosses.filter((gloss) => gloss.start >= start && gloss.start < end).map(local)
+        })
+        start = end + 1
+      }
+      return units
+    }
+
+    /** Notes whose word is not matched in the section's text (sectionGlosses places each note at most once). */
+    function notesOutsideText(section) {
+      const placed = new Set(sectionGlosses(section).flat().map((gloss) => gloss.note))
+      return section.notes.filter((note) => !placed.has(note))
+    }
+
+    /** Per-character readings when the syllable count matches the word, else null (shown in the note instead). */
+    function rubyOf(note) {
+      if (!note?.reading) return null
+      const syllables = note.reading.trim().split(/\s+/)
+      return syllables.length === Array.from(note.word).length ? syllables : null
     }
 
     const LEADING_PUNCT = /^[，。；：、？！”’」』）》…—]+/u
@@ -299,6 +362,7 @@ window.__ModuleLoader__.load({
         next.ui.volume = op.volumeId
         next.volumes[op.volumeId] = { ...(next.volumes[op.volumeId] || {}), lastSection: op.sectionId, readAt: new Date().toISOString() }
       } else if (op.op === 'settings') next.settings = { ...next.settings, ...op.patch }
+      else if (op.op === 'gloss') next.volumes[op.volumeId] = { ...(next.volumes[op.volumeId] || {}), glossMode: op.mode }
       else if (op.op === 'level') next.cards[op.key] = { ...(next.cards[op.key] || {}), level: op.level }
       else if (op.op === 'rate') {
         const level = next.cards[op.key]?.level || 0
@@ -339,6 +403,10 @@ window.__ModuleLoader__.load({
       let progressTimer = null
       let progressOp = null
       let loadedAt = 0
+      // Every state op bumps this. A library response that was requested before an op
+      // carries a state snapshot that may predate it, so it must not replace the newer base.
+      let opsSent = 0
+      let loading = null
 
       function set(patch) {
         value = { ...value, ...patch }
@@ -351,6 +419,7 @@ window.__ModuleLoader__.load({
 
       function enqueue(op) {
         const entry = { op }
+        opsSent++
         pending.push(entry)
         set({ state: display() })
         chain = chain.then(async () => {
@@ -382,26 +451,41 @@ window.__ModuleLoader__.load({
           listeners.add(listener)
           return () => listeners.delete(listener)
         },
-        async load() {
-          set({ status: value.library ? value.status : 'loading', error: '' })
+        load() {
+          // One reload at a time; several panes and timers may ask together.
+          if (!loading) loading = this.reload().finally(() => { loading = null })
+          return loading
+        },
+        async reload() {
+          const before = value.library ? new Set(value.library.volumes.map((row) => row.id)) : null
+          set({ status: value.library ? value.status : 'loading', error: '', refreshing: Boolean(value.library) })
           try {
             await flush()
             await chain
+            const sentBefore = opsSent
             const data = await request(api.library)
-            base = data.state
+            // Ops sent while the library was loading already returned a newer state; keep it.
+            if (opsSent === sentBefore) base = data.state
             const revisions = new Map(data.volumes.map((row) => [row.id, row.revision]))
             const volumes = Object.fromEntries(Object.entries(value.volumes).filter(([id, entry]) => entry.status === 'ready' && entry.volume.revision === revisions.get(id)))
             loadedAt = Date.now()
+            const added = before ? data.volumes.filter((row) => row.id && !row.errors?.length && !before.has(row.id)).map((row) => ({ id: row.id, title: row.title, firstSection: row.sectionIds?.[0] })) : []
             set({
               status: 'ready',
+              refreshing: false,
+              added: added.length ? [...(value.added || []).filter((item) => !added.some((next) => next.id === item.id)), ...added] : (value.added || []),
               library: data,
               volumes,
               state: display(),
               notice: data.recovered ? 'state.json 无法解析，已另存为 ' + data.recovered + '，进度从头开始' : value.notice
             })
           } catch (error) {
-            set({ status: 'error', error: error.message })
+            loadedAt = Date.now() // do not retry every second
+            set({ status: value.library ? 'ready' : 'error', error: error.message, refreshing: false, notice: value.library ? '重新读取书库失败：' + error.message : value.notice })
           }
+        },
+        dismissAdded(id) {
+          set({ added: id ? (value.added || []).filter((item) => item.id !== id) : [] })
         },
         async ensureVolume(id) {
           const current = value.volumes[id]
@@ -427,7 +511,7 @@ window.__ModuleLoader__.load({
         flush,
         /** Reload when shown again, at most every few seconds (several panes may become visible together). */
         refreshIfStale(maxAgeMs = 3000) {
-          if (value.status === 'loading' || Date.now() - loadedAt < maxAgeMs) return
+          if (loading || Date.now() - loadedAt < maxAgeMs) return
           this.load()
         },
         setEncounter(key) {
@@ -440,6 +524,11 @@ window.__ModuleLoader__.load({
           if (!card) return
           set({ encounterKey: card.key })
           this.send({ op: 'seen', key: card.key })
+        },
+        /** Ask the host to set verified: true on a library volume, then reload so recitation unlocks. */
+        async markVerified(id) {
+          await request(api.markVerified, { id })
+          await this.load()
         },
         dismissNotice() {
           set({ notice: '' })
@@ -479,7 +568,16 @@ window.__ModuleLoader__.load({
 .vr-notice{display:flex;gap:8px;align-items:baseline;padding:6px 8px;border-radius:6px;background:color-mix(in srgb,#e9c46a 22%,transparent)}
 .vr-text{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:15.5px;line-height:1.95;letter-spacing:.02em}
 .vr-text p{margin:0 0 .6em}
-.vr-quote{background:color-mix(in srgb,#e9c46a 20%,transparent);border-radius:2px}
+.vr-quote{color:var(--vr-accent,color-mix(in srgb,#b8862b 85%,currentColor))}
+.vr-para{margin:0 0 .7em}
+.vr-line p{margin:0}
+.vr-mode-below .vr-line p{line-height:2.3}
+.vr-mode-below ruby rt{font-size:.48em;color:var(--vr-cinnabar);letter-spacing:0;font-family:system-ui,sans-serif}
+.vr-under{text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 55%,transparent);text-underline-offset:5px}
+.vr-tap{cursor:pointer;text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 70%,transparent);text-underline-offset:5px;border-radius:2px}
+.vr-tap.vr-open{background:color-mix(in srgb,var(--vr-cinnabar) 10%,transparent)}
+.vr-notes-row{display:flex;flex-wrap:wrap;gap:1px 12px;margin:1px 0 8px;font-size:11.5px;line-height:1.55;letter-spacing:0;opacity:.85}
+.vr-bn b{color:var(--vr-cinnabar);font-weight:600;margin-right:2px}
 .vr-noted{text-decoration:underline dotted color-mix(in srgb,var(--vr-cinnabar) 70%,transparent);text-underline-offset:4px}
 .vr-keep{white-space:nowrap}
 .vr-gloss{white-space:normal;display:inline-flex;flex-direction:column;vertical-align:middle;font-size:9.5px;line-height:1.15;color:var(--vr-cinnabar);margin:0 2px;letter-spacing:0;font-family:inherit;cursor:pointer;max-width:12em}
@@ -531,6 +629,11 @@ window.__ModuleLoader__.load({
 .vr-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between}
 .vr-rate button{min-width:52px}
 .vr-error{color:var(--vr-cinnabar)}
+.vr-refresh{font-size:14px;line-height:1.3}
+.vr-spinning{animation:vr-spin .8s linear infinite}
+@keyframes vr-spin{to{transform:rotate(360deg)}}
+.vr-added{flex-wrap:wrap;align-items:center}
+.vr-added button{padding:1px 8px}
 .vr-accent .vr-title{color:var(--vr-accent)}
 .vr-accent .vr-guide{border-left-color:var(--vr-accent)}
 .vr-card.vr-accent{border-top:3px solid var(--vr-accent)}
@@ -568,7 +671,24 @@ window.__ModuleLoader__.load({
         bottom ? h('span', null, bottom) : null)
     }
 
-    function SectionText({ section, showGloss }) {
+    function NoteLine({ items }) {
+      if (!items.length) return null
+      return h('div', { className: 'vr-notes-row' }, ...items.map(({ note, ruby }) => h('span', { key: note.word, className: 'vr-bn' },
+        h('b', null, note.word), (note.reading && !ruby ? ' ' + note.reading : '') + '：' + note.gloss)))
+    }
+
+    function Word({ piece, mode, open, onToggle }) {
+      const className = [piece.quote && 'vr-quote', mode === 'tap' && 'vr-tap', mode === 'tap' && open && 'vr-open', mode === 'below' && 'vr-under'].filter(Boolean).join(' ') || undefined
+      const ruby = mode === 'below' && piece.whole ? rubyOf(piece.gloss.note) : null
+      const content = ruby
+        ? h('ruby', null, ...Array.from(piece.text).flatMap((char, index) => [char, h('rt', { key: index }, ruby[index])]))
+        : piece.text
+      return mode === 'tap'
+        ? h('span', { className, role: 'button', tabIndex: 0, title: '点击看注释', onClick: onToggle, onKeyDown: (event) => { if (event.key === 'Enter') onToggle() } }, content)
+        : h('span', { className }, content)
+    }
+
+    function SectionText({ section, mode = 'inline' }) {
       const glosses = useMemo(() => sectionGlosses(section), [section])
       const [openNotes, setOpenNotes] = useState(() => new Set())
       function toggle(word) {
@@ -577,8 +697,20 @@ window.__ModuleLoader__.load({
         else next.add(word)
         setOpenNotes(next)
       }
+      if (mode !== 'inline') {
+        return h('div', { className: 'vr-text vr-mode-' + mode }, ...section.paragraphs.map((paragraph, index) =>
+          h('div', { key: index, className: 'vr-para' }, ...lineUnits(paragraph, glosses[index]).map((unit, lineIndex) => {
+            const pieces = textPieces(unit.text, unit.quotes, unit.glosses)
+            const shown = unit.glosses.filter((gloss) => mode === 'below' || openNotes.has(gloss.note.word))
+            return h('div', { key: lineIndex, className: 'vr-line' },
+              h('p', null, ...pieces.map((piece, pieceIndex) => piece.noted
+                ? h(Word, { key: pieceIndex, piece, mode, open: openNotes.has(piece.gloss.note.word), onToggle: () => toggle(piece.gloss.note.word) })
+                : h('span', { key: pieceIndex, className: piece.quote ? 'vr-quote' : undefined }, piece.text))),
+              h(NoteLine, { items: shown.map((gloss) => ({ note: gloss.note, ruby: mode === 'below' && gloss.end - gloss.start === gloss.note.word.length ? rubyOf(gloss.note) : null })) }))
+          }))))
+      }
       return h('div', { className: 'vr-text' }, ...section.paragraphs.map((paragraph, index) => {
-        const plan = renderPlan(textPieces(paragraph.text, paragraph.quotes, showGloss ? glosses[index] : []))
+        const plan = renderPlan(textPieces(paragraph.text, paragraph.quotes, glosses[index]))
         return h('p', { key: index }, ...plan.map((item, itemIndex) => {
           const text = h('span', { key: 't', className: [item.quote && 'vr-quote', item.noted && 'vr-noted'].filter(Boolean).join(' ') || undefined }, ...lines(item.text))
           if (!item.glosses.length) return h('span', { key: itemIndex }, text)
@@ -662,6 +794,32 @@ window.__ModuleLoader__.load({
 
     // ---------------------------------------------------------------- views
 
+    /** 「只能阅读」提示；书库里未核对的书卷可由用户确认已核对（只改 frontmatter 的 verified）。 */
+    function Unverified({ app, volume }) {
+      const [step, setStep] = useState('idle')
+      const [error, setError] = useState('')
+      const canMark = volume.origin === 'library' && volume.integrity === 'ok' && volume.verified === false
+      async function mark() {
+        setStep('busy')
+        setError('')
+        try {
+          await app.markVerified(volume.id)
+          setStep('done')
+        } catch (failure) {
+          setError(failure.message)
+          setStep('confirm')
+        }
+      }
+      return h('div', { className: 'vr-small vr-muted vr-row' },
+        h('span', { className: 'vr-grow' }, '这一卷' + (volume.integrity === 'mismatch' ? '原文指纹不一致' : '还未核对') + '，只能阅读，不能背诵。'),
+        canMark && step === 'idle' ? h('button', { type: 'button', onClick: () => setStep('confirm') }, '我已核对') : null,
+        canMark && step !== 'idle' && step !== 'done' ? h('span', { className: 'vr-row' },
+          h('span', null, '已逐字核对原文？'),
+          h('button', { type: 'button', disabled: step === 'busy', onClick: () => void mark() }, '确认'),
+          h('button', { type: 'button', disabled: step === 'busy', onClick: () => setStep('idle') }, '取消')) : null,
+        error ? h('span', { className: 'vr-error' }, error) : null)
+    }
+
     function Shelf({ rows, state, currentId, onPick, onClose }) {
       const [query, setQuery] = useState('')
       const [filter, setFilter] = useState('all')
@@ -716,7 +874,6 @@ window.__ModuleLoader__.load({
       const volumeId = state.ui.volume && rows.some((row) => row.id === state.ui.volume) ? state.ui.volume : rows.find((row) => !row.errors.length)?.id
       const entry = volumeId ? snapshot.volumes[volumeId] : undefined
       const [reciting, setReciting] = useState(false)
-      const [showTranslation, setShowTranslation] = useState(false)
       // First visit (no volume chosen yet): start on the shelf.
       const [shelfOpen, setShelfOpen] = useState(!state.ui.volume || !volumeId)
       const cellsRef = useRef(null)
@@ -729,8 +886,8 @@ window.__ModuleLoader__.load({
       const section = sections[index]
       useEffect(() => {
         setReciting(false)
-        setShowTranslation(false)
       }, [volumeId, section?.id])
+      const showTranslation = state.settings.translationOpen !== false
       useEffect(() => {
         cellsRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
       }, [volumeId, index, shelfOpen])
@@ -740,6 +897,9 @@ window.__ModuleLoader__.load({
         app.progress(volumeId, sections[target].id)
       }
       const cardKey = volume && section ? volume.id + '#' + section.id : ''
+      const glossMode = volume ? glossModeFor(volume, state) : 'inline'
+      // 句下 already shows the notes found in the text; the list keeps only the rest (e.g. notes on the title).
+      const listedNotes = !section ? [] : glossMode === 'below' ? notesOutsideText(section) : section.notes
 
       const currentRow = rows.find((row) => row.id === volumeId)
       const accent = volume?.colorHex || currentRow?.colorHex
@@ -794,20 +954,29 @@ window.__ModuleLoader__.load({
               onRate: (rating) => app.send({ op: 'rate', key: cardKey, rating }),
               onExit: () => setReciting(false)
             })
-            : h(SectionText, { key: 'text-' + cardKey, section, showGloss: state.settings.showGloss }),
+            : h(SectionText, { key: 'text-' + cardKey + '-' + glossMode, section, mode: glossMode }),
           !reciting && showTranslation && section.translation ? h('p', { key: 'trans', className: 'vr-trans' }, section.translation) : null,
-          !reciting && section.notes.length ? h('details', { key: 'notes', className: 'vr-notes' },
-            h('summary', null, '本节注释（' + section.notes.length + '）'),
-            h('ul', null, ...section.notes.map((note) => h('li', { key: note.word }, h('b', null, note.word), note.reading ? ' ' + note.reading : '', '：' + note.gloss)))) : null,
+          !reciting && listedNotes.length ? h('details', {
+            key: 'notes-' + cardKey, className: 'vr-notes', open: state.settings.notesOpen !== false,
+            onToggle: (event) => {
+              const open = event.currentTarget.open
+              if (open !== (state.settings.notesOpen !== false)) app.send({ op: 'settings', patch: { notesOpen: open } })
+            }
+          },
+            h('summary', null, (glossMode === 'below' ? '其余注释（' : '本节注释（') + listedNotes.length + '）'),
+            h('ul', null, ...listedNotes.map((note) => h('li', { key: note.word }, h('b', null, note.word), note.reading ? ' ' + note.reading : '', '：' + note.gloss)))) : null,
           h('div', { key: 'actions', className: 'vr-actions' },
             h('div', { className: 'vr-row' },
               h('button', { type: 'button', disabled: index === 0, onClick: () => go(index - 1) }, '‹ 上一节'),
               h('button', { type: 'button', disabled: index >= sections.length - 1, onClick: () => go(index + 1) }, '下一节 ›')),
             h('div', { className: 'vr-row' },
-              !reciting && section.translation ? h('button', { type: 'button', 'aria-pressed': showTranslation, onClick: () => setShowTranslation(!showTranslation) }, '译') : null,
-              !reciting ? h('button', { type: 'button', 'aria-pressed': state.settings.showGloss, onClick: () => app.send({ op: 'settings', patch: { showGloss: !state.settings.showGloss } }) }, '注') : null,
+              !reciting && section.translation ? h('button', { type: 'button', 'aria-pressed': showTranslation, title: showTranslation ? '收起译文' : '展开译文', onClick: () => app.send({ op: 'settings', patch: { translationOpen: !showTranslation } }) }, '译') : null,
+              !reciting && section.notes.length ? h('button', {
+                type: 'button', title: '注释显示：' + GLOSS_LABELS[glossMode] + '（点击切换：夹注 → 句下 → 点词）',
+                onClick: () => app.send({ op: 'gloss', volumeId: volume.id, sectionId: section.id, mode: GLOSS_MODES[(GLOSS_MODES.indexOf(glossMode) + 1) % GLOSS_MODES.length] })
+              }, GLOSS_LABELS[glossMode]) : null,
               !reciting && volume.recitable ? h('button', { type: 'button', onClick: () => setReciting(true) }, '试背') : null)),
-          !volume.recitable && !volume.errors.length ? h('p', { key: 'locked', className: 'vr-small vr-muted' }, '这一卷' + (volume.integrity === 'mismatch' ? '原文指纹不一致' : '还未核对') + '，只能阅读，不能背诵。') : null,
+          !volume.recitable && !volume.errors.length ? h(Unverified, { key: 'locked', app, volume }) : null,
           index < sections.length - 1 ? h('button', { key: 'next', type: 'button', className: 'vr-dim', onClick: () => go(index + 1) }, '↓ ' + sections[index + 1].title + '　' + sections[index + 1].paragraphs[0].text.replace(/\n/g, ' ')) : null
         ] : null)
     }
@@ -900,7 +1069,6 @@ window.__ModuleLoader__.load({
       const toggle = (key, label) => h('label', { className: 'vr-row' },
         h('input', { type: 'checkbox', checked: state.settings[key], onChange: (event) => app.send({ op: 'settings', patch: { [key]: event.target.checked } }) }), label)
       return h('div', { className: 'vr-pop' },
-        toggle('showGloss', '显示夹注'),
         toggle('followSessions', '正在读时切换会话，阅读器跟过去'),
         h('label', { className: 'vr-row' }, 'Agent 运行超过',
           h('input', { type: 'number', min: 3, max: 600, value: seconds, style: { width: '64px' }, onChange: (event) => setSeconds(event.target.value), onBlur: commitSeconds, onKeyDown: (event) => { if (event.key === 'Enter') commitSeconds() } }),
@@ -943,6 +1111,20 @@ window.__ModuleLoader__.load({
       }
       ctx.effect(() => () => { app.flush() }, 'vibe-reader: flush progress')
 
+      // 入藏 happens inside an Agent turn: reread the library shortly after any turn ends.
+      ctx.effect(() => {
+        let timer = null
+        const stop = watchTurnEnds(tracker, () => {
+          if (!app.getSnapshot().library) return
+          clearTimeout(timer)
+          timer = setTimeout(() => app.refreshIfStale(0), 800)
+        })
+        return () => {
+          stop()
+          clearTimeout(timer)
+        }
+      }, 'vibe-reader: refresh after agent turns')
+
       function openSession(id) {
         try { ctx.uiWorkspace?.openSession(id) } catch (error) { console.warn('[vibe-reader] openSession failed', error) }
       }
@@ -966,7 +1148,10 @@ window.__ModuleLoader__.load({
             return
           }
           app.refreshIfStale()
-          const timer = setInterval(() => setNow(Date.now()), 1000)
+          const timer = setInterval(() => {
+            setNow(Date.now())
+            app.refreshIfStale(REFRESH_POLL_MS) // picks up edits made outside DSH, e.g. in Obsidian
+          }, 1000)
           return () => clearInterval(timer)
         }, [tab.visible])
 
@@ -984,7 +1169,20 @@ window.__ModuleLoader__.load({
                 h('button', { type: 'button', 'aria-pressed': current === 'study', disabled: !snapshot.state, onClick: () => app.send({ op: 'view', view: 'study' }) }, '修业')),
               h('span', { className: 'vr-grow' }),
               h(StatusChip, { view, open: panel === 'status', onToggle: () => togglePanel('status') }),
+              h('button', { type: 'button', className: 'vr-refresh' + (snapshot.refreshing ? ' vr-spinning' : ''), title: '重新读取书库', 'aria-label': '重新读取书库', disabled: !snapshot.library || snapshot.refreshing, onClick: () => app.load() }, '↻'),
               h('button', { type: 'button', title: '设置', 'aria-expanded': panel === 'settings', disabled: !snapshot.state, onClick: () => togglePanel('settings') }, '⚙')),
+            (snapshot.added || []).length ? h('div', { className: 'vr-notice vr-small vr-added' },
+              h('span', null, '新入藏：'),
+              ...snapshot.added.map((item) => h('button', {
+                key: item.id, type: 'button', title: '在修业中打开',
+                onClick: () => {
+                  app.progress(item.id, item.firstSection || 's1')
+                  app.send({ op: 'view', view: 'study' })
+                  app.dismissAdded(item.id)
+                }
+              }, '《' + item.title + '》')),
+              h('span', { className: 'vr-grow' }),
+              h('button', { type: 'button', onClick: () => app.dismissAdded() }, '知道了')) : null,
             panel === 'status' ? h(StatusPanel, { view, now, openSession }) : null,
             panel === 'settings' && snapshot.state ? h(SettingsPanel, { app, snapshot }) : null,
             snapshot.notice ? h('div', { className: 'vr-notice vr-small' }, h('span', { className: 'vr-grow' }, snapshot.notice), h('button', { type: 'button', onClick: app.dismissNotice }, '知道了')) : null),
@@ -1035,7 +1233,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace'],
       apply,
-      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, createTracker, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, SettingsPanel, Recite, SectionText } }
     }
   }
 })

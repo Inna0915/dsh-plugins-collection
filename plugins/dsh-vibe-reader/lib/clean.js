@@ -14,6 +14,8 @@ const HAN = /\p{Script=Han}/u
 const CJK_NEAR = /[\p{Script=Han}，。；：？！、“”‘’「」『』《》（）…—]/u
 const HALF_TO_FULL = { '?': '？', '!': '！', ',': '，', ';': '；', ':': '：' }
 const NOTE_ENTRY = /^(\S+?)\s+([^\s：:]+)\s*[：:]\s*(.+)$/u
+/** 繁转简不会处理的常见异体字（实测 opencc-js t→cn）。只报告，不改原文。 */
+export const VARIANTS = Object.freeze({ 崐: '昆', 茍: '苟', 猨: '猿', 桮: '杯', 胷: '胸', 鬭: '斗', 菓: '果', 竝: '并', 鴈: '雁', 麤: '粗', 甯: '宁' })
 
 let converter
 
@@ -97,7 +99,8 @@ function pairsOf(before, after) {
  */
 export async function cleanParagraphs(paragraphs, { traditional = false, t2s } = {}) {
   const convert = traditional ? (t2s || await loadT2S()) : (text) => text
-  const report = { notes: 0, spaces: 0, punctuation: 0, quotes: 0, pairs: [], warnings: [] }
+  const report = { notes: 0, spaces: 0, punctuation: 0, quotes: 0, pairs: [], variants: [], warnings: [] }
+  const variants = new Map()
   const pairs = new Map()
   let lengthChanged = false
   const out = []
@@ -116,6 +119,7 @@ export async function cleanParagraphs(paragraphs, { traditional = false, t2s } =
     if (changed) for (const [key, count] of changed) pairs.set(key, (pairs.get(key) || 0) + count)
     else lengthChanged = true
     if (!text) continue
+    for (const char of text) if (VARIANTS[char]) variants.set(char, (variants.get(char) || 0) + 1)
     out.push({
       text,
       notes: extracted.notes.map((note) => ({ word: convert(note.word), gloss: convert(note.gloss) }))
@@ -125,6 +129,10 @@ export async function cleanParagraphs(paragraphs, { traditional = false, t2s } =
     const [from, to] = Array.from(key)
     return { from, to, count }
   }).sort((a, b) => b.count - a.count || a.from.localeCompare(b.from))
+  report.variants = [...variants].map(([char, count]) => ({ char, common: VARIANTS[char], count }))
+  if (report.variants.length) {
+    report.warnings.push('原文用了异体字：' + report.variants.map((item) => `${item.char}（通行作「${item.common}」）${item.count > 1 ? '×' + item.count : ''}`).join('、') + '。原文未改动；要不要改用通行字，请问用户（改用就请用户粘贴他要的版本）')
+  }
   if (lengthChanged) report.warnings.push('繁转简改变了某段的字数（词组转换），繁简对应表不完整，请对照原文核对')
   const nonHan = out.some((paragraph) => !HAN.test(paragraph.text))
   if (nonHan) report.warnings.push('有段落不含汉字，请确认是否为正文')

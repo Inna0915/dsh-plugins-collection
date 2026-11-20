@@ -28,7 +28,7 @@ export function defaultState() {
     volumes: {},
     cards: {},
     resurface: {},
-    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false }
+    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false, translationOpen: true, notesOpen: true }
   }
 }
 
@@ -62,7 +62,7 @@ function settingsPatch(patch, lenient = false) {
     if (key === 'readAfterSeconds') {
       if (Number.isInteger(value) && value >= 3 && value <= 600) out[key] = value
       else if (!lenient) throw new OpError('可读阈值应为 3～600 秒的整数')
-    } else if (['followSessions', 'showGloss', 'vertical'].includes(key)) {
+    } else if (['followSessions', 'showGloss', 'vertical', 'translationOpen', 'notesOpen'].includes(key)) {
       if (typeof value === 'boolean') out[key] = value
       else if (!lenient) throw new OpError(`设置 ${key} 应为开或关`)
     } else if (!lenient) {
@@ -133,6 +133,12 @@ export function applyOp(state, op, now, resolve = () => ({ exists: true, recitab
       if (!resolve(key).exists) throw new OpError('没有这张卡')
       const entry = plainObject(next.resurface[key])
       next.resurface[key] = { shown: (entry.shown || 0) + 1, lastShown: dayOf(now) }
+      return next
+    }
+    case 'gloss': {
+      if (!['inline', 'below', 'tap'].includes(op.mode)) throw new OpError('注释显示只能是夹注、句下或点词')
+      if (!resolve(cardKey({ key: `${op.volumeId}#${op.sectionId}` })).exists) throw new OpError('没有这一卷')
+      next.volumes[op.volumeId] = { ...plainObject(next.volumes[op.volumeId]), glossMode: op.mode }
       return next
     }
     case 'settings': {

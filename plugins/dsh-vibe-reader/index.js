@@ -14,7 +14,10 @@ import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createCorpus } from './lib/corpus.js'
+import { setFrontmatter } from './lib/importer.js'
 import { createLibrary, createStateStore, OpError, resolverFor } from './lib/store.js'
+import { randomUUID } from 'node:crypto'
+import { rename, rm, writeFile } from 'node:fs/promises'
 import { createToolService, TOOL_NAME, toolDescription, toolParameters } from './lib/tool.js'
 
 export const name = 'vibe-reader'
@@ -88,6 +91,27 @@ export function createHandlers({ library, state, log = console }) {
       if (!volume) return json({ error: '没有这一卷' }, 404)
       return json({ volume })
     }),
+    /** User confirms a library volume's original is checked: set verified: true, nothing else. */
+    markVerified: (request) => guard(async () => {
+      const { value, error } = await readJson(request)
+      if (error) return error
+      const snapshot = await library.scan()
+      const volume = typeof value.id === 'string' ? snapshot.volumes.get(value.id) : undefined
+      if (!volume) return json({ error: '没有这一卷' }, 404)
+      if (volume.origin !== 'library') return json({ error: '内置书卷不能修改' }, 400)
+      if (volume.errors.length || volume.integrity !== 'ok') return json({ error: '这一卷有格式错误或原文指纹不一致，先修好再标记' }, 400)
+      if (volume.verified !== false) return json({ ok: true, verified: volume.verified })
+      const source = await readFile(volume.path, 'utf8')
+      const updated = setFrontmatter(source, { verified: true })
+      const temporary = volume.path + '.' + randomUUID() + '.tmp'
+      try {
+        await writeFile(temporary, updated, 'utf8')
+        await rename(temporary, volume.path)
+      } finally {
+        await rm(temporary, { force: true })
+      }
+      return json({ ok: true, verified: true })
+    }),
     state: (request) => guard(async () => {
       const { value, error } = await readJson(request)
       if (error) return error
@@ -107,7 +131,8 @@ export function apply(ctx, config) {
   const routes = [
     ['/api/vibe-reader/library', ['GET'], handlers.library],
     ['/api/vibe-reader/volume', ['POST'], handlers.volume],
-    ['/api/vibe-reader/state', ['POST'], handlers.state]
+    ['/api/vibe-reader/state', ['POST'], handlers.state],
+    ['/api/vibe-reader/mark-verified', ['POST'], handlers.markVerified]
   ]
   // Optional services: the panel needs HTTP; the tool and skill work without it (e.g. headless).
   const withConnection = (callback) => (ctx.inject ? ctx.inject(['connection'], callback) : callback(ctx))

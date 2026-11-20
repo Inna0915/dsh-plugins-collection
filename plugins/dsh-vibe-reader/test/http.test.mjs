@@ -46,7 +46,7 @@ test('paths: default under DSH_HOME, absolute libraryRoot honoured, relative ign
 test('http: library, volume, state round trip', async () => {
   const app = await boot()
   try {
-    assert.deepEqual([...app.routes.keys()].sort(), ['/api/vibe-reader/library', '/api/vibe-reader/state', '/api/vibe-reader/volume'])
+    assert.deepEqual([...app.routes.keys()].sort(), ['/api/vibe-reader/library', '/api/vibe-reader/mark-verified', '/api/vibe-reader/state', '/api/vibe-reader/volume'])
     const library = await app.call('/api/vibe-reader/library')
     assert.equal(library.status, 200)
     assert.deepEqual(library.body.volumes.map((row) => row.id).sort(), ['qian-chibi-fu', 'tangshi-liushou', 'yueyanglou-ji'])
@@ -73,6 +73,26 @@ test('http: library, volume, state round trip', async () => {
     assert.equal((await app.call('/api/vibe-reader/state', 'POST', '{')).status, 400)
     assert.equal((await app.call('/api/vibe-reader/state', 'POST', '[]')).status, 400)
     assert.equal((await app.call('/api/vibe-reader/state', 'POST', 'x'.repeat(9000))).status, 413)
+
+    const gloss = await app.call('/api/vibe-reader/state', 'POST', { op: 'gloss', volumeId: 'yueyanglou-ji', sectionId: 's1', mode: 'below' })
+    assert.equal(gloss.body.state.volumes['yueyanglou-ji'].glossMode, 'below')
+    assert.equal((await app.call('/api/vibe-reader/state', 'POST', { op: 'gloss', volumeId: 'yueyanglou-ji', sectionId: 's1', mode: 'huge' })).status, 400)
+
+    // mark-verified: library volumes only, frontmatter only
+    assert.equal((await app.call('/api/vibe-reader/mark-verified', 'POST', { id: 'yueyanglou-ji' })).status, 400, 'built-in seeds are read-only')
+    const { mkdir, writeFile, readFile: read } = await import('node:fs/promises')
+    const { readFileSync } = await import('node:fs')
+    const seed = readFileSync(new URL('../seeds/tangshi-liushou.md', import.meta.url), 'utf8')
+    const mine = seed.replace('id: tangshi-liushou', 'id: mine').replace('verified: corpus', 'verified: false')
+    await mkdir(join(app.home, 'vibe-reader', 'library'), { recursive: true })
+    await writeFile(join(app.home, 'vibe-reader', 'library', 'mine.md'), mine, 'utf8')
+    const marked = await app.call('/api/vibe-reader/mark-verified', 'POST', { id: 'mine' })
+    assert.deepEqual(marked.body, { ok: true, verified: true })
+    const after = await read(join(app.home, 'vibe-reader', 'library', 'mine.md'), 'utf8')
+    assert.equal(after, mine.replace('verified: false', 'verified: true'), 'only the verified line changes')
+    const relisted = await app.call('/api/vibe-reader/library')
+    assert.equal(relisted.body.volumes.find((row) => row.id === 'mine').recitable, true)
+    assert.equal((await app.call('/api/vibe-reader/mark-verified', 'POST', { id: 'nope' })).status, 404)
   } finally {
     await app.close()
   }

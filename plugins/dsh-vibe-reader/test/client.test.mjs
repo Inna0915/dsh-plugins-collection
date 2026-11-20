@@ -310,3 +310,97 @@ test('apply registers a header button that opens the reader, or collapses it whe
   button.props.onClick()
   assert.deepEqual(calls, [['open', 'vibe-reader'], ['hide', 't2'], ['open', 'vibe-reader']])
 })
+
+test('gloss modes: 句下 for poems and dense notes, 夹注 for sparse prose, saved choice wins', () => {
+  const section = (text, notes) => ({ paragraphs: [{ text, quotes: [] }], notes })
+  const prose = { id: 'p', kind: 'prose', sections: [section('甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥', [{ word: '甲', gloss: 'x' }])] }
+  const dense = { id: 'd', kind: 'prose', sections: [section('甲乙丙丁戊己庚辛', [{ word: '甲', gloss: 'x' }, { word: '丙', gloss: 'y' }])] }
+  const poem = { id: 'q', kind: 'poem', sections: [section('天地玄黄', [])] }
+  assert.equal(t.glossModeFor(prose, {}), 'inline')
+  assert.equal(t.glossModeFor(dense, {}), 'below')
+  assert.equal(t.glossModeFor(poem, {}), 'below')
+  assert.equal(t.glossModeFor(poem, { volumes: { q: { glossMode: 'tap' } } }), 'tap')
+  assert.equal(t.glossModeFor(prose, { settings: { showGloss: false } }), 'tap')
+})
+
+test('lineUnits keeps glosses and quotes on their own line; rubyOf only when syllables match', () => {
+  const paragraph = { text: '天地玄黄，宇宙洪荒。\n日月盈昃，辰宿列张。', quotes: [{ start: 0, end: 9 }] }
+  const glosses = [{ start: 2, end: 4, note: { word: '玄黄' } }, { start: 13, end: 15, note: { word: '盈昃' } }]
+  const units = t.lineUnits(paragraph, glosses)
+  assert.equal(units.length, 2)
+  assert.deepEqual(Array.from(units[0].glosses, (g) => [g.start, g.end]), [[2, 4]])
+  assert.deepEqual(Array.from(units[1].glosses, (g) => [g.start, g.end, g.note.word]), [[2, 4, '盈昃']])
+  assert.deepEqual(Array.from(units[0].quotes, (q) => [q.start, q.end]), [[0, 9]])
+  assert.equal(units[1].quotes.length, 0)
+  assert.deepEqual(Array.from(t.rubyOf({ word: '盈昃', reading: 'yíng zè' })), ['yíng', 'zè'])
+  assert.equal(t.rubyOf({ word: '巨阙', reading: 'què' }), null, '1 syllable for 2 characters goes in the note line')
+  assert.equal(t.rubyOf({ word: '玄黄', gloss: 'x' }), null)
+})
+
+test('watchTurnEnds fires when any session stops running', () => {
+  let snapshot = new Map([['a', { running: false }]])
+  const listeners = new Set()
+  const tracker = { getSnapshot: () => snapshot, subscribe: (fn) => { listeners.add(fn); return () => listeners.delete(fn) } }
+  let ends = 0
+  const stop = t.watchTurnEnds(tracker, () => { ends++ })
+  const emit = (next) => { snapshot = next; listeners.forEach((fn) => fn()) }
+  emit(new Map([['a', { running: true }], ['b', { running: true }]]))
+  assert.equal(ends, 0)
+  emit(new Map([['a', { running: false }], ['b', { running: true }]]))
+  assert.equal(ends, 1)
+  emit(new Map([['a', { running: false }], ['b', { running: true }]]))
+  assert.equal(ends, 1, 'no repeat without a new stop')
+  emit(new Map([['a', { running: false }], ['b', { running: false }]]))
+  assert.equal(ends, 2)
+  stop()
+  assert.equal(listeners.size, 0)
+})
+
+test('reload announces newly added volumes until dismissed', async () => {
+  let rows = [{ id: 'a', title: '甲', errors: [], sectionIds: ['s1'] }]
+  const app = t.createAppStore({ request: async (path) => ({ volumes: rows, cards: [], roots: [], state: { ui: {}, volumes: {}, cards: {}, resurface: {}, settings: {} } }) })
+  await app.load()
+  assert.equal(app.getSnapshot().added.length, 0, 'nothing is new on the first load')
+  rows = [...rows, { id: 'b', title: '乙', errors: [], sectionIds: ['s1', 's2'] }, { id: 'c', title: '坏', errors: ['x'], sectionIds: [] }]
+  await app.load()
+  assert.deepEqual(Array.from(app.getSnapshot().added, (item) => [item.id, item.title, item.firstSection]), [['b', '乙', 's1']])
+  assert.equal(app.getSnapshot().refreshing, false)
+  app.dismissAdded('b')
+  assert.equal(app.getSnapshot().added.length, 0)
+})
+
+test('notesOutsideText keeps only notes that 句下 cannot place in the text', () => {
+  const section = { title: '登鹳雀楼', paragraphs: [{ text: '欲穷千里目', quotes: [] }], notes: [{ word: '鹳雀楼', gloss: '楼名' }, { word: '穷', gloss: '尽' }] }
+  assert.deepEqual(Array.from(t.notesOutsideText(section), (note) => note.word), ['鹳雀楼'])
+})
+
+test('a click during a library reload is not undone by the reload', async () => {
+  // Host state as the library endpoint would read it (before the click) vs. after the ops.
+  let hostState = { ui: { view: 'encounter', volume: 'a' }, volumes: {}, cards: {}, resurface: {}, settings: {} }
+  let releaseLibrary
+  let libraryCalls = 0
+  const request = async (path, body) => {
+    if (path.endsWith('library')) {
+      libraryCalls++
+      const snapshot = structuredClone(hostState) // read before the click…
+      if (libraryCalls > 1) await new Promise((resolve) => { releaseLibrary = resolve }) // …but answered after it
+      return { volumes: [{ id: 'a', errors: [], sectionIds: ['s1'] }, { id: 'b', errors: [], sectionIds: ['s1', 's2'] }], cards: [], roots: [], state: snapshot }
+    }
+    hostState = t.optimistic(hostState, body)
+    return { state: structuredClone(hostState) }
+  }
+  const app = t.createAppStore({ request })
+  await app.load()
+  const reload = app.load()
+  assert.equal(app.load(), reload, 'concurrent loads share one request')
+  while (!releaseLibrary) await new Promise((resolve) => setTimeout(resolve, 1))
+  // 在修业中打开
+  app.progress('b', 's2')
+  await app.send({ op: 'view', view: 'study' })
+  assert.equal(app.getSnapshot().state.ui.view, 'study')
+  releaseLibrary()
+  await reload
+  assert.equal(app.getSnapshot().state.ui.view, 'study', 'the stale library snapshot must not revert the click')
+  assert.equal(app.getSnapshot().state.ui.volume, 'b')
+  assert.equal(libraryCalls, 2)
+})

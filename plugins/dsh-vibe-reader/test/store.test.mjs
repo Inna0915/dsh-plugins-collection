@@ -112,3 +112,13 @@ test('library: built-in seeds, override by id, broken files listed, notes ignore
   assert.deepEqual(resolve('qian-chibi-fu#s9'), { exists: false })
   assert.deepEqual(resolve('broken#s1'), { exists: false })
 }))
+
+test('settings: translation and note list default open and can be turned off', () => {
+  const state = defaultState()
+  assert.equal(state.settings.translationOpen, true)
+  assert.equal(state.settings.notesOpen, true)
+  const next = applyOp(state, { op: 'settings', patch: { translationOpen: false, notesOpen: false } }, now)
+  assert.equal(next.settings.translationOpen, false)
+  assert.equal(next.settings.notesOpen, false)
+  assert.equal(normalizeState({ settings: {} }).settings.translationOpen, true, 'older state files get the new defaults')
+})

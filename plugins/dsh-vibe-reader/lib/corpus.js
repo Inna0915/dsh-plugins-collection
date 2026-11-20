@@ -38,6 +38,59 @@ export function splitAuthor(value = '') {
   return ['', text]
 }
 
+/** 千字文：语料每条是一个无标点的四字句，两句一联补「，」「。」。 */
+export function pairPhrases(phrases) {
+  const lines = []
+  for (let index = 0; index < phrases.length; index += 2) {
+    lines.push(phrases[index + 1] === undefined ? phrases[index] + '。' : `${phrases[index]}，${phrases[index + 1]}。`)
+  }
+  return lines
+}
+
+/** 弟子规：语料用空格分隔三字句，换成「，」并以「。」收尾（否则清洗时空格被删，句子会连在一起）。 */
+export function spacedLine(line) {
+  return String(line).trim().split(/\s+/).join('，') + '。'
+}
+
+const flat = (chapters) => chapters.flatMap((chapter) => chapter.lines)
+
+/** 蒙学韵文：一联一行，按篇章分节。 */
+function mengxueVerse(data, file) {
+  if (!data || Array.isArray(data)) return []
+  const name = file.split('/').pop()
+  const base = { author: data.author || '佚名', layout: 'chapters' }
+  if (name === 'qianziwen.json') {
+    const chapters = [{ title: '千字文', lines: pairPhrases(data.paragraphs) }]
+    return [{ ...base, title: '千字文', dynasty: '南朝梁', chapters, paragraphs: flat(chapters), note: '语料无标点，已按四字一句、两句一联补「，」「。」' }]
+  }
+  if (name.startsWith('sanzijing')) {
+    const chapters = [{ title: '三字经', lines: data.paragraphs }]
+    return [{ ...base, title: `三字經（${data.tags || ''}）`, dynasty: '宋', chapters, paragraphs: flat(chapters) }]
+  }
+  if (name === 'dizigui.json') {
+    const chapters = data.content.map((chapter) => ({ title: chapter.chapter, lines: chapter.paragraphs.map(spacedLine) }))
+    return [{ ...base, title: data.title, dynasty: '清', chapters, paragraphs: flat(chapters), note: '语料用空格分隔三字句，已换成「，」并以「。」收尾' }]
+  }
+  if (name === 'zengguangxianwen.json') {
+    const chapters = data.content.map((chapter) => ({ title: chapter.chapter, lines: chapter.paragraphs }))
+    return [{ ...base, title: data.title, dynasty: '明', chapters, paragraphs: flat(chapters) }]
+  }
+  const chapters = [{ title: data.title, lines: data.paragraphs }]
+  return [{ ...base, title: data.title, dynasty: name === 'zhuzijiaxun.json' ? '明末清初' : '北宋', chapters, paragraphs: flat(chapters) }]
+}
+
+/** 蒙学骈文：声律启蒙按韵、幼学琼林按门类各成一篇，一段一节。 */
+function mengxueProse(data) {
+  if (!data || !Array.isArray(data.content)) return []
+  return data.content.flatMap((volume) => volume.content || []).map((chapter) => ({
+    title: `${data.title}·${String(chapter.chapter).replace(/^[一二三四五六七八九十]+\s*/, (match) => match.trim())}`,
+    author: data.title.includes('聲律') ? '車萬育' : '程登吉',
+    dynasty: '清',
+    paragraphs: chapter.paragraphs,
+    layout: 'sections'
+  }))
+}
+
 const poem = (dynasty, titleKey = 'title', linesKey = 'paragraphs') => (data) => data.map((item) => ({
   title: item[titleKey] || item.title, author: item.author || '', dynasty, paragraphs: item[linesKey], layout: 'lines'
 }))
@@ -80,6 +133,12 @@ export const COLLECTIONS = {
     }))
   },
   nalan: { label: '纳兰性德词', tier: 'core', traditional: false, kind: 'poem', files: ['纳兰性德/纳兰性德诗集.json'], items: poem('清', 'title', 'para') },
+  mengxue: {
+    label: '蒙学', tier: 'core', traditional: true, kind: 'poem',
+    files: ['蒙学/qianziwen.json', '蒙学/sanzijing-new.json', '蒙学/sanzijing-traditional.json', '蒙学/dizigui.json', '蒙学/zengguangxianwen.json', '蒙学/zhuzijiaxun.json', '蒙学/baijiaxing.json'],
+    items: mengxueVerse
+  },
+  mengxueProse: { label: '蒙学（骈文）', tier: 'core', traditional: true, kind: 'prose', files: ['蒙学/shenglvqimeng.json', '蒙学/youxueqionglin.json'], items: mengxueProse },
   quantangshi: { label: '全唐诗', tier: 'deep', traditional: true, kind: 'poem', files: range('全唐诗/poet.tang.', 0, 57000, 1000), items: poem('唐') },
   quansongci: { label: '全宋词', tier: 'deep', traditional: false, kind: 'poem', files: range('宋词/ci.song.', 0, 21000, 1000, ['宋词/ci.song.2019y.json']), items: poem('宋', 'rhythmic') },
   yuanqu: { label: '元曲', tier: 'deep', traditional: false, kind: 'poem', files: ['元曲/yuanqu.json'], items: poem('元') }
@@ -172,7 +231,7 @@ export function createCorpus({ cacheDir, fetchImpl = fetch, ctextKey = '', log =
       author: entry.author,
       dynasty: entry.dynasty,
       paragraphs: entry.item.paragraphs.length,
-      chars: entry.bareText.length,
+      chars: Array.from(entry.bareText).length,
       preview: lines.slice(0, 2).join(' ').slice(0, 48),
       match
     }
@@ -282,10 +341,33 @@ export async function buildDraft({ refs, id, volumeTitle }, get) {
     const cleaned = await cleanParagraphs(item.paragraphs, { traditional: collection.traditional })
     for (const key of ['notes', 'spaces', 'punctuation', 'quotes']) report[key] += cleaned.report[key]
     for (const pair of cleaned.report.pairs) report.pairs.set(pair.from + pair.to, (report.pairs.get(pair.from + pair.to) || 0) + pair.count)
-    report.warnings.push(...cleaned.report.warnings)
+    report.warnings.push(...cleaned.report.warnings.map((warning) => (picked.length > 1 ? `${convert(item.title)}：${warning}` : warning)))
     const title = convert(item.title)
     const author = convert(item.author)
     const meta = kind === 'poem' ? [`> 作者：${[item.dynasty, author].filter(Boolean).join(' · ') || '佚名'}`, ...(item.group ? [`> 出处：${item.group}`] : [])] : []
+    if (item.note) report.warnings.push(`${title}：${item.note}`)
+    if (item.layout === 'chapters') {
+      const lines = cleaned.paragraphs.map((paragraph) => paragraph.text)
+      const total = item.chapters.reduce((sum, chapter) => sum + chapter.lines.length, 0)
+      if (lines.length !== total) throw new CorpusError(`${title} 清洗后行数变了（${total} → ${lines.length}），请检查语料`)
+      let cursor = 0
+      for (const chapter of item.chapters) {
+        const part = lines.slice(cursor, cursor + chapter.lines.length)
+        cursor += chapter.lines.length
+        const chapterTitle = convert(chapter.title)
+        const groups = chunk(part, part.length > LONG_POEM_LINES ? POEM_CHUNK : part.length)
+        groups.forEach((group, index) => {
+          sections.push({
+            title: groups.length > 1 ? `${chapterTitle} · ${index + 1}` : chapterTitle,
+            meta: sections.length === 0 ? meta : [],
+            paragraphs: [group.join('\n')],
+            notes: []
+          })
+          originalParts.push(group.join('\n'))
+        })
+      }
+      continue
+    }
     if (item.layout === 'sections') {
       cleaned.paragraphs.forEach((paragraph, index) => {
         sections.push({ title: `第 ${index + 1} 段`, meta: [], paragraphs: [paragraph.text], notes: paragraph.notes })
@@ -335,7 +417,7 @@ export async function buildDraft({ refs, id, volumeTitle }, get) {
     markdown: lines.join('\n').replace(/\n+$/, '\n'),
     original: originalParts.join('\n\n'),
     sections: sections.length,
-    chars: bare(originalParts.join('')).length,
+    chars: Array.from(bare(originalParts.join(''))).length,
     report: { ...report, pairs: [...report.pairs].map(([key, count]) => ({ from: Array.from(key)[0], to: Array.from(key)[1], count })).sort((a, b) => b.count - a.count) }
   }
 }

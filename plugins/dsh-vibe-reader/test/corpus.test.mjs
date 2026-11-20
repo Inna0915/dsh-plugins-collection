@@ -154,3 +154,32 @@ test('ctext: title search without a key; gettext needs a key; directories list c
     await assert.rejects(corpus.draft({ refs: ['ctext:ctp:analects'], id: 'lunyu' }), (error) => error.chapters?.[0] === 'ctext:ctp:analects/xue-er')
   })
 })
+
+test('蒙学: 千字文 phrases pair into couplets, 弟子规 spaces become commas, chapters become sections', async () => {
+  const { pairPhrases, spacedLine } = await import('../lib/corpus.js')
+  assert.deepEqual(pairPhrases(['天地玄黃', '宇宙洪荒', '日月盈昃']), ['天地玄黃，宇宙洪荒。', '日月盈昃。'])
+  assert.equal(spacedLine('弟子規 聖人訓 首孝弟 次謹信'), '弟子規，聖人訓，首孝弟，次謹信。')
+  const phrases = Array.from({ length: 40 }, (_, index) => '天地玄黃宇宙洪荒日月盈昃辰宿列張寒來暑往秋收冬藏'.slice((index % 6) * 4, (index % 6) * 4 + 4) || '閏餘成歲')
+  const files = {
+    '蒙学/qianziwen.json': { title: '千字文', author: '周興嗣', paragraphs: phrases },
+    '蒙学/dizigui.json': { title: '弟子規', author: '李毓秀', content: [{ chapter: '總敘', paragraphs: ['弟子規 聖人訓 首孝弟 次謹信'] }, { chapter: '入則孝', paragraphs: ['父母呼 應勿緩 父母命 行勿懶'] }] },
+    '蒙学/shenglvqimeng.json': { title: '聲律啓蒙', content: [{ title: '上卷', content: [{ chapter: '一 東', paragraphs: ['雲對雨，雪對風。', '沿對革，異對同。'] }] }] }
+  }
+  await withCorpus({ files }, async (corpus) => {
+    const [qianzi] = (await corpus.search({ query: '千字文', collections: ['mengxue'] })).hits
+    assert.equal(qianzi.author, '周兴嗣')
+    const draft = await corpus.draft({ refs: [qianzi.ref], id: 'qianzi-wen' })
+    const volume = parseVolume(draft.markdown)
+    assert.deepEqual(volume.errors, [])
+    assert.equal(volume.kind, 'poem')
+    assert.deepEqual(volume.sections.map((section) => section.paragraphs[0].text.split('\n').length), [8, 8, 4], '20 couplets → 8 + 8 + 4')
+    assert.equal(volume.sections[0].paragraphs[0].text.split('\n')[0], '天地玄黄，宇宙洪荒。')
+    assert.match(draft.report.warnings.join(), /补「，」「。」/)
+    const di = parseVolume((await corpus.draft({ refs: [(await corpus.search({ query: '弟子规' })).hits[0].ref], id: 'dizigui' })).markdown)
+    assert.deepEqual(di.sections.map((section) => section.title), ['总叙', '入则孝'])
+    assert.equal(di.sections[1].paragraphs[0].text, '父母呼，应勿缓，父母命，行勿懒。')
+    const [dong] = (await corpus.search({ query: '声律启蒙' })).hits
+    assert.equal(dong.title, '声律启蒙·一东')
+    assert.equal(parseVolume((await corpus.draft({ refs: [dong.ref], id: 'shenglv-dong' })).markdown).kind, 'prose')
+  })
+})
