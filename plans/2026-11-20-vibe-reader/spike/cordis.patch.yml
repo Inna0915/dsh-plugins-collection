@@ -1,0 +1,7 @@
+# 书童使用便宜模型；删掉 provider/model 两行则回退到 agentDefaultModel（新会话默认模型）。
+- insert:
+    - id: vibe-reader-spike
+      name: dsh-vibe-reader-spike
+      config:
+        provider: magpie
+        model: workbuddy/deepseek-v4.1-flash
