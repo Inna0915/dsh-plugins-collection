@@ -1,0 +1,95 @@
+/*
+ * 左栏共用样式：唯一来源。规则说明见 docs/sidebar-style.md。
+ * 只改这个文件，然后运行 node scripts/sync-sidebar-style.mjs，把它写进各插件源码里的
+ * 标记处；node scripts/sync-sidebar-style.mjs --check 检查各插件是否已同步。
+ *
+ * 几何数值对齐 dsh-modern-ui 0.1.20 的左栏（内容区左缘记为 0）：
+ *   分组标题文字在 +10；行内容（图标框，或没有图标的文字）在 +12；
+ *   底部入口区自带 2px 内边距；图标框 18px（内放 16px 图标），图标与文字间距 10px，文字在 +40。
+ * scripts/check-dsh-compatibility.cjs 会核对 modern-ui 的这些数值是否变了。
+ */
+:root {
+  --dshx-label-inset: 10px;
+  --dshx-row-inset: 12px;
+  --dshx-footer-inset: 2px;
+  --dshx-icon-box: 18px;
+  --dshx-icon-gap: 10px;
+  --dshx-row-height: 38px;
+  --dshx-rail-size: 36px;
+}
+
+/* Footer entries stack like the navigation list above them. */
+[data-slot="sidebar.footer.action"]:has(> .dshx-entry) {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* A left-sidebar entry = a host navigation row (新会话、插件……). */
+.dshx-entry {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--dshx-icon-gap);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--dshx-row-height);
+  margin: 0;
+  padding: 0 calc(var(--dshx-row-inset) - var(--dshx-footer-inset));
+  border: 0;
+  border-radius: var(--dsw-radius-lg, 16px);
+  background: transparent;
+  color: var(--ink-2, var(--dsw-alias-label-secondary));
+  font: inherit;
+  font-size: var(--fs-strong, 14px);
+  font-weight: 500;
+  line-height: 22px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .14s ease, color .14s ease;
+}
+.dshx-entry:hover {
+  background: var(--hover, var(--dsw-alias-interactive-bg-hover));
+  color: var(--ink, var(--dsw-alias-label-primary));
+}
+.dshx-entry:active {
+  transform: translateY(1px);
+}
+.dshx-entry:focus-visible {
+  outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4d6bfe));
+  outline-offset: -2px;
+}
+.dshx-entry[aria-current="page"] {
+  background: var(--accent-tint, var(--dsw-alias-interactive-bg-hover));
+  color: var(--primary, var(--dsw-alias-state-business-primary, currentColor));
+}
+.dshx-entry-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--dshx-icon-box);
+  height: var(--dshx-icon-box);
+}
+.dshx-entry-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.dshx-entry-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Collapsed rail: icon only, centred. */
+.dshx-entry.dshx-rail {
+  width: var(--dshx-rail-size);
+  height: var(--dshx-rail-size);
+  min-height: var(--dshx-rail-size);
+  padding: 0;
+  justify-content: center;
+  align-self: center;
+}

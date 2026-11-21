@@ -65,4 +65,31 @@ for (const [name, fragments] of Object.entries(hostContracts)) {
   const code = readContractSource(name, 'index.js');
   for (const fragment of fragments) assert.ok(code.includes(normalize(fragment)), `${name}: changed contract ${fragment}`);
 }
-console.log(JSON.stringify({ runtime, exemptionsUsed: false, plugins: rows, clientContractChecks: Object.keys(contracts).length, hostContractChecks: Object.keys(hostContracts).length }, null, 2));
+// shared/sidebar.css aligns the plugins' left-sidebar rows to dsh-modern-ui, which replaces the
+// official sidebar in the Desktop profile. Its tokens and spacing are private, so check the ones
+// the shared values were measured from; class hashes change per build, so match by class suffix.
+const modernUi = path.join(process.env.USERPROFILE || '', '.dsh/profiles/desktop/node_modules/@iroha1145/dsh-modern-ui');
+let modernUiChecks = 'not installed';
+if (fs.existsSync(path.join(modernUi, 'lib/client.js'))) {
+  const code = fs.readFileSync(path.join(modernUi, 'lib/client.js'), 'utf8');
+  const version = JSON.parse(fs.readFileSync(path.join(modernUi, 'package.json'), 'utf8')).version;
+  const rule = (suffix) => new RegExp(`\\.[A-Za-z0-9_]+_${suffix}\\{([^}]*)\\}`, 'g');
+  const declares = (suffix, declaration) => [...code.matchAll(rule(suffix))].some((match) => match[1].includes(declaration));
+  const body = code.match(/body\{([^}]*--ink-2:[^}]*)\}/)?.[1] || '';
+  const expected = {
+    tokens: ['--ink:', '--ink-2:', '--ink-3:', '--hover:', '--hover-2:', '--accent-tint:', '--primary:', '--line-soft:'].filter((token) => !body.includes(token)),
+    'footArea padding 6px 2px 0 (--dshx-footer-inset: 2px)': declares('footArea', 'padding:6px 2px 0'),
+    'panelRow min-height 38px, padding 0 12px, gap 10px (--dshx-row-height, --dshx-row-inset, --dshx-icon-gap)': declares('panelRow', 'min-height:38px') && declares('panelRow', 'padding:0 12px'),
+    'panelGlyph 18px (--dshx-icon-box)': declares('panelGlyph', 'width:18px'),
+    'navSectionLabel margin 12px 10px 6px (--dshx-label-inset: 10px)': declares('navSectionLabel', 'margin:12px 10px 6px'),
+    'workspace sectionHeader padding-left 10px (--dshx-label-inset)': declares('sectionHeader', 'padding-left:10px'),
+    'workspace rows padding 0 12px (--dshx-row-inset)': declares('sessionRow', 'padding:0 12px')
+  };
+  const changed = Object.entries(expected).filter(([key, ok]) => (key === 'tokens' ? ok.length > 0 : !ok)).map(([key, ok]) => (key === 'tokens' ? `missing tokens ${ok.join(' ')}` : key));
+  if (changed.length) {
+    console.error(`dsh-modern-ui ${version} changed what shared/sidebar.css is aligned to:\n  ` + changed.join('\n  ') + '\nUpdate shared/sidebar.css, then run node scripts/sync-sidebar-style.mjs.');
+    process.exitCode = 1;
+  }
+  modernUiChecks = { version, checks: Object.keys(expected).length, changed };
+}
+console.log(JSON.stringify({ runtime, exemptionsUsed: false, plugins: rows, clientContractChecks: Object.keys(contracts).length, hostContractChecks: Object.keys(hostContracts).length, modernUi: modernUiChecks }, null, 2));
