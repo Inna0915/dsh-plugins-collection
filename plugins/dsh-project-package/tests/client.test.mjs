@@ -33,7 +33,10 @@ test('entry is directly above kanban and registers no scan/timer/panel script',(
   shell.apply(ctx);
   const entry=entries.find(x=>x.options.name==='sidebar.footer.action');assert.equal(entry.options.order,-5);
   assert.equal(window.document.querySelectorAll('script').length,0);
-  const button=entry.render({wide:true});button.props.onClick();assert.equal(selected,'dsh-project-package');
+  const element=entry.render({wide:true});const button=element.type(element.props);
+  assert.equal(button.props.className,'dshx-entry','shared left-sidebar entry style (shared/sidebar.css)');
+  button.props.onClick();assert.equal(selected,'dsh-project-package');
+  const rail=entry.render({wide:false});assert.equal(rail.type(rail.props).props.className,'dshx-entry dshx-rail');
   cleanup.forEach(fn=>fn?.());
 });
 test('current project selection prefers exact path then owning reactor',()=>{

@@ -323,18 +323,20 @@ window.__ModuleLoader__.load({
     /* styles                                                            */
     /* ---------------------------------------------------------------- */
 
-    const CSS = `
+    // Left-sidebar entry: shared/sidebar.css (synced by scripts/sync-sidebar-style.mjs; edit there, not here).
+    // It comes first so the .mb-bar rules below only add what the summary bar needs on top of a .dshx-entry.
+    const SIDEBAR_CSS = /* @sidebar-style */ ":root{--dshx-label-inset: 10px;--dshx-row-inset: 12px;--dshx-footer-inset: 2px;--dshx-icon-box: 18px;--dshx-icon-gap: 10px;--dshx-row-height: 38px;--dshx-rail-size: 36px}[data-slot=\"sidebar.footer.action\"]:has(> .dshx-entry){display: flex !important;flex-direction: column;align-items: stretch;gap: 3px;width: 100%;min-width: 0}.dshx-entry{box-sizing: border-box;display: flex;align-items: center;gap: var(--dshx-icon-gap);width: 100%;min-width: 0;min-height: var(--dshx-row-height);margin: 0;padding: 0 calc(var(--dshx-row-inset) - var(--dshx-footer-inset));border: 0;border-radius: var(--dsw-radius-lg, 16px);background: transparent;color: var(--ink-2, var(--dsw-alias-label-secondary));font: inherit;font-size: var(--fs-strong, 14px);font-weight: 500;line-height: 22px;text-align: left;cursor: pointer;transition: background-color .14s ease, color .14s ease}.dshx-entry:hover{background: var(--hover, var(--dsw-alias-interactive-bg-hover));color: var(--ink, var(--dsw-alias-label-primary))}.dshx-entry:active{transform: translateY(1px)}.dshx-entry:focus-visible{outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4d6bfe));outline-offset: -2px}.dshx-entry[aria-current=\"page\"]{background: var(--accent-tint, var(--dsw-alias-interactive-bg-hover));color: var(--primary, var(--dsw-alias-state-business-primary, currentColor))}.dshx-entry-icon{display: inline-flex;flex: none;align-items: center;justify-content: center;width: var(--dshx-icon-box);height: var(--dshx-icon-box)}.dshx-entry-icon svg{width: 16px;height: 16px}.dshx-entry-label{min-width: 0;overflow: hidden;text-overflow: ellipsis;white-space: nowrap}.dshx-entry.dshx-rail{width: var(--dshx-rail-size);height: var(--dshx-rail-size);min-height: var(--dshx-rail-size);padding: 0;justify-content: center;align-self: center}" /* @sidebar-style-end */
+    const CSS = SIDEBAR_CSS + `
 .mb-root{position:relative;flex:1 1 0%;min-width:0;max-width:100%;box-sizing:border-box;font-family:var(--dsw-font-family);color:var(--dsw-alias-label-primary);font-size:12px;line-height:1.35}
 .mb-root,.mb-root *{box-sizing:border-box}
-.mb-bar{display:flex;align-items:center;gap:0;width:100%;min-width:0;min-height:36px;padding:0 7px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--dcu-sidebar-primary,var(--dsw-alias-label-primary));font-family:inherit;font-size:14px;cursor:pointer;text-align:left;overflow:hidden}
-.mb-bar:hover{background:var(--dsw-alias-interactive-bg-hover)}
-.mb-bar-mark{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none;margin-right:10px}
-.mb-bar-mark svg{transform:translateX(1px)}
-.mb-bar-title{flex:none;font-weight:400;color:inherit}
+.mb-bar{gap:0;overflow:hidden}
+.mb-bar-mark{display:flex;align-items:center;justify-content:center;width:var(--dshx-icon-box);height:var(--dshx-icon-box);flex:none;margin-right:var(--dshx-icon-gap)}
+.mb-bar-mark svg{width:16px;height:16px}
+.mb-bar-title{flex:none;color:inherit}
 .mb-bar-spacer{flex:1;min-width:0}
-.mb-bar-chevron{flex:none;display:flex;color:var(--dsw-alias-label-tertiary)}
+.mb-bar-chevron{flex:none;display:flex;color:var(--ink-3,var(--dsw-alias-label-tertiary))}
 .mb-chips{display:flex;align-items:center;gap:0;min-width:0;overflow:hidden}
-.mb-chip{flex:none;white-space:nowrap;font-size:14px;font-weight:400;color:inherit}
+.mb-chip{flex:none;white-space:nowrap;font-size:inherit;font-weight:inherit;color:inherit}
 .mb-chip.is-ordered{font-weight:700}
 .mb-reminder{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:9px;padding:2px 6px;border-radius:999px;background:rgba(220,76,54,.12);color:var(--dsw-alias-state-error-primary,#b72d27);font-size:10px;font-weight:600;line-height:1.4;white-space:nowrap}
 .mb-reminder::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -1039,7 +1041,7 @@ function BatchPanel({ panel, parentBusy, onBusy, onRefresh }) {
       const summaryBar = h('button', {
         ref: barRef,
         type: 'button',
-        className: `mb-bar${todayDay ? '' : ' is-empty'}`,
+        className: `dshx-entry mb-bar${todayDay ? '' : ' is-empty'}`,
         title: `${today ? `${monthDayOf(today)} ${weekdayName(today, t)} · ${t('today')}` : t('title')} · ${t(expanded ? 'collapse' : 'expand')}`,
         'aria-expanded': expanded,
         disabled: busy,

@@ -233,7 +233,8 @@ test('real React portal: both section toggles, independent five-item pagers, upd
     assert.equal(document.querySelector('.dsr-workspace-pager'), null);
     assert.equal(visibleGroups(), 5);
     const css = document.querySelector('style[data-dsh-sidebar-recents]').textContent;
-    assert.match(css, /\.dsr-recents-action\s*\{[^}]*color:\s*var\(--dsw-alias-label-primary/);
+    // docs/sidebar-style.md: text buttons use the modern-ui tertiary ink with the official fallback.
+    assert.match(css, /\.dsr-recents-action\s*\{[^}]*color:\s*var\(--ink-3, var\(--dsw-alias-label-tertiary\)\)/);
     await act(async () => statuses.set(new Map([['session-11', { running: true }]])));
     await flush();
     assert.ok(document.querySelector('[data-dsr-workspace-activity="w0"]'));

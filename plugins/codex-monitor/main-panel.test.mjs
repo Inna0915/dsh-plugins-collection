@@ -83,7 +83,7 @@ test('主页面与原生右栏分别注册，反复打开时复用当前会话�
       assert.equal(button.type, 'button')
       assert.equal(button.props['aria-label'], '打开会话看板')
       assert.equal(button.props['aria-haspopup'], undefined)
-      assert.equal(button.props.className, wide ? 'cdm-trigger' : 'cdm-trigger cdm-rail')
+      assert.equal(button.props.className, wide ? 'dshx-entry' : 'dshx-entry dshx-rail')
       button.props.onClick()
       button.props.onClick()
     }

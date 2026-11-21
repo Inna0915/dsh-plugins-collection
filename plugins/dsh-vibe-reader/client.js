@@ -7,6 +7,7 @@ window.__ModuleLoader__.load({
     const kind = 'vibe-reader'
     const tabId = 'dsh-vibe-reader/reader'
     const MAIN_ID = 'dsh-vibe-reader'
+    const NAME = '闲庭信步'
     const MAIN_WIDE_MIN = 1150 // px: below this the main area uses the sidebar arrangement
     const api = { library: 'api/vibe-reader/library', volume: 'api/vibe-reader/volume', state: 'api/vibe-reader/state', markVerified: 'api/vibe-reader/mark-verified' }
     const MAX_LEVEL = 5
@@ -815,13 +816,8 @@ window.__ModuleLoader__.load({
 .vr-main-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:calc(16px*var(--vr-scale,1));font-weight:600;letter-spacing:.25em;margin-right:8px}
 `
 
-    // The left sidebar entry lives outside the panel, so its style goes into the document once.
-    const ENTRY_CSS = '.vr-trigger{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-width:0;height:36px;flex:0 0 36px;padding:7px 10px;border:0;border-radius:var(--dsw-radius-md,8px);background:transparent;color:var(--dsw-alias-label-primary,#222);font:inherit;font-size:14px;line-height:22px;cursor:pointer;text-align:left}'
-      + '.vr-trigger:hover{background:var(--dsw-alias-interactive-bg-hover,#8882)}'
-      + '.vr-trigger svg{flex:none}'
-      + '.vr-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-      + '.vr-trigger.vr-rail{width:36px;align-self:center;justify-content:center;padding:0}'
-      + '.vr-trigger:focus-visible{outline:2px solid var(--dsw-focus-ring-color,#4d6bfe);outline-offset:-2px}'
+    // Left-sidebar entry: shared/sidebar.css (synced by scripts/sync-sidebar-style.mjs; edit there, not here).
+    const SIDEBAR_CSS = /* @sidebar-style */ ":root{--dshx-label-inset: 10px;--dshx-row-inset: 12px;--dshx-footer-inset: 2px;--dshx-icon-box: 18px;--dshx-icon-gap: 10px;--dshx-row-height: 38px;--dshx-rail-size: 36px}[data-slot=\"sidebar.footer.action\"]:has(> .dshx-entry){display: flex !important;flex-direction: column;align-items: stretch;gap: 3px;width: 100%;min-width: 0}.dshx-entry{box-sizing: border-box;display: flex;align-items: center;gap: var(--dshx-icon-gap);width: 100%;min-width: 0;min-height: var(--dshx-row-height);margin: 0;padding: 0 calc(var(--dshx-row-inset) - var(--dshx-footer-inset));border: 0;border-radius: var(--dsw-radius-lg, 16px);background: transparent;color: var(--ink-2, var(--dsw-alias-label-secondary));font: inherit;font-size: var(--fs-strong, 14px);font-weight: 500;line-height: 22px;text-align: left;cursor: pointer;transition: background-color .14s ease, color .14s ease}.dshx-entry:hover{background: var(--hover, var(--dsw-alias-interactive-bg-hover));color: var(--ink, var(--dsw-alias-label-primary))}.dshx-entry:active{transform: translateY(1px)}.dshx-entry:focus-visible{outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4d6bfe));outline-offset: -2px}.dshx-entry[aria-current=\"page\"]{background: var(--accent-tint, var(--dsw-alias-interactive-bg-hover));color: var(--primary, var(--dsw-alias-state-business-primary, currentColor))}.dshx-entry-icon{display: inline-flex;flex: none;align-items: center;justify-content: center;width: var(--dshx-icon-box);height: var(--dshx-icon-box)}.dshx-entry-icon svg{width: 16px;height: 16px}.dshx-entry-label{min-width: 0;overflow: hidden;text-overflow: ellipsis;white-space: nowrap}.dshx-entry.dshx-rail{width: var(--dshx-rail-size);height: var(--dshx-rail-size);min-height: var(--dshx-rail-size);padding: 0;justify-content: center;align-self: center}" /* @sidebar-style-end */
 
     function durationText(ms) {
       const seconds = Math.max(0, Math.round(ms / 1000))
@@ -1514,11 +1510,11 @@ window.__ModuleLoader__.load({
           ? h('div', { key: 'shelf', className: 'vr-rail-shelf' }, h(Shelf, { rows: snapshot.library.volumes, state: snapshot.state, currentId: current === 'study' ? snapshot.state.ui.volume : null, onPick: pickFromRail, onClose: () => {}, autoFocus: false }))
           : null
 
-        return h('section', { ref: root, className: main ? (rail ? 'vr vr-main vr-wide' : 'vr vr-main') : 'vr', 'aria-label': '闲庭', style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
+        return h('section', { ref: root, className: main ? (rail ? 'vr vr-main vr-wide' : 'vr vr-main') : 'vr', 'aria-label': NAME, style: { '--vr-scale': snapshot.state?.settings?.fontScale || 1 } },
           h('style', null, styles),
           h('div', { className: 'vr-head' },
             h('div', { className: 'vr-row' },
-              main ? h('span', { className: 'vr-main-title' }, '闲庭') : null,
+              main ? h('span', { className: 'vr-main-title' }, NAME) : null,
               h('div', { className: 'vr-seg', role: 'group', 'aria-label': '视图' },
                 h('button', { type: 'button', 'aria-pressed': current === 'encounter', disabled: !snapshot.state, onClick: () => app.send({ op: 'view', view: 'encounter' }) }, '偶遇'),
                 h('button', { type: 'button', 'aria-pressed': current === 'study', disabled: !snapshot.state, onClick: () => app.send({ op: 'view', view: 'study' }) }, '修业')),
@@ -1561,33 +1557,34 @@ window.__ModuleLoader__.load({
       }
 
       function HeaderButton() {
-        const label = '闲庭：读一则古诗文'
+        const label = NAME + '：读一则古诗文'
         if (primitives?.Button) {
           return h(primitives.Button, { size: 'sm', 'aria-label': label, title: label, onClick: toggleReader }, h(BookIcon))
         }
         return h('button', { type: 'button', className: 'vr-head-btn', 'aria-label': label, title: label, onClick: toggleReader }, h('style', null, styles), h(BookIcon))
       }
 
-      /** Left sidebar footer entry, next to 会话看板 / 任务看板: opens 闲庭 in the main area. */
+      /** Left sidebar footer entry, next to 会话看板 / 任务看板: opens 闲庭信步 in the main area, highlighted while open. */
       function SidebarEntry(props) {
         const wide = props.wide === true
-        return h('button', { type: 'button', className: wide ? 'vr-trigger' : 'vr-trigger vr-rail', title: wide ? undefined : '闲庭', 'aria-label': '打开闲庭', onClick: openMain },
-          h(BookIcon, { size: 16 }), wide ? h('span', null, '闲庭') : null)
+        const active = typeof props.usePanelInfo === 'function' ? props.usePanelInfo((info) => info?.activePanelId === MAIN_ID) : false
+        return h('button', { type: 'button', className: wide ? 'dshx-entry' : 'dshx-entry dshx-rail', title: wide ? undefined : NAME, 'aria-label': '打开' + NAME, 'aria-current': active ? 'page' : undefined, onClick: openMain },
+          h('span', { className: 'dshx-entry-icon' }, h(BookIcon, { size: 16 })), wide ? h('span', { className: 'dshx-entry-label' }, NAME) : null)
       }
 
       ctx.effect(() => {
         if (typeof document === 'undefined') return () => {}
         const style = document.createElement('style')
-        style.dataset.plugin = 'dsh-vibe-reader/entry'
-        style.textContent = ENTRY_CSS
+        style.dataset.dshxSidebar = 'dsh-vibe-reader'
+        style.textContent = SIDEBAR_CSS
         document.head.appendChild(style)
         return () => style.remove()
       }, 'vibe-reader: sidebar entry style')
       ctx.effect(() => ctx.slots.inject('main', () =>
-        ctx.slots.register({ name: 'main', key: MAIN_ID, id: MAIN_ID, label: '闲庭' }, MainPane)
+        ctx.slots.register({ name: 'main', key: MAIN_ID, id: MAIN_ID, label: NAME }, MainPane)
       ), 'vibe-reader: main panel')
       ctx.effect(() => ctx.slots.inject('sidebar.footer.action', () =>
-        ctx.slots.register({ name: 'sidebar.footer.action', id: 'vibe-reader', order: 40, label: '闲庭' }, SidebarEntry)
+        ctx.slots.register({ name: 'sidebar.footer.action', id: 'vibe-reader', order: 40, label: NAME }, SidebarEntry)
       ), 'vibe-reader: sidebar entry')
 
       ctx.effect(() => ctx.slots.inject('conversation.session.header.utilities', () =>
@@ -1597,9 +1594,9 @@ window.__ModuleLoader__.load({
       ctx.effect(() => ctx.sidebarRightTabs.register({
         id: tabId,
         kind,
-        title: () => '闲庭',
+        title: () => NAME,
         keepMounted: true,
-        guide: [{ id: kind, order: 36, title: () => '闲庭', description: () => '间隙读一则古诗文', icon: BookIcon }]
+        guide: [{ id: kind, order: 36, title: () => NAME, description: () => '间隙读一则古诗文', icon: BookIcon }]
       }), 'vibe-reader: tab')
       ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab', () =>
         ctx.slots.register({ name: 'sidebar.right.pane.tab', key: tabId }, ReaderPane)

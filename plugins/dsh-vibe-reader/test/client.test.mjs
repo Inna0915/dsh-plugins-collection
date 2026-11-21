@@ -200,7 +200,7 @@ test('apply: registers the tab, needs the verified services, survives a missing 
   }))
   assert.equal(tab.kind, 'vibe-reader')
   assert.equal(tab.keepMounted, true)
-  assert.equal(tab.title(), '闲庭')
+  assert.equal(tab.title(), '闲庭信步')
   for (const dispose of disposers) if (typeof dispose === 'function') dispose()
 })
 
@@ -523,7 +523,7 @@ test('AgentPanel: logo from the 会话看板 module, task title and running time
   assert.match(text(expand({ type: AgentPanel, props: { view: withReact.__test.agentBoardView(failing), feed: failing, now, openBoard: () => {} } })), /暂时读不到会话看板/)
 })
 
-test('left sidebar entry opens 闲庭 in the main area; collapsed rail shows only the icon', async () => {
+test('left sidebar entry opens 闲庭信步 in the main area; collapsed rail shows only the icon', async () => {
   const registered = {}
   const panels = []
   const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
@@ -541,15 +541,15 @@ test('left sidebar entry opens 闲庭 in the main area; collapsed rail shows onl
   const main = registered.main
   assert.equal(main.meta.key, 'dsh-vibe-reader')
   assert.equal(main.meta.id, 'dsh-vibe-reader')
-  assert.equal(main.meta.label, '闲庭')
+  assert.equal(main.meta.label, '闲庭信步')
   const entry = registered['sidebar.footer.action']
-  assert.equal(entry.meta.label, '闲庭')
+  assert.equal(entry.meta.label, '闲庭信步')
   const wide = entry.component({ wide: true })
-  assert.equal(wide.props.className, 'vr-trigger')
-  assert.equal(wide.props.children.at(-1).props.children[0], '闲庭')
+  assert.equal(wide.props.className, 'dshx-entry')
+  assert.equal(wide.props.children.at(-1).props.children[0], '闲庭信步')
   const rail = entry.component({ wide: false })
-  assert.equal(rail.props.className, 'vr-trigger vr-rail')
-  assert.equal(rail.props.title, '闲庭')
+  assert.equal(rail.props.className, 'dshx-entry dshx-rail')
+  assert.equal(rail.props.title, '闲庭信步')
   assert.equal(rail.props.children.at(-1), null)
   wide.props.onClick()
   assert.deepEqual(panels, ['dsh-vibe-reader'])

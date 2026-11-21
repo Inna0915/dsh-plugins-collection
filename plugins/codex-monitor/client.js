@@ -17,6 +17,8 @@ window.__ModuleLoader__.load({
     const SearchIcon = primitives.IconSearchOutlineRegular || primitives.IconSearchOutline16;
     const CloseIcon = primitives.IconCloseOutlineRegular || primitives.IconCloseOutline16;
 
+    // Left-sidebar entry: shared/sidebar.css (synced by scripts/sync-sidebar-style.mjs; edit there, not here).
+    const SIDEBAR_CSS = /* @sidebar-style */ ":root{--dshx-label-inset: 10px;--dshx-row-inset: 12px;--dshx-footer-inset: 2px;--dshx-icon-box: 18px;--dshx-icon-gap: 10px;--dshx-row-height: 38px;--dshx-rail-size: 36px}[data-slot=\"sidebar.footer.action\"]:has(> .dshx-entry){display: flex !important;flex-direction: column;align-items: stretch;gap: 3px;width: 100%;min-width: 0}.dshx-entry{box-sizing: border-box;display: flex;align-items: center;gap: var(--dshx-icon-gap);width: 100%;min-width: 0;min-height: var(--dshx-row-height);margin: 0;padding: 0 calc(var(--dshx-row-inset) - var(--dshx-footer-inset));border: 0;border-radius: var(--dsw-radius-lg, 16px);background: transparent;color: var(--ink-2, var(--dsw-alias-label-secondary));font: inherit;font-size: var(--fs-strong, 14px);font-weight: 500;line-height: 22px;text-align: left;cursor: pointer;transition: background-color .14s ease, color .14s ease}.dshx-entry:hover{background: var(--hover, var(--dsw-alias-interactive-bg-hover));color: var(--ink, var(--dsw-alias-label-primary))}.dshx-entry:active{transform: translateY(1px)}.dshx-entry:focus-visible{outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4d6bfe));outline-offset: -2px}.dshx-entry[aria-current=\"page\"]{background: var(--accent-tint, var(--dsw-alias-interactive-bg-hover));color: var(--primary, var(--dsw-alias-state-business-primary, currentColor))}.dshx-entry-icon{display: inline-flex;flex: none;align-items: center;justify-content: center;width: var(--dshx-icon-box);height: var(--dshx-icon-box)}.dshx-entry-icon svg{width: 16px;height: 16px}.dshx-entry-label{min-width: 0;overflow: hidden;text-overflow: ellipsis;white-space: nowrap}.dshx-entry.dshx-rail{width: var(--dshx-rail-size);height: var(--dshx-rail-size);min-height: var(--dshx-rail-size);padding: 0;justify-content: center;align-self: center}" /* @sidebar-style-end */;
     const POLL_MS = 5000;
     const REFRESH_POLL_MS = 200;
     const REQUEST_TIMEOUT_MS = 15000;
@@ -27,7 +29,6 @@ window.__ModuleLoader__.load({
     ];
 
     const CSS = ''
-      + '.cdm-trigger{box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;flex:0 0 36px;width:100%;min-width:0;height:36px;min-height:36px;margin:0;padding:7px 10px;color:var(--dsw-alias-label-primary,#222);background:transparent;border:0;border-radius:var(--dsw-radius-md,8px);font-family:inherit;font-size:14px;font-weight:400;line-height:22px;text-align:left;overflow:hidden}.cdm-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}.cdm-trigger.cdm-rail{width:36px;height:36px;min-height:36px;flex:0 0 36px;align-self:center;justify-content:center;gap:0;margin:0;padding:0;border-radius:var(--dsw-radius-md,8px)}.cdm-trigger>svg{flex:none;width:16px;height:16px}.cdm-trigger:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary,#4d6bfe));outline-offset:-2px}[data-slot="sidebar.footer.action"]:has(> .cdm-trigger){display:flex!important;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;width:100%;min-width:0}.cdm-triggerLabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       + '.cdm-panel{box-sizing:border-box;flex:1;align-self:stretch;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;display:flex;flex-direction:column;position:relative;isolation:isolate;container-type:inline-size;overflow:hidden;background:var(--dsw-alias-bg-layer-2,#fff);color:var(--dsw-alias-label-primary,#1f2329)}'
       + '.cdm-sourceWarning{color:var(--dsw-alias-warning-fg-1,#b7791f)}.cdm-head{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border-bottom:1px solid var(--dsw-alias-divider-1,rgba(127,127,127,.2))}.cdm-heading{min-width:0;display:flex;align-items:center;gap:10px}.cdm-title{margin:0;font-size:16px;line-height:24px;font-weight:600;letter-spacing:0}.cdm-badge{color:var(--dsw-alias-label-secondary,#555);border:1px solid var(--dsw-alias-divider-1,rgba(127,127,127,.25));border-radius:8px;padding:1px 8px;font-size:12px;line-height:18px;white-space:nowrap}.cdm-subtitle{color:var(--dsw-alias-label-tertiary,#777);font-size:12px;line-height:18px;white-space:nowrap}.cdm-actions{margin-left:auto;display:flex;flex-wrap:wrap;max-width:100%;align-items:center;gap:8px;min-width:0}'
       + '.cdm-search{box-sizing:border-box;width:min(260px,24vw);height:32px;display:flex;align-items:center;gap:7px;padding:0 9px;color:var(--dsw-alias-label-secondary,#555);background:var(--dsw-alias-bg-layer-1,rgba(127,127,127,.08));border:1px solid var(--dsw-alias-divider-1,rgba(127,127,127,.28));border-radius:6px}.cdm-search input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--dsw-alias-label-primary,#222);font:inherit;font-size:13px;letter-spacing:0}.cdm-search input::placeholder{color:var(--dsw-alias-label-tertiary,#888)}'
@@ -834,15 +835,18 @@ window.__ModuleLoader__.load({
 
     function MonitorEntry(props) {
       const wide = props.wide === true;
+      // Highlighted while the board is the open main panel, like the host navigation rows.
+      const active = typeof props.usePanelInfo === "function" ? props.usePanelInfo((info) => info?.activePanelId === MAIN_PANEL_ID) : false;
       return React.createElement("button", {
           type: "button",
-          className: wide ? "cdm-trigger" : "cdm-trigger cdm-rail",
+          className: wide ? "dshx-entry" : "dshx-entry dshx-rail",
           title: wide ? undefined : "会话看板",
           "aria-label": "打开会话看板",
+          "aria-current": active ? "page" : undefined,
           onClick: props.onOpen
         },
-          React.createElement(MonitorIcon, null),
-          wide ? React.createElement("span", { className: "cdm-triggerLabel" }, "会话看板") : null
+          React.createElement("span", { className: "dshx-entry-icon" }, React.createElement(MonitorIcon, null)),
+          wide ? React.createElement("span", { className: "dshx-entry-label" }, "会话看板") : null
       );
     }
 
@@ -954,7 +958,7 @@ window.__ModuleLoader__.load({
 
       const style = document.createElement("style");
       style.dataset.plugin = "codex-monitor/client";
-      style.textContent = CSS + PREVIEW_CSS + RUNNING_CSS;
+      style.textContent = CSS + PREVIEW_CSS + RUNNING_CSS + SIDEBAR_CSS;
       document.head.appendChild(style);
       ctx.effect(() => () => style.remove(), "codex-monitor: stylesheet");
       ctx.effect(() => ctx.sidebarRightTabs.register({

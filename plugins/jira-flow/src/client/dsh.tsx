@@ -23,9 +23,39 @@ function BoardIcon() {
   );
 }
 
+// Left-sidebar entry: shared/sidebar.css (synced by scripts/sync-sidebar-style.mjs; edit there, not here).
+const SIDEBAR_CSS = /* @sidebar-style */ ":root{--dshx-label-inset: 10px;--dshx-row-inset: 12px;--dshx-footer-inset: 2px;--dshx-icon-box: 18px;--dshx-icon-gap: 10px;--dshx-row-height: 38px;--dshx-rail-size: 36px}[data-slot=\"sidebar.footer.action\"]:has(> .dshx-entry){display: flex !important;flex-direction: column;align-items: stretch;gap: 3px;width: 100%;min-width: 0}.dshx-entry{box-sizing: border-box;display: flex;align-items: center;gap: var(--dshx-icon-gap);width: 100%;min-width: 0;min-height: var(--dshx-row-height);margin: 0;padding: 0 calc(var(--dshx-row-inset) - var(--dshx-footer-inset));border: 0;border-radius: var(--dsw-radius-lg, 16px);background: transparent;color: var(--ink-2, var(--dsw-alias-label-secondary));font: inherit;font-size: var(--fs-strong, 14px);font-weight: 500;line-height: 22px;text-align: left;cursor: pointer;transition: background-color .14s ease, color .14s ease}.dshx-entry:hover{background: var(--hover, var(--dsw-alias-interactive-bg-hover));color: var(--ink, var(--dsw-alias-label-primary))}.dshx-entry:active{transform: translateY(1px)}.dshx-entry:focus-visible{outline: 2px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary, #4d6bfe));outline-offset: -2px}.dshx-entry[aria-current=\"page\"]{background: var(--accent-tint, var(--dsw-alias-interactive-bg-hover));color: var(--primary, var(--dsw-alias-state-business-primary, currentColor))}.dshx-entry-icon{display: inline-flex;flex: none;align-items: center;justify-content: center;width: var(--dshx-icon-box);height: var(--dshx-icon-box)}.dshx-entry-icon svg{width: 16px;height: 16px}.dshx-entry-label{min-width: 0;overflow: hidden;text-overflow: ellipsis;white-space: nowrap}.dshx-entry.dshx-rail{width: var(--dshx-rail-size);height: var(--dshx-rail-size);min-height: var(--dshx-rail-size);padding: 0;justify-content: center;align-self: center}" /* @sidebar-style-end */;
+
+/** Footer entry: highlighted while the board is the open main panel, like the host navigation rows. */
+function SidebarEntry({ wide, usePanelInfo, onOpen }: { wide?: boolean; usePanelInfo?: (pick: (info: any) => boolean) => boolean; onOpen(): void }) {
+  const active = typeof usePanelInfo === 'function' ? usePanelInfo((info) => info?.activePanelId === 'jira-flow') : false;
+  return (
+    <button
+      type="button"
+      className={wide ? 'dshx-entry' : 'dshx-entry dshx-rail'}
+      title={wide ? undefined : '任务看板'}
+      aria-label="打开任务看板"
+      aria-current={active ? 'page' : undefined}
+      onClick={onOpen}
+    >
+      <span className="dshx-entry-icon">
+        <BoardIcon />
+      </span>
+      {wide ? <span className="dshx-entry-label">任务看板</span> : null}
+    </button>
+  );
+}
+
 export const inject = ['slots', 'layout', 'sidebarRight', 'sidebarRightTabs', 'uiSession'];
 export function apply(ctx: any) {
   const open = () => openWorkspaceBoard(ctx, flushSync);
+  ctx.effect(() => {
+    const style = document.createElement('style');
+    style.dataset.dshxSidebar = 'jira-flow';
+    style.textContent = SIDEBAR_CSS;
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, 'jira-flow: sidebar entry style');
   function FullPage() {
     return <App onOpenWorkspace={open} captureComposer={() => captureCurrentComposer(ctx)} />;
   }
@@ -122,26 +152,8 @@ export function apply(ctx: any) {
   ctx.slots.inject('sidebar.footer.action', () =>
     ctx.slots.register(
       { name: 'sidebar.footer.action', id: 'jira-flow-entry', order: 35 },
-      (props: { wide?: boolean }) => (
-        <button
-          title="任务看板"
-          aria-label="打开任务看板"
-          onClick={() => ctx.layout.selectPanel('jira-flow')}
-          style={{
-            width: '100%',
-            border: 0,
-            background: 'transparent',
-            color: 'inherit',
-            padding: '9px 10px',
-            textAlign: 'left',
-            cursor: 'pointer',
-            borderRadius: 8,
-            fontSize: 14,
-          }}
-        >
-          <span style={{ fontWeight: 700, marginRight: props.wide ? 8 : 0 }}>▦</span>
-          {props.wide ? '任务看板' : ''}
-        </button>
+      (props: { wide?: boolean; usePanelInfo?: (pick: (info: any) => boolean) => boolean }) => (
+        <SidebarEntry {...props} onOpen={() => ctx.layout.selectPanel('jira-flow')} />
       ),
     ),
   );
