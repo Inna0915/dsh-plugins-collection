@@ -37,11 +37,25 @@ const paths = resolvePaths({})
 const cacheRoot = join(REAL_HOME, 'vibe-reader', 'cache')
 const library = createLibrary([{ origin: 'builtin', dir: paths.seedsDir }, { origin: 'library', dir: paths.libraryDir }])
 
-/** Every author a volume shows: per-section labels (组诗) or the volume author. */
+// Not a person: no author entry, the background tells where the text comes from instead.
+const UNKNOWN_AUTHOR = /^(佚名|无名氏|不详|未详|小雅|大雅|国风|周南|召南|颂)$|诗经|乐府|民歌/
+// A group: the entry keeps the group's name; facts come from its central figure.
+const GROUP_AUTHORS = { 孔子及其弟子: '孔子' }
+
+/** Every person a volume shows: per-section labels (组诗) or the volume author; unknown authors left out. */
 function authorsOf(volume) {
   const labels = volume.sections.map((section) => section.meta.author).filter(Boolean)
-  const list = labels.length ? labels.map((label) => splitAuthorLabel(label, volume.dynasty)) : [{ name: volume.author, dynasty: volume.dynasty }]
-  return [...new Map(list.filter((item) => item.name).map((item) => [item.name, item])).values()]
+  const list = labels.length ? labels.map((label) => splitAuthorLabel(label, volume.dynasty)) : [splitAuthorLabel(volume.author, volume.dynasty)]
+  return [...new Map(list.filter((item) => item.name && !UNKNOWN_AUTHOR.test(item.name)).map((item) => [item.name, item])).values()]
+}
+
+/** How to describe the authors to the agent, special cases spelled out. */
+function authorBrief(volume) {
+  const people = authorsOf(volume)
+  if (!people.length) return '作者不可考（佚名、诗经或民歌），不写作者文件，只写背景，并在背景里交代出处与流传'
+  return '先用 author 查作者（' + people.map((item) => GROUP_AUTHORS[item.name]
+    ? `「${item.name}」是群体：author 查「${GROUP_AUTHORS[item.name]}」，作者文件 name 写「${item.name}」，写清编纂者与成书`
+    : `${item.dynasty} · ${item.name}`).join('、') + '），作者库里没有的写小传并 save-author，已有的不要重写'
 }
 
 async function pick() {
@@ -100,8 +114,7 @@ function run(volume) {
     { id: 'approval', config: { policy: 'never' } },
     { id: 'permission', config: { defaultPreset: 'read-only', presets: { 'read-only': { sandbox: 'read-only', approval: 'never' } } } }
   ]))
-  const who = authorsOf(volume).map((item) => `${item.dynasty} · ${item.name}`).join('、')
-  const prompt = `给闲庭书卷《${volume.title}》（id：${volume.id}）补知人论世：先用 author 查作者（${who}），作者库里没有的写小传并 save-author，已有的不要重写；再写写作背景并 save-background${volume.sections.length > 1 && authorsOf(volume).length > 1 ? '（多首成卷，按节写各首背景）' : ''}。可以用 read 看书卷内容，但不要改动书卷本身。\n`
+  const prompt = `给闲庭书卷《${volume.title}》（id：${volume.id}）补知人论世：${authorBrief(volume)}；再写写作背景并 save-background${volume.sections.length > 1 && authorsOf(volume).length > 1 ? '（多首成卷，按节写各首背景）' : ''}。可以用 read 看书卷内容，但不要改动书卷本身。\n`
   return new Promise((resolve) => {
     const started = Date.now()
     const child = spawn(process.execPath, [DSH_CLI, '--profile', 'headless', '--patch', overlay, '--json', '-'], { cwd: dir, env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true })

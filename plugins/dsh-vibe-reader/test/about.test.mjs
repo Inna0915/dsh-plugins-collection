@@ -71,6 +71,7 @@ test('background file: whole-volume text plus per-section blocks', () => {
   assert.match(parseBackground('---\nvolume: x\n---\n\n# 背景\n文字\n').errors.join(), /## 篇名/)
   assert.deepEqual(splitAuthorLabel('唐 · 杜甫'), { dynasty: '唐', name: '杜甫' })
   assert.deepEqual(splitAuthorLabel('李白', '唐'), { dynasty: '唐', name: '李白' })
+  assert.deepEqual(splitAuthorLabel('魏晉 · 西晋 · 李密'), { dynasty: '魏晉·西晋', name: '李密' }, 'the last segment is the name')
   const pool = [{ name: '王某', dynasty: '唐', errors: [] }, { name: '王某', dynasty: '北宋', errors: [] }]
   assert.equal(findAuthor(pool, '王某', '宋').dynasty, '北宋', 'same name: dynasty decides, 北宋 counts as 宋')
 })

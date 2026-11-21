@@ -1058,9 +1058,12 @@ window.__ModuleLoader__.load({
      * section's background when the volume has per-section ones, else the volume background.
      */
     function aboutFor(library, row, section) {
-      const parts = String(section?.meta?.author || '').split(/[·・]/).map((part) => part.trim()).filter(Boolean)
-      const name = parts.length >= 2 ? parts.slice(1).join('·') : parts[0] || row?.author || ''
-      const dynasty = parts.length >= 2 ? parts[0] : row?.dynasty || ''
+      // Last segment = name (「魏晋 · 西晋 · 李密」→ 李密), as lib/about.js splitAuthorLabel; the volume
+      // author field may carry a period too (author: 西晋·李密).
+      const split = (label) => String(label || '').split(/[·・]/).map((part) => part.trim()).filter(Boolean)
+      const parts = split(section?.meta?.author).length ? split(section?.meta?.author) : split(row?.author)
+      const name = parts[parts.length - 1] || ''
+      const dynasty = parts.length >= 2 ? parts.slice(0, -1).join('·') : row?.dynasty || ''
       const core = (value) => String(value || '').replace(/^[南北东西前后]/, '')
       const pool = (library?.authors || []).filter((author) => author.name === name && !author.errors?.length)
       const author = pool.find((entry) => core(entry.dynasty) === core(dynasty)) || pool[0] || null

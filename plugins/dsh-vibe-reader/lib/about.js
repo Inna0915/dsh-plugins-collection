@@ -96,10 +96,13 @@ export function parseBackground(source, fileName = '') {
   return { volume, source: typeof data.source === 'string' ? data.source.trim() : '', text, sections: bySection, errors, warnings }
 }
 
-/** 「唐 · 杜甫」→ { dynasty: '唐', name: '杜甫' }; a bare name keeps the fallback dynasty. */
+/**
+ * 「唐 · 杜甫」→ { dynasty: '唐', name: '杜甫' }. The last segment is the name and everything before it
+ * the period, so corpus labels such as 「魏晋 · 西晋 · 李密」 still give 李密. A bare name keeps the fallback dynasty.
+ */
 export function splitAuthorLabel(label, fallbackDynasty = '') {
   const parts = String(label || '').split(/[·・]/).map((part) => part.trim()).filter(Boolean)
-  if (parts.length >= 2) return { dynasty: parts[0], name: parts.slice(1).join('·') }
+  if (parts.length >= 2) return { dynasty: parts.slice(0, -1).join('·'), name: parts[parts.length - 1] }
   return { dynasty: fallbackDynasty, name: parts[0] || '' }
 }
 

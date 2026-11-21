@@ -620,6 +620,7 @@ test('aboutFor: the section author (组诗) or the volume author; per-section ba
   assert.deepEqual(Array.from(other.background), ['六首诗作于不同时期'], 'falls back to the volume background')
   const yue = t.aboutFor(library, { id: 'yue', author: '范仲淹', dynasty: '宋' }, { id: 's1', meta: {} })
   assert.equal(yue.author.name, '范仲淹', 'prose sections use the volume author')
+  assert.equal(t.aboutFor(library, { id: 'x', author: '宋·范仲淹', dynasty: '宋' }, { id: 's1', meta: {} }).author.name, '范仲淹', 'a period in the volume author field is split off too')
   assert.equal(yue.background.length, 0)
   assert.equal(t.aboutFor(library, { id: 'broken', author: '坏文件' }, { id: 's1', meta: {} }).author, null, 'files with errors are skipped')
   assert.equal(t.aboutFor(library, { id: 'broken', author: '坏文件' }, { id: 's1', meta: {} }).background.length, 0)
