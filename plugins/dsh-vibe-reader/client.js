@@ -795,6 +795,23 @@ window.__ModuleLoader__.load({
 .vr-rail .vr-shelf-list{flex:1;min-height:0;overflow:auto;margin-right:-8px;padding-right:8px}
 .vr-rail .vr-agents{max-height:38%;overflow:auto;padding-top:12px;border-top:1px solid var(--vr-line)}
 .vr-shelf-list{display:grid;gap:2px;align-content:start}
+.vr-about{border:1px solid var(--vr-line);border-radius:8px;padding:0 10px}
+.vr-about>summary{display:flex;gap:10px;align-items:baseline;padding:7px 0;cursor:pointer;list-style:none;font-size:calc(12.5px*var(--vr-scale,1))}
+.vr-about>summary::-webkit-details-marker{display:none}
+.vr-about>summary::before{content:"▸";opacity:.5;font-size:.85em}
+.vr-about[open]>summary::before{content:"▾"}
+.vr-about-tag{flex:none;font-weight:600;letter-spacing:.1em}
+.vr-accent .vr-about-tag{color:var(--vr-accent)}
+.vr-about-lead{min-width:0;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-about-body{display:grid;gap:12px;padding:2px 0 10px}
+.vr-about-row{display:grid;grid-template-columns:2.6em minmax(0,1fr);gap:8px}
+.vr-about-label{font-size:calc(12px*var(--vr-scale,1));opacity:.55;padding-top:.15em}
+.vr-about-text{display:grid;gap:6px;font-size:calc(13.5px*var(--vr-scale,1));line-height:1.8}
+.vr-about-text p{margin:0}
+.vr-about-facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:0;font-size:calc(12.5px*var(--vr-scale,1))}
+.vr-about-facts dt{opacity:.55}
+.vr-about-facts dd{margin:0}
+.vr-about-source{margin:0;font-size:calc(11px*var(--vr-scale,1));opacity:.5}
 .vr-main-title{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;font-size:calc(16px*var(--vr-scale,1));font-weight:600;letter-spacing:.25em;margin-right:8px}
 `
 
@@ -1040,6 +1057,41 @@ window.__ModuleLoader__.load({
           !recent.length && !unread.length ? h('p', { className: 'vr-muted vr-small' }, query || filter !== 'all' ? '没有匹配的书卷。语料里的篇目可以在任一会话里用刻书匠入藏。' : '书库里还没有书卷。在任一会话里用刻书匠（vibe-reader-engraver）入藏。') : null))
     }
 
+    /**
+     * 知人论世 for the section on screen: the section's own author (组诗) or the volume's, and the
+     * section's background when the volume has per-section ones, else the volume background.
+     */
+    function aboutFor(library, row, section) {
+      const parts = String(section?.meta?.author || '').split(/[·・]/).map((part) => part.trim()).filter(Boolean)
+      const name = parts.length >= 2 ? parts.slice(1).join('·') : parts[0] || row?.author || ''
+      const dynasty = parts.length >= 2 ? parts[0] : row?.dynasty || ''
+      const core = (value) => String(value || '').replace(/^[南北东西前后]/, '')
+      const pool = (library?.authors || []).filter((author) => author.name === name && !author.errors?.length)
+      const author = pool.find((entry) => core(entry.dynasty) === core(dynasty)) || pool[0] || null
+      const entry = library?.backgrounds?.[row?.id]
+      const usable = entry && !entry.errors?.length ? entry : null
+      const own = usable?.sections?.[section?.id]?.text
+      return { author, background: own?.length ? own : usable?.text || [], source: usable?.source || '' }
+    }
+
+    function AboutBlock({ about, open, onToggle }) {
+      const { author, background } = about
+      if (!author && !background.length) return null
+      const courtesy = (author?.facts.find((fact) => /字|号/.test(fact.label))?.value || '').split(/[；;]/)[0]
+      const lead = [author ? author.name + (author.life ? '（' + author.life + '）' : '') + (courtesy ? '　' + courtesy : '') : '', background.length ? '写作背景' : ''].filter(Boolean).join(' · ')
+      const sources = [author?.source ? '小传据 ' + author.source : '', about.source ? '背景据 ' + about.source : ''].filter(Boolean).join('；')
+      return h('details', { className: 'vr-about', open, onToggle: (event) => { if (event.currentTarget.open !== open) onToggle(event.currentTarget.open) } },
+        h('summary', null, h('span', { className: 'vr-about-tag' }, '知人论世'), h('span', { className: 'vr-about-lead' }, lead)),
+        h('div', { className: 'vr-about-body' },
+          author ? h('div', { className: 'vr-about-row' }, h('span', { className: 'vr-about-label' }, '作者'),
+            h('div', { className: 'vr-about-text' },
+              author.facts.length ? h('dl', { className: 'vr-about-facts' }, ...author.facts.flatMap((fact, index) => [h('dt', { key: 'k' + index }, fact.label), h('dd', { key: 'v' + index }, fact.value)])) : null,
+              ...author.bio.map((paragraph, index) => h('p', { key: index }, paragraph)))) : null,
+          background.length ? h('div', { className: 'vr-about-row' }, h('span', { className: 'vr-about-label' }, '背景'),
+            h('div', { className: 'vr-about-text' }, ...background.map((paragraph, index) => h('p', { key: index }, paragraph)))) : null,
+          sources ? h('p', { className: 'vr-about-source' }, sources) : null))
+    }
+
     /** 「唐 · 白居易」vs「唐·白居易」: spacing and the middle dot do not make a different author. */
     function sameAuthor(a, b) {
       const key = (text) => String(text || '').replace(/[\s·・]/g, '')
@@ -1126,6 +1178,7 @@ window.__ModuleLoader__.load({
                 onClick: () => go(position)
               }, toNumeral(position + 1))
             }))),
+          h(AboutBlock, { key: 'about', about: aboutFor(library, currentRow, section), open: state.settings.aboutOpen === true, onToggle: (open) => app.send({ op: 'settings', patch: { aboutOpen: open } }) }),
           index > 0 ? h('button', { key: 'prev', type: 'button', className: 'vr-dim', onClick: () => go(index - 1) }, '↑ ' + sections[index - 1].title + '　' + sections[index - 1].paragraphs[0].text.replace(/\n/g, ' ')) : null,
           h('h3', { key: 'title', className: 'vr-title' }, section.title,
             section.meta.author && sameAuthor(section.meta.author, [currentRow?.dynasty, currentRow?.author].filter(Boolean).join(' · ')) === false
@@ -1556,7 +1609,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'sidebarRightTabs', 'sidebarRight', 'uiSession', 'sessions', 'uiWorkspace', 'layout'],
       apply,
-      __test: { track, boardView, agentBoardView, createBoardFeed, createTracker, sameAuthor, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, AgentPanel, SettingsPanel, Recite, SectionText } }
+      __test: { track, boardView, agentBoardView, createBoardFeed, createTracker, sameAuthor, aboutFor, createFollower, maskParagraphs, sectionGlosses, textPieces, renderPlan, glossLines, pickCard, fitsVertical, optimistic, createAppStore, toNumeral, shelfItems, shelfTags, glossModeFor, lineUnits, rubyOf, notesOutsideText, watchTurnEnds, views: { StudyView, Shelf, EncounterView, StatusChip, StatusPanel, AgentPanel, SettingsPanel, AboutBlock, Recite, SectionText } }
     }
   }
 })

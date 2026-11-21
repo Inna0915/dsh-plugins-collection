@@ -598,3 +598,30 @@ test('wide main area: the shelf lives in the rail (no autofocus, own scroll box)
   assert.equal(find(inline, (node) => node.props.className === 'vr-shelf').length, 1, 'sidebar tab: first visit still opens the inline shelf')
 })
 
+test('aboutFor: the section author (组诗) or the volume author; per-section background before the volume one', () => {
+  const library = {
+    authors: [
+      { name: '杜甫', dynasty: '唐', facts: [], bio: ['杜甫小传'], errors: [] },
+      { name: '范仲淹', dynasty: '宋', facts: [], bio: ['范仲淹小传'], errors: [] },
+      { name: '坏文件', dynasty: '唐', facts: [], bio: [], errors: ['缺少小传正文'] }
+    ],
+    backgrounds: {
+      tang: { text: ['六首诗作于不同时期'], sections: { s2: { title: '春望', text: ['至德二载春'] } }, source: '年谱', errors: [] },
+      broken: { text: ['x'], sections: {}, errors: ['bad'] }
+    }
+  }
+  const tang = { id: 'tang', author: '', dynasty: '唐' }
+  const spring = t.aboutFor(library, tang, { id: 's2', meta: { author: '唐 · 杜甫' } })
+  assert.equal(spring.author.name, '杜甫')
+  assert.deepEqual(Array.from(spring.background), ['至德二载春'])
+  assert.equal(spring.source, '年谱')
+  const other = t.aboutFor(library, tang, { id: 's3', meta: { author: '唐 · 李白' } })
+  assert.equal(other.author, null, 'no entry for 李白 yet')
+  assert.deepEqual(Array.from(other.background), ['六首诗作于不同时期'], 'falls back to the volume background')
+  const yue = t.aboutFor(library, { id: 'yue', author: '范仲淹', dynasty: '宋' }, { id: 's1', meta: {} })
+  assert.equal(yue.author.name, '范仲淹', 'prose sections use the volume author')
+  assert.equal(yue.background.length, 0)
+  assert.equal(t.aboutFor(library, { id: 'broken', author: '坏文件' }, { id: 's1', meta: {} }).author, null, 'files with errors are skipped')
+  assert.equal(t.aboutFor(library, { id: 'broken', author: '坏文件' }, { id: 's1', meta: {} }).background.length, 0)
+})
+

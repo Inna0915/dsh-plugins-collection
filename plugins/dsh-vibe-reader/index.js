@@ -13,6 +13,7 @@ import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createAuthorSource } from './lib/authors.js'
 import { createCorpus } from './lib/corpus.js'
 import { setFrontmatter } from './lib/importer.js'
 import { createLibrary, createStateStore, OpError, resolverFor } from './lib/store.js'
@@ -58,12 +59,20 @@ export function resolvePaths(config = {}, env = process.env) {
   const home = env.DSH_HOME || join(homedir(), '.dsh')
   const dataDir = join(home, 'vibe-reader')
   const custom = typeof config.libraryRoot === 'string' && config.libraryRoot.trim()
+  // cacheRoot lets batch runs with a throwaway DSH_HOME reuse the downloaded corpora and author sources.
+  const cacheRoot = typeof config.cacheRoot === 'string' && isAbsolute(config.cacheRoot.trim()) ? config.cacheRoot.trim() : join(dataDir, 'cache')
   return {
     stateFile: join(dataDir, 'state.json'),
     libraryDir: custom && isAbsolute(custom.trim()) ? custom.trim() : join(dataDir, 'library'),
-    corpusDir: join(dataDir, 'cache', 'corpus'),
+    corpusDir: join(cacheRoot, 'corpus'),
+    authorsCacheDir: join(cacheRoot, 'authors'),
     seedsDir: SEEDS
   }
+}
+
+/** 知人论世 entries as the panel needs them: no absolute paths. */
+function publicAbout({ path: _path, ...entry }) {
+  return entry
 }
 
 /** Route handlers, separated from ctx for tests. */
@@ -81,7 +90,7 @@ export function createHandlers({ library, state, log = console }) {
   return {
     library: () => guard(async () => {
       const [snapshot, current] = await Promise.all([library.scan(), state.read()])
-      return json({ roots: snapshot.roots, volumes: snapshot.list, cards: snapshot.cards, state: current, recovered: state.recovered() })
+      return json({ roots: snapshot.roots, volumes: snapshot.list, cards: snapshot.cards, authors: snapshot.authors.map(publicAbout), backgrounds: Object.fromEntries(Object.entries(snapshot.backgrounds).map(([id, background]) => [id, publicAbout(background)])), state: current, recovered: state.recovered() })
     }),
     volume: (request) => guard(async () => {
       const { value, error } = await readJson(request)
@@ -145,7 +154,7 @@ export function apply(ctx, config) {
   // Optional: the 刻书匠 tool and skill. The tool is visible in every session, so its description stays short.
   const ctextKey = (typeof config?.ctextApiKey === 'string' && config.ctextApiKey.trim()) || process.env.CTEXT_API_KEY || ''
   const corpus = createCorpus({ cacheDir: paths.corpusDir, ctextKey })
-  const tool = createToolService({ library, libraryDir: paths.libraryDir, corpus })
+  const tool = createToolService({ library, libraryDir: paths.libraryDir, corpus, authors: createAuthorSource({ cacheDir: paths.authorsCacheDir }) })
   ctx.inject?.(['tools'], (toolCtx) => {
     toolCtx.tools.register({
       name: TOOL_NAME,

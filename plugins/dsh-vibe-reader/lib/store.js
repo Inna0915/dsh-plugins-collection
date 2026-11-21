@@ -5,6 +5,7 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { parseAuthor, parseBackground } from './about.js'
 import { colorOf } from './palette.js'
 import { cardsOf, parseVolume, summarize } from './volume.js'
 
@@ -28,7 +29,7 @@ export function defaultState() {
     volumes: {},
     cards: {},
     resurface: {},
-    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false, translationOpen: true, notesOpen: true, fontScale: 1 }
+    settings: { readAfterSeconds: 10, followSessions: true, showGloss: true, vertical: false, translationOpen: true, notesOpen: true, aboutOpen: false, fontScale: 1 }
   }
 }
 
@@ -65,7 +66,7 @@ function settingsPatch(patch, lenient = false) {
     } else if (key === 'fontScale') {
       if (typeof value === 'number' && Number.isFinite(value) && value >= 0.8 && value <= 2) out[key] = Math.round(value * 100) / 100
       else if (!lenient) throw new OpError('字号比例应在 0.8～2 之间')
-    } else if (['followSessions', 'showGloss', 'vertical', 'translationOpen', 'notesOpen'].includes(key)) {
+    } else if (['followSessions', 'showGloss', 'vertical', 'translationOpen', 'notesOpen', 'aboutOpen'].includes(key)) {
       if (typeof value === 'boolean') out[key] = value
       else if (!lenient) throw new OpError(`设置 ${key} 应为开或关`)
     } else if (!lenient) {
@@ -244,6 +245,37 @@ export function createLibrary(roots) {
     return volume
   }
 
+  // 知人论世 files live in authors/ and backgrounds/ under each root; a later root overrides an earlier one.
+  async function readAbout(file, name, parse) {
+    const info = await stat(file)
+    const cached = cache.get(file)
+    if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached.volume
+    const parsed = info.size > MAX_VOLUME_BYTES ? { ...parse('', name), errors: ['文件过大'] } : parse(await readFile(file, 'utf8'), name)
+    const value = { ...parsed, file: name, path: file }
+    cache.set(file, { mtimeMs: info.mtimeMs, size: info.size, volume: value })
+    return value
+  }
+
+  async function scanAbout(volumes) {
+    const authors = new Map()
+    const backgrounds = new Map()
+    for (const root of roots) {
+      for (const name of (await listVolumeFiles(join(root.dir, 'authors'))) || []) {
+        const author = { ...(await readAbout(join(root.dir, 'authors', name), name, parseAuthor)), origin: root.origin }
+        authors.set(author.name || name, author)
+      }
+      for (const name of (await listVolumeFiles(join(root.dir, 'backgrounds'))) || []) {
+        const background = { ...(await readAbout(join(root.dir, 'backgrounds', name), name, parseBackground)), origin: root.origin }
+        const volume = volumes.get(background.volume)
+        const warnings = [...background.warnings]
+        if (background.volume && !volume) warnings.push(`书库里没有书卷 ${background.volume}`)
+        for (const id of Object.keys(background.sections)) if (volume && !volume.sections.some((section) => section.id === id)) warnings.push(`书卷 ${background.volume} 没有节 {#${id}}`)
+        backgrounds.set(background.volume || name, { ...background, warnings })
+      }
+    }
+    return { authors: [...authors.values()], backgrounds: Object.fromEntries(backgrounds) }
+  }
+
   async function scan() {
     const byId = new Map()
     const rows = []
@@ -272,9 +304,12 @@ export function createLibrary(roots) {
       }
     }
     const readable = rows.filter((volume) => volume.id && !volume.errors.length && byId.get(volume.id) === volume)
+    const about = await scanAbout(byId)
     return {
       roots: rootInfo,
       volumes: byId,
+      authors: about.authors,
+      backgrounds: about.backgrounds,
       list: rows.map(summarize),
       cards: readable.flatMap(cardsOf)
     }
