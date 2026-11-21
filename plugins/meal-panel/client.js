@@ -419,38 +419,87 @@ const BATCH_CSS = `
 .mb-batch-list{max-height:190px;overflow:auto;border:1px solid var(--dsw-alias-border-l1);border-radius:5px}.mb-batch-row{display:grid;grid-template-columns:auto 1fr;gap:4px;padding:4px;border-bottom:1px solid var(--dsw-alias-border-l1);overflow-wrap:anywhere}.mb-batch-row:last-child{border-bottom:0}.mb-batch-row input{align-self:start}.mb-batch-row small{display:block;color:var(--dsw-alias-label-secondary)}.mb-batch-source{font-size:9px;color:var(--dsw-alias-label-tertiary);margin-top:5px}
 `
 
-const BATCH_HOLIDAYS_2026 = [
-  ['2026-01-01','2026-01-03','元旦'], ['2026-02-15','2026-02-23','春节'],
-  ['2026-04-04','2026-04-06','清明节'], ['2026-05-01','2026-05-05','劳动节'],
-  ['2026-06-19','2026-06-21','端午节'], ['2026-09-25','2026-09-27','中秋节'],
-  ['2026-10-01','2026-10-07','国庆节'],
-]
-const BATCH_MAKEUP_2026 = new Set(['2026-01-04','2026-02-14','2026-02-28','2026-05-09','2026-09-20','2026-10-10'])
+const BATCH_CALENDARS = {
+  2026: {
+    holidays: [
+      ['2026-01-01','2026-01-03','元旦'], ['2026-02-15','2026-02-23','春节'],
+      ['2026-04-04','2026-04-06','清明节'], ['2026-05-01','2026-05-05','劳动节'],
+      ['2026-06-19','2026-06-21','端午节'], ['2026-09-25','2026-09-27','中秋节'],
+      ['2026-10-01','2026-10-07','国庆节'],
+    ],
+    makeup: new Set(['2026-01-04','2026-02-14','2026-02-28','2026-05-09','2026-09-20','2026-10-10']),
+  },
+  2027: {
+    holidays: [
+      ['2027-01-01','2027-01-03','元旦'], ['2027-02-05','2027-02-13','春节'],
+      ['2027-04-03','2027-04-05','清明节'], ['2027-05-01','2027-05-05','劳动节'],
+      ['2027-06-09','2027-06-09','端午节'], ['2027-09-15','2027-09-15','中秋节'],
+      ['2027-10-01','2027-10-07','国庆节'],
+    ],
+    makeup: new Set(['2027-01-31','2027-02-14','2027-05-08','2027-09-26','2027-10-09']),
+  },
+}
+const BATCH_CALENDAR_YEARS = Object.keys(BATCH_CALENDARS).sort()
 const BATCH_DAY_MS = 86400000
+const BATCH_MAX_DAYS = 186
+function batchIso(stamp) {
+  return new Date(stamp).toISOString().slice(0, 10)
+}
 function batchStamp(date) {
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('请选择有效日期')
   const stamp = Date.parse(date + 'T00:00:00Z')
-  if (!Number.isFinite(stamp) || new Date(stamp).toISOString().slice(0, 10) !== date) throw new Error('日期无效')
+  if (!Number.isFinite(stamp) || batchIso(stamp) !== date) throw new Error('日期无效')
   return stamp
+}
+function batchRange(kind, today, currentStart) {
+  const baseStamp = batchStamp(today)
+  const year = Number(today.slice(0, 4)), month = Number(today.slice(5, 7)), day = Number(today.slice(8, 10))
+  if (kind === 'week') {
+    return { start: today, end: batchIso(baseStamp + 6 * BATCH_DAY_MS) }
+  }
+  if (kind === 'halfYear') {
+    const targetMonthIndex = month - 1 + 6
+    const targetLastDay = new Date(Date.UTC(year, targetMonthIndex + 1, 0)).getUTCDate()
+    const targetStamp = Date.UTC(year, targetMonthIndex, Math.min(day, targetLastDay)) - BATCH_DAY_MS
+    return { start: today, end: batchIso(Math.max(baseStamp, targetStamp)) }
+  }
+  if (kind === 'next') {
+    let baseYear = year, baseMonth = month
+    if (typeof currentStart === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(currentStart) && currentStart.slice(0, 7) >= today.slice(0, 7)) {
+      try {
+        batchStamp(currentStart)
+        baseYear = Number(currentStart.slice(0, 4))
+        baseMonth = Number(currentStart.slice(5, 7))
+      } catch { /* fall back to today's month */ }
+    }
+    return {
+      start: batchIso(Date.UTC(baseYear, baseMonth, 1)),
+      end: batchIso(Date.UTC(baseYear, baseMonth + 1, 0)),
+    }
+  }
+  return { start: today, end: batchIso(Date.UTC(year, month, 0)) }
 }
 function batchDates(start, end) {
   const first = batchStamp(start), last = batchStamp(end)
   if (last < first) throw new Error('结束日期不能早于开始日期')
-  if ((last - first) / BATCH_DAY_MS >= 93) throw new Error('一次最多选择 93 天')
+  if ((last - first) / BATCH_DAY_MS >= BATCH_MAX_DAYS) throw new Error(`一次最多选择 ${BATCH_MAX_DAYS} 天`)
   const dates = []
   for (let n = first; n <= last; n += BATCH_DAY_MS) {
-    const date = new Date(n).toISOString().slice(0, 10)
-    if (!date.startsWith('2026-')) throw new Error('仅收录 2026 年官方节假日安排，其他年份请先更新日历数据')
-    dates.push(date)
+    dates.push(batchIso(n))
   }
   return dates
 }
 function batchDayInfo(date) {
   const day = new Date(batchStamp(date)).getUTCDay()
-  if (!date.startsWith('2026-')) throw new Error('该年份节假日数据未收录')
-  const holiday = BATCH_HOLIDAYS_2026.find(([start, end]) => date >= start && date <= end)
-  const makeup = BATCH_MAKEUP_2026.has(date)
-  return { workday: makeup || (!holiday && day !== 0 && day !== 6), label: makeup ? '调休补班' : holiday ? holiday[2] : day === 0 || day === 6 ? '周末' : '工作日', weekday: '周' + '日一二三四五六'[day] }
+  const weekday = '周' + '日一二三四五六'[day]
+  const calendar = BATCH_CALENDARS[date.slice(0, 4)]
+  if (!calendar) {
+    const workday = day !== 0 && day !== 6
+    return { workday, label: workday ? '默认工作日' : '周末', weekday, fallback: true }
+  }
+  const holiday = calendar.holidays.find(([start, end]) => date >= start && date <= end)
+  const makeup = calendar.makeup.has(date)
+  return { workday: makeup || (!holiday && day !== 0 && day !== 6), label: makeup ? '调休补班' : holiday ? holiday[2] : day === 0 || day === 6 ? '周末' : '工作日', weekday, fallback: false }
 }
 function batchTime(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) return NaN
@@ -512,10 +561,9 @@ function BatchPanel({ panel, parentBusy, onBusy, onRefresh }) {
   const invalidate = () => { setRows([]); setIdentity(null); setDone(false); tell('设置已更改，请重新预览。') }
   const changeRange = kind => {
     const today = panel?.today || serviceDate(Date.now())
-    const year = Number(today.slice(0,4)), month = Number(today.slice(5,7))
-    const iso = n => new Date(n).toISOString().slice(0,10)
-    setStart(kind === 'next' ? iso(Date.UTC(year, month, 1)) : today)
-    setEnd(kind === 'week' ? iso(batchStamp(today) + 6 * BATCH_DAY_MS) : iso(Date.UTC(year, month + (kind === 'next' ? 1 : 0), 0)))
+    const nextRange = batchRange(kind, today, start)
+    setStart(nextRange.start)
+    setEnd(nextRange.end)
     invalidate()
   }
   const updateRow = (key, patch) => { if (mounted.current) setRows(old => old.map(row => row.key === key ? { ...row, ...patch } : row)) }
@@ -540,7 +588,9 @@ function BatchPanel({ panel, parentBusy, onBusy, onRefresh }) {
       }))
       if (!mounted.current) return
       setRows(next); setIdentity(who)
-      tell(`账号：${who.username}；工作日 ${new Set(next.filter(row => row.workday).map(row => row.date)).size} 天，可订 ${next.filter(row => row.selected).length} 餐。请逐项核对。`)
+      const fallbackYears = [...new Set(next.filter(row => row.fallback).map(row => row.date.slice(0, 4)))]
+      const fallbackNote = fallbackYears.length ? `${fallbackYears.join('、')} 年未收录法定节假日，默认按周一至周五筛选；` : ''
+      tell(`账号：${who.username}；工作日 ${new Set(next.filter(row => row.workday).map(row => row.date)).size} 天，可订 ${next.filter(row => row.selected).length} 餐。${fallbackNote}请逐项核对。`)
     } catch (failure) { tell(failure?.message || '预览失败', true) }
     finally { working.current = false; if (mounted.current) setBusy(false); onBusy?.(false) }
   }
@@ -603,7 +653,7 @@ function BatchPanel({ panel, parentBusy, onBusy, onRefresh }) {
       h('div', { className:'mb-batch-fields' },
         h('label', null, '开始日期', h('input', { type:'date', value:start, disabled:busy, onChange:e => { setStart(e.target.value); invalidate() } })),
         h('label', null, '结束日期', h('input', { type:'date', value:end, disabled:busy, onChange:e => { setEnd(e.target.value); invalidate() } }))),
-      h('div', { className:'mb-batch-shortcuts' }, ...[['本月剩余','month'],['下个月','next'],['未来7天','week']].map(([label, kind]) => h('button', { key:kind, type:'button', disabled:busy, onClick:() => changeRange(kind) }, label))),
+      h('div', { className:'mb-batch-shortcuts' }, ...[['本月剩余','month'],['下个月','next'],['未来7天','week'],['未来半年','halfYear']].map(([label, kind]) => h('button', { key:kind, type:'button', disabled:busy, onClick:() => changeRange(kind) }, label))),
       h('div', { className:'mb-batch-meals' },
         h('label', null, h('input', { type:'checkbox', checked:lunch, disabled:busy, onChange:e => { setLunch(e.target.checked); invalidate() } }), '午餐'),
         h('label', null, h('input', { type:'checkbox', checked:dinner, disabled:busy, onChange:e => { setDinner(e.target.checked); invalidate() } }), '晚餐')),
@@ -615,7 +665,7 @@ function BatchPanel({ panel, parentBusy, onBusy, onRefresh }) {
       rows.length ? h('div', { className:'mb-batch-list', 'aria-label':'逐餐预览与结果' }, ...rows.map(row => h('label', { className:'mb-batch-row', key:row.key },
         h('input', { type:'checkbox', checked:row.selected, disabled:busy || done || !row.eligible, 'aria-label':`${row.date} ${row.meal === 'LUNCH' ? '午餐' : '晚餐'}`, onChange:e => updateRow(row.key, { selected:e.target.checked }) }),
         h('span', null, `${row.date} ${row.weekday} · ${row.meal === 'LUNCH' ? '午餐' : '晚餐'} · ${row.label}`, h('small', null, `${row.result ? row.result + ' · ' : ''}${row.reason}`))))) : null,
-      h('div', { className:'mb-batch-source' }, '仅含 2026 年官方节假日及调休；最多 93 天。请保持页面开启。')) : null)
+      h('div', { className:'mb-batch-source' }, `${BATCH_CALENDAR_YEARS.join('、')} 年含官方节假日及调休，未收录年份默认按周一至周五筛选；最多 ${BATCH_MAX_DAYS} 天。请保持页面开启。`)) : null)
 }
 
 

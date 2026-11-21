@@ -7,12 +7,12 @@ import { __internals } from '../index.js'
 const client = await readFile(new URL('../client.js', import.meta.url), 'utf8')
 const marker = '    function RefreshIcon() {'
 assert.equal(client.split(marker).length, 2)
-const source = client.replace(marker, '    globalThis.batchTest = { batchDates, batchDayInfo, batchEligibility, needsLunchReminder };\n' + marker)
+const source = client.replace(marker, '    globalThis.batchTest = { batchDates, batchRange, batchDayInfo, batchEligibility, needsLunchReminder };\n' + marker)
 let factory
 const sandbox = { window: { __ModuleLoader__: { load: module => { factory = module.factory } } } }
 vm.runInNewContext(source, sandbox)
 factory(() => ({ createElement() {} }))
-const { batchDates, batchDayInfo, batchEligibility, needsLunchReminder } = sandbox.batchTest
+const { batchDates, batchRange, batchDayInfo, batchEligibility, needsLunchReminder } = sandbox.batchTest
 const dayForAlert = { date: '2026-10-28', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2026-10-28T00:45:00Z' }] }
 const panelForAlert = { today: '2026-10-28', presence: 'IN_OFFICE' }
 const at = time => Date.parse(`2026-10-28T${time}+08:00`)
@@ -25,15 +25,75 @@ for (const choice of ['ORDERED', 'DECLINED']) {
 }
 assert.equal(needsLunchReminder({ ...panelForAlert, presence: 'OUT_OF_OFFICE' }, dayForAlert, at('08:35:00')), false)
 assert.equal(batchDates('2026-10-30', '2026-11-02').length, 4)
-assert.throws(() => batchDates('2026-12-31', '2027-01-01'), /2026/)
-assert.throws(() => batchDates('2026-01-01', '2026-04-04'), /93/)
-assert.equal(batchDayInfo('2026-10-10').workday, true)
-assert.equal(batchDayInfo('2026-10-01').workday, false)
+const plain = value => JSON.parse(JSON.stringify(value))
+assert.deepEqual(plain(batchDates('2026-12-31', '2027-01-04')), ['2026-12-31', '2027-01-01', '2027-01-02', '2027-01-03', '2027-01-04'])
+assert.equal(batchDates('2026-01-01', '2026-07-05').length, 186)
+assert.throws(() => batchDates('2026-01-01', '2026-07-06'), /186/)
+assert.deepEqual(plain(batchRange('month', '2026-11-19', '2027-02-01')), { start: '2026-11-19', end: '2026-11-30' })
+assert.deepEqual(plain(batchRange('next', '2026-11-19', '2026-11-19')), { start: '2026-12-01', end: '2026-12-31' })
+assert.deepEqual(plain(batchRange('next', '2026-11-19', '2026-12-01')), { start: '2027-01-01', end: '2027-01-31' })
+assert.deepEqual(plain(batchRange('next', '2026-11-19', '2027-01-01')), { start: '2027-02-01', end: '2027-02-28' })
+assert.deepEqual(plain(batchRange('next', '2026-11-19', '2028-01-01')), { start: '2028-02-01', end: '2028-02-29' })
+assert.deepEqual(plain(batchRange('next', '2026-11-19', '2026-09-01')), { start: '2026-12-01', end: '2026-12-31' })
+assert.deepEqual(plain(batchRange('week', '2026-11-19', '2027-02-01')), { start: '2026-11-19', end: '2026-11-25' })
+assert.deepEqual(plain(batchRange('halfYear', '2026-11-19', '2027-02-01')), { start: '2026-11-19', end: '2027-05-18' })
+assert.deepEqual(plain(batchRange('halfYear', '2026-07-01', '2026-07-01')), { start: '2026-07-01', end: '2026-12-31' })
+assert.deepEqual(plain(batchRange('halfYear', '2026-08-31', '2026-08-31')), { start: '2026-08-31', end: '2027-02-27' })
+assert.equal(batchDates(...Object.values(plain(batchRange('halfYear', '2026-11-19', '2026-11-19')))).length, 181)
+assert.deepEqual(plain(batchDayInfo('2026-10-10')), { workday: true, label: '调休补班', weekday: '周六', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2026-10-01')), { workday: false, label: '国庆节', weekday: '周四', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-01-01')), { workday: false, label: '元旦', weekday: '周五', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-01-03')), { workday: false, label: '元旦', weekday: '周日', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-01-04')), { workday: true, label: '工作日', weekday: '周一', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-01-31')), { workday: true, label: '调休补班', weekday: '周日', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-02-05')), { workday: false, label: '春节', weekday: '周五', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-02-13')), { workday: false, label: '春节', weekday: '周六', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-02-14')), { workday: true, label: '调休补班', weekday: '周日', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-04-05')), { workday: false, label: '清明节', weekday: '周一', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-05-05')), { workday: false, label: '劳动节', weekday: '周三', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-05-08')), { workday: true, label: '调休补班', weekday: '周六', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-06-09')), { workday: false, label: '端午节', weekday: '周三', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-06-10')), { workday: true, label: '工作日', weekday: '周四', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-09-15')), { workday: false, label: '中秋节', weekday: '周三', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-09-26')), { workday: true, label: '调休补班', weekday: '周日', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-10-01')), { workday: false, label: '国庆节', weekday: '周五', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-10-07')), { workday: false, label: '国庆节', weekday: '周四', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2027-10-09')), { workday: true, label: '调休补班', weekday: '周六', fallback: false })
+assert.deepEqual(plain(batchDayInfo('2028-01-01')), { workday: false, label: '周末', weekday: '周六', fallback: true })
+assert.deepEqual(plain(batchDayInfo('2028-01-02')), { workday: false, label: '周末', weekday: '周日', fallback: true })
+assert.deepEqual(plain(batchDayInfo('2028-01-03')), { workday: true, label: '默认工作日', weekday: '周一', fallback: true })
+assert.deepEqual(plain(batchDayInfo('2028-01-04')), { workday: true, label: '默认工作日', weekday: '周二', fallback: true })
 const calendar = { today: '2026-10-26', serverTime: '2026-10-26T09:00:00+08:00', presence: 'IN_OFFICE', days: [{ date: '2026-10-28', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'DECLINED', locked: false, deadline: '2026-10-28T00:45:00Z' }] }] }
 assert.equal(batchEligibility('2026-10-28', 'LUNCH', calendar, false).eligible, false)
 assert.equal(batchEligibility('2026-10-28', 'LUNCH', calendar, true).eligible, true)
 calendar.days[0].meals[0].locked = true
 assert.equal(batchEligibility('2026-10-28', 'LUNCH', calendar, true).eligible, false)
+const calendar2027 = {
+  today: '2027-01-01',
+  serverTime: '2027-01-01T08:00:00+08:00',
+  presence: 'IN_OFFICE',
+  days: [
+    { date: '2027-01-01', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2027-01-01T00:45:00Z' }] },
+    { date: '2027-01-31', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2027-01-31T00:45:00Z' }] },
+    { date: '2027-06-09', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2027-06-09T00:45:00Z' }] },
+  ],
+}
+assert.deepEqual(plain(batchEligibility('2027-01-01', 'LUNCH', calendar2027, false)), { eligible: false, reason: '元旦' })
+assert.deepEqual(plain(batchEligibility('2027-01-31', 'LUNCH', calendar2027, false)), { eligible: true, reason: '可订餐' })
+assert.deepEqual(plain(batchEligibility('2027-06-09', 'LUNCH', calendar2027, false)), { eligible: false, reason: '端午节' })
+const calendar2028 = {
+  today: '2028-01-01',
+  serverTime: '2028-01-01T08:00:00+08:00',
+  presence: 'IN_OFFICE',
+  days: [
+    { date: '2028-01-02', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2028-01-02T00:45:00Z' }] },
+    { date: '2028-01-03', presence: 'IN_OFFICE', meals: [] },
+    { date: '2028-01-04', presence: 'IN_OFFICE', meals: [{ meal: 'LUNCH', presence: 'IN_OFFICE', choice: 'UNSELECTED', locked: false, deadline: '2028-01-04T00:45:00Z' }] },
+  ],
+}
+assert.deepEqual(plain(batchEligibility('2028-01-02', 'LUNCH', calendar2028, false)), { eligible: false, reason: '周末' })
+assert.deepEqual(plain(batchEligibility('2028-01-03', 'LUNCH', calendar2028, false)), { eligible: false, reason: '网站未提供该餐次' })
+assert.deepEqual(plain(batchEligibility('2028-01-04', 'LUNCH', calendar2028, false)), { eligible: true, reason: '可订餐' })
 
 function request(path, body, headers = { host: '127.0.0.1:3080', origin: 'http://127.0.0.1:3080', 'content-type': 'application/json' }) {
   const req = Readable.from([Buffer.from(JSON.stringify(body))]); req.method = 'POST'; req.url = '/meal/api/' + path; req.headers = headers
