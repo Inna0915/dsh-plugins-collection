@@ -15,6 +15,9 @@ PRODUCT_JARS: list[tuple[str, str, str]] = [
     ("fms-front-*.jar",    "version/fms-front.md", "fms-front"),
     # FMS 后端发布资源由 fms-warehouse 携带，不是 fms-platform。
     ("fms-warehouse-*.jar", "version/fms.md",       "fms"),
+    ("gaia-front-*.jar",   "version/gaia-front.md", "gaia-front"),
+    # Gaia 后端发布资源由 gaia-module 携带，不是 gaia-boot 或 gaia-service。
+    ("gaia-module-*.jar",  "version/gaia.md",      "gaia"),
 ]
 
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -104,7 +107,7 @@ def collect_product_notes(project_dir: str, project_has_releases: bool = False) 
         families = {
             jar.name.split("-", 1)[0]
             for jar in lib_dir.glob("*.jar")
-            if jar.name.startswith(("wms-", "fms-"))
+            if jar.name.startswith(("wms-", "fms-", "gaia-"))
         }
 
     for glob_pattern, md_entry, module in PRODUCT_JARS:

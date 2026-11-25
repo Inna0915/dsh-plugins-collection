@@ -294,7 +294,7 @@ class ProductJarsConfigTest(unittest.TestCase):
 
         modules = {e[2] for e in PRODUCT_JARS}
         self.assertEqual(
-            modules, {"wms-front", "wms", "fms-front", "fms"}
+            modules, {"wms-front", "wms", "fms-front", "fms", "gaia-front", "gaia"}
         )
 
     def test_wms_platform_mapping_and_derived_version(self):
